@@ -787,120 +787,6 @@ body{
     color: whitesmoke;
     font-weight: 400;
 }
-.portfolio{
-    height:auto;
-    width: 100%;
-    display: flex;
-    flex-direction: row;
-    align-items: center;
-    justify-content: center;
-    padding: 1.5%;
-    padding-right: 2%;
-padding-top: 50px;
-padding-bottom: 40px;
-}
-
-.portfolio-text{
-    width: 40%;
-    padding-left: 1%;
-    margin: 1%;
-    margin-left: -40px;
-    margin-top: 160px;
-    z-index: 3;
-    opacity: 1;
-    background: #080808;
-    padding-top: 10px;
-    padding-bottom: 10px;
-}
-
-.portfolio-text h2{
-    font-size: 35px;
-    font-family: poppins;
-    font-weight: 200;
-    padding: 20px;
-    color: #c70039;
-    transition: all .4s ease;
-}
-.portfolio-text p{
-    font-size: 16px;
-    opacity: .8;
-    font-family: poppins;
-    font-weight: 200;
-    padding: 20px;
-}
-.portfolio-text button{
-    font-size: 16px;
-    opacity: .8;
-    font-family: poppins;
-    font-weight: 200;
-    padding: 10px 20px;
-    background:transparent;
-    color:#c70039;
-    transition: all .4s ease;
-    outline: none;
-    margin: 20px;
-    border: 1.5px solid #c70039;
-    cursor: pointer;
-    overflow: hidden;
-    position: relative;
-    transition: all .4s ease;
-}
-.portfolio-text button::before{
-    content: "";
-    position: absolute;
-    width: 0%;
-    height: 200%;
-    transform: rotate(-15deg) translateY(-20px);
-    top: 0;
-    left: 0;
-    z-index: 3;
-    background: #c70039;
-    transition: all .7s ease;
-}
-.portfolio-text button:hover{
-    opacity: 1;
-    color:whitesmoke;
-}
- button:hover .index{
-     position: relative;
-    z-index: 4;
-}
-.portfolio-text button:hover::before{
-    opacity: 1;
-    width: 120%;
-}
-.button{
-    text-align: center;
-}
-    .portfolio-image img{
-        height: 400px;
-        width: 100%;
-        position: relative;
-    }
-    .portfolio-image{
-        height: 400px;
-        width: 40%;
-    }
-.portfolio-image img::before{
-    content: "";
-    height: 100%;
-    width: 100%;
-    background: #c70039;
-    opacity: .1;
-    top: 0;
-    left: 0;
-    transition: all .4s ease;
-    position: absolute;
-    z-index: 2;
-}
-#portfolio-content{
-    width: 100%;
-    display: flex;
-    height: auto;
-    flex-direction: column;
-    justify-content: center;
-    overflow: hidden;
-}
 #portfolio{
     display: none;
     height: auto;
@@ -1239,43 +1125,6 @@ form button:hover{
     opacity: 1;
 }
 
-.theme-changer {
-    height: auto;
-    width: auto;
-    display: flex;
-    flex-direction: row;
-    position: fixed;
-    right: -150px;
-    top: 62.5%; /* Đặt dưới color changer một chút */
-    z-index: 4;
-    color: black;
-    transition: all .4s ease;
-}
-
-.theme-changer-active {
-    right: 0px;
-    transition: all .4s ease;
-}
-
-.theme-panel {
-    height: 45px;
-    cursor: pointer;
-    width: 45px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border-bottom-left-radius: 3px;
-    border-top-left-radius: 3px;
-    background: whitesmoke;
-}
-
-.theme-panel img {
-    height: 40px;
-    width: 40px;
-    padding: 2px;
-    animation: rotate 2s linear infinite;
-}
-
 .themes ul {
     display: flex;
     flex-wrap: wrap;
@@ -1330,20 +1179,6 @@ form button:hover{
 
 .themes li a:hover {
     background: rgba(0, 0, 0, 0.1);
-}
-
-.theme-selector {
-    height: auto;
-    width: 150px;
-    padding: 10px;
-    background: whitesmoke;
-    font-family: poppins;
-    font-size: 16px;
-    display: flex;
-    color: black;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
 }
 
 .color-changer{
@@ -1509,7 +1344,7 @@ For devices with smaller width like mobile phone
         display: none;
     }
     #breaker{
-        height: 50vh;
+        height: 100vh; /* full screen like desktop (was 50vh: the wipe covered only the top half) */
         width: 200%;
         background-color: #c70039;
         opacity: 1;
@@ -1636,58 +1471,11 @@ For devices with smaller width like mobile phone
         margin-top: 20px;
         margin-bottom: 15px;
     }
-    .portfolio{
-        height:auto;
-        width: 100%;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        padding: 1.5%;
-        padding-right: 2%;
-    padding-top: 50px;
-    padding-bottom: 40px;
-    }
-    .portfolio-text{
-        width: 90%;
-        padding-left: 0%;
-        margin: 0%;
-        margin-left: 0px;
-        margin-top: 0px;
-        z-index: 1;
-        background: #070707;
-        padding-top: 10px;
-        padding-bottom: 10px;
-    }
-        .portfolio-image{
-            position: relative;
-        }
-            .portfolio-text h2{
-                font-size: 22px;
-                font-family: poppins;
-                font-weight: 200;
-                padding: 10px;
-            }
-            .portfolio-text p{
-                font-size: 15px;
-                opacity: .8;
-                font-family: poppins;
-                font-weight: 200;
-                padding: 15px;
-            }
             .cursor{
                 display: none;
             }
             .service:hover .service-img img{
                 box-shadow:0px 0px 0px 0px #c70039 ;
-            }
-            .portfolio-image img{
-                height: 300px;
-                width: 100%;
-            }
-            .portfolio-image{
-                height: 300px;
-                width: 90%;
             }
             #navigation-bar img{
                 height: 80px;
@@ -1964,7 +1752,7 @@ for tabs and large phones
         display: none;
     }
     #breaker{
-        height: 50vh;
+        height: 100vh; /* full screen like desktop (was 50vh: the wipe covered only the top half) */
         width: 200%;
         background-color: #c70039;
         opacity: 1;
@@ -2107,59 +1895,11 @@ for tabs and large phones
         margin-top: 20px;
         margin-bottom: 15px;
     }
-    .portfolio{
-        height:auto;
-        width: 100%;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        padding: 1.5%;
-        padding-right: 2%;
-    padding-top: 50px;
-    padding-bottom: 40px;
-    }
-    .portfolio-text{
-        width: 70%;
-        padding-left: 0%;
-        margin: 0%;
-        margin-left: 0px;
-        margin-top: 0px;
-        z-index: 1;
-        background: #080808;
-        padding-top: 15px;
-        padding-bottom: 15px;
-    }
-        .portfolio-image{
-            position: relative;
-        }
-            .portfolio-text h2{
-                font-size: 35px;
-                font-family: poppins;
-                font-weight: 200;
-                padding: 15px;
-            }
-            .portfolio-text p{
-                font-size: 20px;
-                opacity: .8;
-                font-family: poppins;
-                font-weight: 200;
-                padding: 15px;
-            }
             .cursor{
                 display: none;
             }
             .service:hover .service-img img{
                 box-shadow:0px 0px 0px 0px #c70039 ;
-            }
-            .portfolio-image img{
-                height: 380px;
-                width: 100%;
-                position: relative;
-            }
-            .portfolio-image{
-                height: 380px;
-                width: 70%;
             }
             #navigation-bar img{
                 height: 80px;
@@ -2383,16 +2123,6 @@ for tabs and large phones
 
 
 @media all and (max-width: 9000px) and (min-width: 1441px){
-
-    .portfolio-image img{
-        height: 500px;
-        width: 100%;
-        position: relative;
-    }
-    .portfolio-image{
-        height: 500px;
-        width: 40%;
-    }
     .about-img img{
         width: 100%;
         height: 650px;
@@ -2422,7 +2152,6 @@ for tabs and large phones
         font-weight: 200;
     }
     .cv a button{
-        background: transparent;
         border:none;
         padding: 25px 35px;
         color: whitesmoke;

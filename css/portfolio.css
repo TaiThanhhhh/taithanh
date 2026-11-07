@@ -1,0 +1,193 @@
+/*
+ * Portfolio page.
+ *
+ * Keeps the original look (dark panel overlapping the image, accent title,
+ * outline button with a sweep fill) on an aligned, alternating grid.
+ * Accent colour comes from the global `.color` class, so every palette applies.
+ */
+
+.work-list {
+  list-style: none;
+  width: 86%; /* same outer edges as the About page grid */
+  margin: 50px auto 0;
+  padding-bottom: 130px;
+  display: grid;
+  gap: 140px;
+}
+
+/* 12-column row: image spans 8, panel spans 5 and overlaps the image by 1. */
+.work {
+  display: grid;
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  align-items: center;
+}
+
+.work-media {
+  grid-column: 1 / 9;
+  grid-row: 1;
+  aspect-ratio: 16 / 10;
+  overflow: hidden;
+  background: #0b0b0b;
+}
+
+.work-media img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: var(--focus, 50% 50%);
+  transition: transform 0.8s ease;
+}
+
+.work:hover .work-media img {
+  transform: scale(1.04);
+}
+
+.work-panel {
+  grid-column: 8 / 13;
+  grid-row: 1;
+  position: relative;
+  z-index: 2;
+  padding: 44px 44px 46px;
+  background: #080808;
+  box-shadow: 0 30px 60px rgba(0, 0, 0, 0.35);
+}
+
+/* Alternate sides on every other project. */
+.work:nth-child(even) .work-media {
+  grid-column: 5 / 13;
+}
+
+.work:nth-child(even) .work-panel {
+  grid-column: 1 / 6;
+}
+
+.work-title {
+  font-family: poppins;
+  font-size: 30px;
+  font-weight: 500;
+  line-height: 1.25;
+}
+
+.work-text {
+  margin-top: 16px;
+  font-family: poppins;
+  font-size: 16px;
+  line-height: 1.7;
+  color: whitesmoke;
+  opacity: 0.8;
+}
+
+.work-stack {
+  margin-top: 14px;
+  font-family: poppins;
+  font-size: 14px;
+  color: whitesmoke;
+  opacity: 0.5;
+}
+
+/* Shown instead of a link when the project is not public. */
+.work-note {
+  margin-top: 28px;
+  font-family: poppins;
+  font-size: 14px;
+  color: whitesmoke;
+  opacity: 0.5;
+}
+
+/* Outline button with the theme's diagonal sweep fill on hover. */
+.work-link {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 28px;
+  padding: 11px 22px;
+  border: 1.5px solid currentColor;
+  font-family: poppins;
+  font-size: 15px;
+  text-decoration: none;
+  overflow: hidden;
+}
+
+.work-link::before {
+  content: '';
+  position: absolute;
+  /* Oversized and centred on the button so the rotated strip covers every corner. */
+  top: -100%;
+  left: -20%;
+  width: 0;
+  height: 300%;
+  background: currentColor;
+  transform: rotate(-15deg);
+  transition: width 0.7s ease;
+}
+
+.work-link span {
+  position: relative;
+  z-index: 1;
+  transition: color 0.4s ease;
+}
+
+.work-link:hover::before,
+.work-link:focus-visible::before {
+  width: 140%;
+}
+
+.work-link:hover span,
+.work-link:focus-visible span {
+  color: whitesmoke;
+}
+
+.work-link:focus-visible {
+  outline: 2px solid whitesmoke;
+  outline-offset: 3px;
+}
+
+/* Tablet: stack the image, panel overlaps its bottom edge. */
+@media all and (max-width: 1025px) and (min-width: 551px) {
+  .work-list {
+    gap: 100px;
+    padding-bottom: 100px;
+  }
+
+  .work {
+    display: block;
+  }
+
+  .work-panel {
+    margin: -70px 6% 0;
+  }
+}
+
+/* Mobile: same stacked layout, tighter spacing. */
+@media only screen and (max-width: 550px) {
+  .work-list {
+    width: 90%;
+    margin-top: 30px;
+    gap: 70px;
+    padding-bottom: 70px;
+  }
+
+  .work {
+    display: block;
+  }
+
+  .work-panel {
+    margin: -36px 4% 0;
+    padding: 26px 22px 28px;
+  }
+
+  .work-title {
+    font-size: 22px;
+  }
+
+  .work-text {
+    font-size: 15px;
+  }
+
+  .work-link,
+  .work-note {
+    margin-top: 22px;
+  }
+}

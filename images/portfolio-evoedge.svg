@@ -1,0 +1,197 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 1000" preserveAspectRatio="xMidYMid slice" role="img" aria-labelledby="title desc" font-family="Inter, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif">
+  <title id="title">EvoEdge casing pressure test dashboard</title>
+  <desc id="desc">Illustrative mockup of a real-time casing pressure test: staged pressure ramps to a 5,000 psi target with a hold period, live KPIs and MQTT sensor readings. Sample data.</desc>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#071a1f"/>
+      <stop offset="0.55" stop-color="#0b1220"/>
+      <stop offset="1" stop-color="#06090f"/>
+    </linearGradient>
+    <radialGradient id="glow" cx="0.18" cy="0.12" r="0.7">
+      <stop offset="0" stop-color="#14b8a6" stop-opacity="0.35"/>
+      <stop offset="1" stop-color="#14b8a6" stop-opacity="0"/>
+    </radialGradient>
+    <pattern id="dots" width="28" height="28" patternUnits="userSpaceOnUse">
+      <circle cx="2" cy="2" r="1.2" fill="#ffffff" fill-opacity="0.05"/>
+    </pattern>
+    <linearGradient id="area" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#2dd4bf" stop-opacity="0.28"/>
+      <stop offset="1" stop-color="#2dd4bf" stop-opacity="0"/>
+    </linearGradient>
+    <filter id="shadow" x="-10%" y="-10%" width="130%" height="130%">
+      <feDropShadow dx="0" dy="30" stdDeviation="36" flood-color="#000000" flood-opacity="0.55"/>
+    </filter>
+    <filter id="soft" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="6"/>
+    </filter>
+    <clipPath id="plot"><rect x="380" y="440" width="900" height="330"/></clipPath>
+  </defs>
+
+  <!-- Backdrop -->
+  <rect width="1600" height="1000" fill="url(#bg)"/>
+  <rect width="1600" height="1000" fill="url(#glow)"/>
+  <rect width="1600" height="1000" fill="url(#dots)"/>
+
+  <!-- App window (bleeds off the right and bottom edges) -->
+  <g filter="url(#shadow)">
+    <rect x="80" y="70" width="1600" height="1000" rx="20" fill="#0d1117" stroke="#ffffff" stroke-opacity="0.09"/>
+  </g>
+  <path d="M100 70h1580v52H80V90a20 20 0 0 1 20-20z" fill="#0a0e14"/>
+  <line x1="80" y1="122" x2="1680" y2="122" stroke="#30363d"/>
+  <circle cx="112" cy="96" r="6.5" fill="#ff5f57"/>
+  <circle cx="134" cy="96" r="6.5" fill="#febc2e"/>
+  <circle cx="156" cy="96" r="6.5" fill="#28c840"/>
+  <text x="700" y="101" text-anchor="middle" font-size="14" fill="#8b949e">evoedge.local / wells / A-12 / casing-test</text>
+
+  <!-- Sidebar -->
+  <rect x="80" y="122" width="220" height="950" fill="#0a0e14"/>
+  <line x1="300" y1="122" x2="300" y2="1070" stroke="#30363d"/>
+  <path d="M120 148l14 8v16l-14 8-14-8v-16z" fill="none" stroke="#2dd4bf" stroke-width="3" stroke-linejoin="round"/>
+  <circle cx="120" cy="164" r="4" fill="#2dd4bf"/>
+  <text x="146" y="171" font-size="19" font-weight="700" fill="#e6edf3">EvoEdge</text>
+  <g font-size="15" fill="#8b949e">
+    <rect x="104" y="214" width="16" height="16" rx="4" fill="none" stroke="#6e7681" stroke-width="1.8"/>
+    <text x="134" y="227">Overview</text>
+    <rect x="96" y="250" width="188" height="40" rx="9" fill="#2dd4bf" fill-opacity="0.12"/>
+    <rect x="96" y="250" width="3" height="40" rx="1.5" fill="#2dd4bf"/>
+    <path d="M104 278l5-8 4 5 4-9 3 6" fill="none" stroke="#2dd4bf" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+    <text x="134" y="275" fill="#e6edf3" font-weight="600">Casing test</text>
+    <circle cx="112" cy="319" r="7.5" fill="none" stroke="#6e7681" stroke-width="1.8"/>
+    <text x="134" y="324">Live sensors</text>
+    <rect x="104" y="358" width="16" height="12" rx="2" fill="none" stroke="#6e7681" stroke-width="1.8"/>
+    <text x="134" y="371">FracLoader</text>
+    <path d="M106 404h12M106 410h12M106 416h8" stroke="#6e7681" stroke-width="1.8" stroke-linecap="round"/>
+    <text x="134" y="418">Post Job Reports</text>
+    <circle cx="112" cy="460" r="7.5" fill="none" stroke="#6e7681" stroke-width="1.8"/>
+    <text x="134" y="465">Settings</text>
+  </g>
+  <text x="104" y="534" font-size="12" font-weight="600" fill="#6e7681" letter-spacing="1.2">ACTIVE WELLS</text>
+  <g font-size="14" fill="#8b949e">
+    <circle cx="110" cy="562" r="4" fill="#22c55e"/><text x="124" y="567" fill="#e6edf3">Well A-12</text><text x="270" y="567" text-anchor="end" fill="#6e7681">Stage 3</text>
+    <circle cx="110" cy="594" r="4" fill="#22c55e"/><text x="124" y="599">Well B-07</text><text x="270" y="599" text-anchor="end" fill="#6e7681">Rig-up</text>
+    <circle cx="110" cy="626" r="4" fill="#f59e0b"/><text x="124" y="631">Well C-03</text><text x="270" y="631" text-anchor="end" fill="#6e7681">Standby</text>
+  </g>
+
+  <!-- Page header -->
+  <text x="330" y="176" font-size="30" font-weight="700" fill="#e6edf3">Casing pressure test</text>
+  <text x="330" y="204" font-size="15" fill="#8b949e">Well A-12 · Stage 3 · Streaming over MQTT</text>
+  <rect x="1078" y="152" width="92" height="34" rx="17" fill="#22c55e" fill-opacity="0.14" stroke="#22c55e" stroke-opacity="0.4"/>
+  <circle cx="1098" cy="169" r="5" fill="#22c55e"/>
+  <circle cx="1098" cy="169" r="10" fill="#22c55e" fill-opacity="0.25"/>
+  <text x="1112" y="174" font-size="14" font-weight="600" fill="#4ade80">Live</text>
+  <rect x="1182" y="152" width="128" height="34" rx="8" fill="#2dd4bf"/>
+  <text x="1246" y="174" text-anchor="middle" font-size="14" font-weight="700" fill="#042f2e">Generate PJR</text>
+
+  <!-- KPI cards -->
+  <g>
+    <rect x="330" y="228" width="230" height="112" rx="12" fill="#161b22" stroke="#30363d"/>
+    <text x="352" y="260" font-size="14" fill="#8b949e">Casing pressure</text>
+    <text x="352" y="302" font-size="32" font-weight="700" fill="#e6edf3">4,812<tspan font-size="16" fill="#8b949e" font-weight="500"> psi</tspan></text>
+    <text x="352" y="326" font-size="13" fill="#4ade80">Holding · −0.18 psi/min</text>
+
+    <rect x="580" y="228" width="230" height="112" rx="12" fill="#161b22" stroke="#30363d"/>
+    <text x="602" y="260" font-size="14" fill="#8b949e">Test target</text>
+    <text x="602" y="302" font-size="32" font-weight="700" fill="#e6edf3">5,000<tspan font-size="16" fill="#8b949e" font-weight="500"> psi</tspan></text>
+    <text x="602" y="326" font-size="13" fill="#8b949e">Reached at 13:35</text>
+
+    <rect x="830" y="228" width="230" height="112" rx="12" fill="#161b22" stroke="#30363d"/>
+    <text x="852" y="260" font-size="14" fill="#8b949e">Hold time</text>
+    <text x="852" y="302" font-size="32" font-weight="700" fill="#e6edf3">11:42<tspan font-size="16" fill="#8b949e" font-weight="500"> / 15:00</tspan></text>
+    <rect x="852" y="317" width="186" height="6" rx="3" fill="#30363d"/>
+    <rect x="852" y="317" width="145" height="6" rx="3" fill="#2dd4bf"/>
+
+    <rect x="1080" y="228" width="230" height="112" rx="12" fill="#161b22" stroke="#30363d"/>
+    <text x="1102" y="260" font-size="14" fill="#8b949e">Leak rate</text>
+    <text x="1102" y="302" font-size="32" font-weight="700" fill="#e6edf3">0.18<tspan font-size="16" fill="#8b949e" font-weight="500"> psi/min</tspan></text>
+    <rect x="1102" y="312" width="96" height="20" rx="10" fill="#22c55e" fill-opacity="0.14"/>
+    <text x="1150" y="326" text-anchor="middle" font-size="12" font-weight="600" fill="#4ade80">Within limit</text>
+  </g>
+
+  <!-- Chart card -->
+  <rect x="330" y="360" width="980" height="452" rx="12" fill="#161b22" stroke="#30363d"/>
+  <text x="356" y="398" font-size="17" font-weight="600" fill="#e6edf3">Pressure vs. time</text>
+  <g font-size="13" fill="#8b949e">
+    <rect x="964" y="387" width="14" height="4" rx="2" fill="#2dd4bf"/><text x="984" y="394">Casing</text>
+    <rect x="1050" y="387" width="14" height="4" rx="2" fill="#60a5fa"/><text x="1070" y="394">Annulus</text>
+    <path d="M1145 389h14" stroke="#fbbf24" stroke-width="2.5" stroke-dasharray="4 3"/><text x="1165" y="394">Target</text>
+    <rect x="1225" y="383" width="12" height="12" rx="3" fill="#fbbf24" fill-opacity="0.25"/><text x="1243" y="394">Hold</text>
+  </g>
+
+  <!-- Grid + axes -->
+  <g stroke="#ffffff" stroke-opacity="0.06">
+    <line x1="380" y1="760" x2="1280" y2="760"/>
+    <line x1="380" y1="701.8" x2="1280" y2="701.8"/>
+    <line x1="380" y1="643.6" x2="1280" y2="643.6"/>
+    <line x1="380" y1="585.5" x2="1280" y2="585.5"/>
+    <line x1="380" y1="527.3" x2="1280" y2="527.3"/>
+    <line x1="380" y1="469.1" x2="1280" y2="469.1"/>
+  </g>
+  <g font-size="12" fill="#6e7681" text-anchor="end">
+    <text x="368" y="764">0</text><text x="368" y="706">1k</text><text x="368" y="648">2k</text>
+    <text x="368" y="590">3k</text><text x="368" y="531">4k</text><text x="368" y="473">5k</text>
+  </g>
+  <g font-size="12" fill="#6e7681" text-anchor="middle">
+    <text x="380" y="790">13:00</text><text x="560" y="790">13:10</text><text x="740" y="790">13:20</text>
+    <text x="920" y="790">13:30</text><text x="1100" y="790">13:40</text><text x="1280" y="790">13:50</text>
+  </g>
+
+  <g clip-path="url(#plot)">
+    <!-- Hold window -->
+    <rect x="1010" y="440" width="270" height="320" fill="#fbbf24" fill-opacity="0.07"/>
+    <line x1="1010" y1="440" x2="1010" y2="760" stroke="#fbbf24" stroke-opacity="0.45" stroke-dasharray="3 4"/>
+    <text x="1020" y="458" font-size="12" font-weight="600" fill="#fbbf24">HOLD · 15 MIN</text>
+    <!-- Target -->
+    <line x1="380" y1="469.1" x2="1280" y2="469.1" stroke="#fbbf24" stroke-width="2" stroke-dasharray="7 6" stroke-opacity="0.9"/>
+    <!-- Casing pressure: staged ramps 1,500 / 3,000 / 5,000 psi, then hold -->
+    <path d="M380 760 L434 760 C452 760 506 672.7 524 672.7 L650 671.5 C668 671.5 722 585.5 740 585.5 L920 584.2 C938 584.2 992 469.1 1010 469.1 C1080 470.5 1150 476 1226 480 L1226 760 L380 760 Z" fill="url(#area)"/>
+    <path d="M380 760 L434 760 C452 760 506 672.7 524 672.7 L650 671.5 C668 671.5 722 585.5 740 585.5 L920 584.2 C938 584.2 992 469.1 1010 469.1 C1080 470.5 1150 476 1226 480" fill="none" stroke="#2dd4bf" stroke-width="3.5" stroke-linejoin="round" stroke-linecap="round"/>
+    <!-- Annulus pressure -->
+    <path d="M380 746 L434 746 C470 744 500 741 524 742 L650 743 C690 741 710 740 740 741 L920 742 C960 740 990 738 1010 739 L1226 741" fill="none" stroke="#60a5fa" stroke-width="2.5" stroke-linejoin="round"/>
+  </g>
+
+  <!-- Live point + tooltip -->
+  <circle cx="1226" cy="480" r="14" fill="#2dd4bf" fill-opacity="0.25" filter="url(#soft)"/>
+  <circle cx="1226" cy="480" r="6.5" fill="#0d1117" stroke="#2dd4bf" stroke-width="3"/>
+  <line x1="1226" y1="487" x2="1226" y2="760" stroke="#2dd4bf" stroke-opacity="0.35" stroke-dasharray="3 4"/>
+  <rect x="1060" y="494" width="152" height="58" rx="8" fill="#0d1117" stroke="#30363d"/>
+  <text x="1076" y="519" font-size="16" font-weight="700" fill="#e6edf3">4,812 psi</text>
+  <text x="1076" y="540" font-size="12" fill="#8b949e">13:47:20 · PT-101</text>
+
+  <!-- Sensors panel (partly behind the text panel on desktop) -->
+  <rect x="1330" y="152" width="320" height="388" rx="12" fill="#161b22" stroke="#30363d"/>
+  <text x="1354" y="190" font-size="17" font-weight="600" fill="#e6edf3">Sensors</text>
+  <text x="1354" y="212" font-size="13" fill="#8b949e">MQTT · 12 msg/s</text>
+  <g font-size="14">
+    <line x1="1354" y1="232" x2="1650" y2="232" stroke="#30363d"/>
+    <circle cx="1362" cy="260" r="4" fill="#22c55e"/><text x="1376" y="265" fill="#e6edf3">PT-101 Casing</text><text x="1376" y="287" font-size="22" font-weight="700" fill="#e6edf3">4,812 <tspan font-size="13" fill="#8b949e">psi</tspan></text>
+    <line x1="1354" y1="306" x2="1650" y2="306" stroke="#30363d"/>
+    <circle cx="1362" cy="334" r="4" fill="#22c55e"/><text x="1376" y="339" fill="#e6edf3">PT-102 Annulus</text><text x="1376" y="361" font-size="22" font-weight="700" fill="#e6edf3">248 <tspan font-size="13" fill="#8b949e">psi</tspan></text>
+    <line x1="1354" y1="380" x2="1650" y2="380" stroke="#30363d"/>
+    <circle cx="1362" cy="408" r="4" fill="#22c55e"/><text x="1376" y="413" fill="#e6edf3">TT-301 Temperature</text><text x="1376" y="435" font-size="22" font-weight="700" fill="#e6edf3">86.4 <tspan font-size="13" fill="#8b949e">°F</tspan></text>
+    <line x1="1354" y1="454" x2="1650" y2="454" stroke="#30363d"/>
+    <circle cx="1362" cy="482" r="4" fill="#f59e0b"/><text x="1376" y="487" fill="#e6edf3">FT-201 Flow</text><text x="1376" y="509" font-size="22" font-weight="700" fill="#e6edf3">0.0 <tspan font-size="13" fill="#8b949e">bpm</tspan></text>
+  </g>
+
+  <!-- Alarms -->
+  <rect x="1330" y="560" width="320" height="252" rx="12" fill="#161b22" stroke="#30363d"/>
+  <text x="1354" y="598" font-size="17" font-weight="600" fill="#e6edf3">Alarms</text>
+  <text x="1354" y="642" font-size="30" font-weight="700" fill="#e6edf3">0 <tspan font-size="15" font-weight="500" fill="#8b949e">active</tspan></text>
+  <line x1="1354" y1="664" x2="1650" y2="664" stroke="#30363d"/>
+  <g font-size="13">
+    <circle cx="1362" cy="690" r="4" fill="#f59e0b"/><text x="1376" y="695" fill="#e6edf3">Rate-of-rise warning</text>
+    <text x="1376" y="714" fill="#8b949e">PT-101 · 13:21 · cleared</text>
+    <circle cx="1362" cy="746" r="4" fill="#6e7681"/><text x="1376" y="751" fill="#e6edf3">Stage 2 hold passed</text>
+    <text x="1376" y="770" fill="#8b949e">13:30 · auto-logged</text>
+  </g>
+
+  <!-- Report strip (partly behind the text panel on mobile) -->
+  <rect x="330" y="832" width="980" height="200" rx="12" fill="#161b22" stroke="#30363d"/>
+  <text x="356" y="870" font-size="17" font-weight="600" fill="#e6edf3">Post Job Report</text>
+  <rect x="356" y="892" width="34" height="42" rx="5" fill="#ef4444" fill-opacity="0.16" stroke="#ef4444" stroke-opacity="0.5"/>
+  <text x="373" y="919" text-anchor="middle" font-size="10" font-weight="700" fill="#f87171">PDF</text>
+  <text x="404" y="908" font-size="15" font-weight="600" fill="#e6edf3">PJR-A12-S3.pdf</text>
+  <text x="404" y="929" font-size="13" fill="#8b949e">Template: Client standard v4 · 18 pages</text>
+  <rect x="760" y="908" width="380" height="8" rx="4" fill="#30363d"/>
+  <rect x="760" y="908" width="292" height="8" rx="4" fill="#2dd4bf"/>
+  <text x="1160" y="917" font-size="13" fill="#8b949e">Generating · 77%</text>
+</svg>

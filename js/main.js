@@ -6,14 +6,16 @@
 
   function bootstrap() {
     // Render dynamic markup first so later modules can bind to it.
-    Portfolio.colorSwitcher.render();
+    Portfolio.settings.render();
 
     Portfolio.loader.init();
+    Portfolio.settings.init();
     Portfolio.themeSwitcher.init();
     Portfolio.colorSwitcher.init();
     Portfolio.navigation.init();
     Portfolio.typewriter.init();
     Portfolio.cursor.init();
+    Portfolio.swarm.init();
     Portfolio.contactForm.init();
   }
 

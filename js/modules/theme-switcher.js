@@ -1,15 +1,11 @@
 /**
- * @file Background theme picker backed by particles.js.
+ * @file Home background picker backed by particles.js.
+ * The options live in the settings panel (settings.js).
  */
 (function (Portfolio) {
   'use strict';
 
-  const SELECTORS = {
-    container: '.theme-changer',
-    panel: '.theme-panel',
-    option: '.themes a[data-theme]',
-  };
-  const ACTIVE_CLASS = 'theme-changer-active';
+  const OPTION_SELECTOR = '.themes a[data-theme]';
 
   function destroyParticles() {
     if (window.pJSDom && window.pJSDom.length > 0) {
@@ -37,14 +33,7 @@
     applyTheme,
 
     init() {
-      const container = document.querySelector(SELECTORS.container);
-
-      document.querySelector(SELECTORS.panel)?.addEventListener('click', (event) => {
-        event.preventDefault();
-        container?.classList.toggle(ACTIVE_CLASS);
-      });
-
-      document.querySelectorAll(SELECTORS.option).forEach((option) => {
+      document.querySelectorAll(OPTION_SELECTOR).forEach((option) => {
         option.addEventListener('click', (event) => {
           event.preventDefault();
           applyTheme(option.dataset.theme);

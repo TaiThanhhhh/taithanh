@@ -1,0 +1,154 @@
+/*
+ * About page additions on top of the original styles in css/index.css.
+ * Same visual language as the rest of the site: Raleway headings, Poppins text,
+ * accent colour through the global `.color` class (so every palette applies).
+ */
+
+/* ---------- Fixes to the original section ---------- */
+
+/* `aileron` is never loaded, so the CV button used to fall back to a serif font. */
+.cv a button {
+  font-family: poppins;
+}
+
+/* Crop the portrait into its frame instead of stretching it. */
+.about-img img {
+  object-fit: cover;
+  object-position: 65% 35%;
+}
+
+/* Skill bars read their width from `--level` on each bar. */
+.prog .skill-level {
+  width: var(--level);
+}
+
+/* ---------- Experience: horizontal timeline ----------
+ * Columns reuse the exact box model of the service cards below (container padding
+ * 2.5%, inline-block columns with the same width/margin per breakpoint), so the
+ * timeline lines up edge-to-edge with "My Services".
+ */
+#experience {
+  padding: 30px 0 20px;
+}
+
+.experience-heading {
+  text-align: center;
+  font-size: 45px;
+  font-family: raleway;
+  font-weight: 900;
+  color: whitesmoke;
+  padding: 30px 10px;
+}
+
+.journey {
+  list-style: none;
+  width: 100%;
+  padding: 2.5%;
+  text-align: center;
+}
+
+.journey-item {
+  position: relative;
+  display: inline-block;
+  vertical-align: top;
+  width: 28%;
+  margin: 1.5%;
+  padding-top: 30px;
+  border-top: 2px solid rgba(255, 255, 255, 0.12);
+  text-align: left;
+}
+
+/* Milestone dot sitting on the line. */
+.journey-item::before {
+  content: '';
+  position: absolute;
+  top: -7px;
+  left: 0;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: #3a3a3a;
+  transition: transform 0.4s ease;
+}
+
+.journey-item:hover::before {
+  transform: scale(1.35);
+}
+
+/* Current role: line and dot take the accent colour (the item carries `.color`). */
+.journey-item--current {
+  border-top-color: currentColor;
+}
+
+.journey-item--current::before {
+  background: currentColor;
+}
+
+.journey-year {
+  font-family: raleway;
+  font-size: 28px;
+  line-height: 1.2;
+}
+
+.journey-role {
+  margin-top: 14px;
+  font-family: poppins;
+  font-size: 20px;
+  font-weight: 500;
+  color: whitesmoke;
+}
+
+.journey-place {
+  margin-top: 4px;
+  font-family: poppins;
+  font-size: 15px;
+  color: whitesmoke;
+  opacity: 0.55;
+}
+
+.journey-text {
+  margin-top: 14px;
+  font-family: poppins;
+  font-size: 15px;
+  line-height: 1.7;
+  color: whitesmoke;
+  opacity: 0.8;
+}
+
+/* Tablet: services wrap to two cards per row (45% + 2% margins); keep three
+   timeline columns inside the same outer edges. */
+@media all and (max-width: 1025px) and (min-width: 551px) {
+  .journey-item {
+    width: 28.6%;
+    margin: 2%;
+  }
+
+  .journey-year {
+    font-size: 24px;
+  }
+
+  .journey-role {
+    font-size: 18px;
+  }
+}
+
+/* Mobile: one column, same width as the stacked service cards (90%). */
+@media only screen and (max-width: 550px) {
+  .experience-heading {
+    font-size: 35px;
+  }
+
+  .journey-item {
+    width: 90%;
+    margin: 1.5% 1.5% 34px;
+    padding-top: 24px;
+  }
+
+  .journey-year {
+    font-size: 24px;
+  }
+
+  .journey-role {
+    font-size: 19px;
+  }
+}

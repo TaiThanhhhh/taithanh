@@ -52,19 +52,6 @@
 .seo-progress{
     background: #481380;
 }
-.portfolio-text h2{
-    color: #481380;
-}
-.portfolio-text button{
-    color: #481380;
-    border: 1.5px solid #481380;
-}
-.portfolio-text button::before{
-    background: #481380;
-}
-.portfolio-image img::before{
-    background: #481380;
-}
 .blog-date{
     background: #481380;
 }

@@ -51,6 +51,9 @@
 
     playBreaker();
     gsap.set(`#${targetId}`, { display: 'block', delay: timings.pageSwap });
+
+    // Lets other features (e.g. swarm mode) react to the page change.
+    document.dispatchEvent(new CustomEvent('portfolio:navigate', { detail: { sectionId: targetId } }));
   }
 
   Portfolio.navigation = {

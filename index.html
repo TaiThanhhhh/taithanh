@@ -3,13 +3,17 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="description" content="Thanh Tai Nguyen - Personal Portfolio Website">
-  <meta name="keywords" content="blog, business card, creative, creative portfolio, cv theme, online resume, personal, portfolio, professional cv, responsive portfolio, resume, resume theme, vcard">
+  <meta name="description" content="Thanh Tai Nguyen, software engineer in Ho Chi Minh City. Full-stack and real-time apps with Angular and Spring Boot.">
+  <meta name="keywords" content="Thanh Tai Nguyen, software engineer, full-stack developer, Angular, Spring Boot, ASP.NET Core, MQTT, RabbitMQ, Kafka, MongoDB, IoT, Ho Chi Minh City, portfolio, resume">
   <meta name="author" content="Tài Thành">
   <title>Thanh Tai Nguyen Personal Website</title>
 
   <link rel="icon" type="image/png" href="images/logo.png">
   <link rel="stylesheet" href="css/index.css">
+  <link rel="stylesheet" href="css/about.css">
+  <link rel="stylesheet" href="css/portfolio.css">
+  <link rel="stylesheet" href="css/settings.css">
+  <link rel="stylesheet" href="css/swarm.css">
 
   <!-- Google Analytics (gtag.js) -->
   <script async src="https://www.googletagmanager.com/gtag/js?id=G-GCQ408M3J9"></script>
@@ -78,14 +82,24 @@
       </div>
     </div>
 
+    <!-- Settings (colours + home background), shared by every page -->
+    <div class="color-changer settings" data-component="settings"></div>
+
+    <!-- Swarm mode switch -->
+    <button type="button" class="swarm-switch" data-swarm-toggle aria-pressed="false" title="Swarm cursors (Esc to turn off)">
+      <span class="swarm-switch__label">Swarm</span>
+      <span class="swarm-switch__track color" aria-hidden="true"></span>
+    </button>
+
     <!-- ============ Home ============ -->
     <div id="header">
       <div id="particles"></div>
 
       <div class="social-media-links">
+        <a href="https://www.linkedin.com/in/taithanh/" target="_blank" rel="noopener noreferrer"><img src="images/linkedin logo.png" class="social-media" alt="linkedin-logo"></a>
+        <a href="https://github.com/TaiThanhhhh" target="_blank" rel="noopener noreferrer"><img src="images/github-logo.svg" class="social-media" alt="github-logo"></a>
         <a href="https://www.instagram.com/aitt.16/" target="_blank" rel="noopener noreferrer"><img src="images/instagram logo.png" class="social-media" alt="instagram-logo"></a>
         <a href="https://www.facebook.com/thanh.tai.944485/" target="_blank" rel="noopener noreferrer"><img src="images/facebook logo.png" class="social-media" alt="facebook-logo"></a>
-        <a href="https://www.linkedin.com/in/taithanh/" target="_blank" rel="noopener noreferrer"><img src="images/linkedin logo.png" class="social-media" alt="linkedin-logo"></a>
         <a href="https://www.threads.net/@aitt.16" target="_blank" rel="noopener noreferrer"><img src="images/threads_logo.png" class="social-media" alt="threads-logo"></a>
       </div>
 
@@ -94,31 +108,12 @@
           <div class="firstline"><span class="color">Thanh Tai </span>Nguyen</div>
           <div class="secondline">
             I'm a
-            <span class="txt-rotate color" data-period="1200" data-rotate='[" Web Developer.", " Backend Developer.", " Freelancer."]'></span>
+            <span class="txt-rotate color" data-period="1200" data-rotate='[" Software Engineer.", " Full-stack Developer.", " Backend Engineer."]'></span>
             <span class="slash">|</span>
           </div>
           <div class="contact">
             <a href="mailto:taithanh16052002@gmail.com"><img src="images/mail.png" alt="email-pic" class="contactpic"></a>
             <a href="tel:+84981208297"><img src="images/call.png" alt="phone-pic" class="contactpic"></a>
-          </div>
-
-          <div class="color-changer" data-component="color-changer"></div>
-
-          <div class="theme-changer">
-            <div class="theme-panel">
-              <img src="images/brightness.png" alt="">
-            </div>
-            <div class="theme-selector">
-              <div class="heading">Custom Themes</div>
-              <div class="themes">
-                <ul>
-                  <li><a href="#0" class="theme-clean" title="Particles" data-theme="particles">Particles</a></li>
-                  <li><a href="#0" class="theme-particles" title="Clean" data-theme="clean">Clean</a></li>
-                  <li><a href="#0" class="theme-snow" title="Snow" data-theme="snow">Snow</a></li>
-                  <li><a href="#0" class="theme-dust" title="Dust" data-theme="dust">Dust</a></li>
-                </ul>
-              </div>
-            </div>
           </div>
         </div>
       </div>
@@ -128,7 +123,6 @@
 
     <!-- ============ About ============ -->
     <div id="about">
-      <div class="color-changer" data-component="color-changer"></div>
 
       <div id="about-content">
         <div class="about-header">
@@ -136,90 +130,114 @@
           <span class="header-caption">Get to Know <span class="color"> me.</span></span>
         </div>
         <div class="about-main">
-          <div class="about-first-paragraph wow">
+          <div class="about-first-paragraph">
             <span class="about-first-line">
-              I'm creative
-              <span class="color">Web Developer</span>
-              based in HCMC , Vietnam </span>
+              I'm a
+              <span class="color">Software Engineer</span>
+              based in HCMC, Vietnam</span>
             <br>
-            <span class="about-second-line"> With years of expertise as a professional Web developer, I have honed the skills and knowledge required to ensure your project's success. I genuinely enjoy every step of the process.</span>
+            <span class="about-second-line">I build full-stack and real-time apps with Angular and Spring Boot. Right now I'm at J317, making live dashboards and reports for the oil and gas industry.</span>
             <div class="cv">
               <a href="ThanhTai_Nguyen_Resume_FullStackDeveloper.pdf" download><button>Download <span class="colors">CV</span></button></a>
             </div>
           </div>
           <div class="about-img">
-            <img src="images/ThanhTai_Vt.jpg" alt="ThanhTai">
+            <img src="images/ThanhTai_Vt.jpg" alt="Thanh Tai Nguyen">
           </div>
         </div>
       </div>
+
+      <!-- Experience -->
+      <section id="experience" aria-labelledby="experience-heading">
+        <h2 id="experience-heading" class="experience-heading">My <span class="color">Experience</span></h2>
+        <ol class="journey">
+          <li class="journey-item">
+            <p class="journey-year color">2020 – 2025</p>
+            <h3 class="journey-role">Engineer's Degree in IT</h3>
+            <p class="journey-place">HCMC University of Industry and Trade</p>
+            <p class="journey-text">GPA 3.44. First prize in the faculty research competition, 2024.</p>
+          </li>
+          <li class="journey-item">
+            <p class="journey-year color">2024 – 2025</p>
+            <h3 class="journey-role">Full Stack Developer</h3>
+            <p class="journey-place">NewTech</p>
+            <p class="journey-text">Started as an intern and stayed on full-time. Made the APIs faster and added logging that cut downtime.</p>
+          </li>
+          <li class="journey-item journey-item--current color">
+            <p class="journey-year">2025 – now</p>
+            <h3 class="journey-role">Software Engineer</h3>
+            <p class="journey-place">J317</p>
+            <p class="journey-text">Live sensor dashboards and automated reports for oil and gas. Got the main dashboard loading in under 10 seconds, down from over a minute.</p>
+          </li>
+        </ol>
+      </section>
 
       <!-- Services -->
       <div id="services">
-        <div class="color-changer" data-component="color-changer"></div>
 
-        <div class="services-heading wow">
+        <div class="services-heading">
           <span class="color">My</span> Services
         </div>
         <div class="services-content">
-          <div class="service-one service wow">
+          <div class="service-one service">
             <div class="service-img">
-              <img src="images/CSharp.png" alt="service-one">
+              <img src="images/CSharp.png" alt="Backend">
             </div>
             <div class="service-description">
               <h2>Backend Developer</h2>
-              <p>Building robust APIs and optimizing backend system performance using ASP.NET Core.</p>
+              <p>Fast, reliable APIs with ASP.NET Core and Spring Boot.</p>
             </div>
           </div>
-          <div class="service-two service wow">
+          <div class="service-two service">
             <div class="service-img">
-              <img src="images/Angular.png" alt="service-two">
+              <img src="images/Angular.png" alt="Frontend">
             </div>
             <div class="service-description">
               <h2>Frontend Developer</h2>
-              <p>Creating interactive user interfaces and enhancing user experience with Angular.</p>
+              <p>Clean, responsive interfaces with Angular.</p>
             </div>
           </div>
-          <div class="service-three service wow">
+          <div class="service-three service">
             <div class="service-img">
-              <img src="images/bulb.png" alt="service-three">
+              <img src="images/bulb.png" alt="Real-time and IoT">
             </div>
             <div class="service-description">
-              <h2>Fullstack Solutions</h2>
-              <p>Developing comprehensive solutions by combining Angular frontend and C# backend.</p>
+              <h2>Real-time &amp; IoT</h2>
+              <p>Live data from devices to dashboards, over MQTT and message queues.</p>
             </div>
           </div>
         </div>
       </div>
 
-      <!-- Skills (bar widths are defined per class in css/index.css) -->
+      <!-- Skills: bar width comes from --level (css/about.css); the progress class only sets the accent colour. -->
       <div id="skills">
         <div class="skills-header">
           My <span class="color"> Skills</span>
         </div>
         <div class="skills-content" style="text-align: center;">
           <div class="skill-html skill">
-            <div class="skill-text"><div class="html">HTML/CSS</div></div>
-            <div class="html-prog wow prog"><div class="html-progress wow">70%</div></div>
+            <div class="skill-text"><div class="html">Angular / TypeScript</div></div>
+            <div class="html-prog prog"><div class="html-progress skill-level" style="--level: 90%">90%</div></div>
           </div>
           <div class="skill-html skill">
-            <div class="skill-text"><div class="html">Typescript</div></div>
-            <div class="html-prog wow prog"><div class="js-progress wow">90%</div></div>
+            <div class="skill-text"><div class="html">Spring Boot / Java</div></div>
+            <div class="html-prog prog"><div class="js-progress skill-level" style="--level: 85%">85%</div></div>
           </div>
           <div class="skill-html skill">
-            <div class="skill-text"><div class="html">C#</div></div>
-            <div class="html-prog wow prog"><div class="adobe-progress wow">90%</div></div>
+            <div class="skill-text"><div class="html">ASP.NET / C#</div></div>
+            <div class="html-prog prog"><div class="adobe-progress skill-level" style="--level: 90%">90%</div></div>
           </div>
           <div class="skill-html skill">
-            <div class="skill-text"><div class="html">SQL</div></div>
-            <div class="html-prog wow prog"><div class="php-progress wow">87%</div></div>
+            <div class="skill-text"><div class="html">SQL / MongoDB</div></div>
+            <div class="html-prog prog"><div class="php-progress skill-level" style="--level: 87%">87%</div></div>
           </div>
           <div class="skill-html skill">
-            <div class="skill-text"><div class="html">Bootstrap</div></div>
-            <div class="html-prog wow prog"><div class="jquery-progress wow">74%</div></div>
+            <div class="skill-text"><div class="html">RabbitMQ / Kafka / MQTT</div></div>
+            <div class="html-prog prog"><div class="jquery-progress skill-level" style="--level: 80%">80%</div></div>
           </div>
           <div class="skill-html skill">
-            <div class="skill-text"><div class="html">Canva</div></div>
-            <div class="html-prog wow prog"><div class="seo-progress wow">84%</div></div>
+            <div class="skill-text"><div class="html">Python</div></div>
+            <div class="html-prog prog"><div class="seo-progress skill-level" style="--level: 70%">70%</div></div>
           </div>
         </div>
       </div>
@@ -233,53 +251,56 @@
 
     <!-- ============ Portfolio ============ -->
     <div id="portfolio">
-      <div class="color-changer" data-component="color-changer"></div>
 
       <div class="portfolio-header"><span class="color"> My </span> Portfolio
         <span class="header-caption"> Some Of My <span class="color"> Works</span></span>
       </div>
-      <div id="portfolio-content">
-        <div class="portfolio portfolio-first">
-          <div class="portfolio-image">
-            <img src="images/portfolio-first.jpg" alt="portfolio-first">
+      <ol class="work-list">
+        <li class="work">
+          <div class="work-media">
+            <img src="images/portfolio-evoedge.svg" alt="Illustration of the EvoEdge live monitoring dashboard" loading="lazy">
           </div>
-          <div class="portfolio-text">
-            <h2>Daily Zen</h2>
-            <p>A sleek and intuitive habit tracker designed to help you build better routines and achieve your goals. With insightful charts and progress tracking, this app makes it easy to stay consistent and productive in your daily life.</p>
-            <div class="button"><a href="#"><button><span class="index"> Coming Soon<i class="gg-arrow-right"></i></span></button></a></div>
+          <div class="work-panel">
+            <h3 class="work-title color">EvoEdge &amp; EvoAutomate</h3>
+            <p class="work-text">Live well monitoring and automated job reports for oil and gas teams.</p>
+            <p class="work-stack">Angular · Spring Boot · MQTT · RabbitMQ</p>
+            <p class="work-note">Internal product at J317</p>
           </div>
-        </div>
-        <div class="portfolio portfolio-second">
-          <div class="portfolio-image">
-            <img src="images/BrainRotAlert.jpg" alt="portfolio-second">
+        </li>
+        <li class="work">
+          <div class="work-media">
+            <img src="images/enhanceCreditScore_VPBank.png" alt="Credit score lookup page with a score gauge and contributing factors" loading="lazy">
           </div>
-          <div class="portfolio-text">
-            <h2>BrainRot Alert - Focus Mode</h2>
-            <p>Fight digital addiction with BrainRot Alert - a Chrome extension that monitors your browsing habits and alerts you when consuming too much low-quality content. Features customizable limits, usage statistics, and website blocking. Built with JavaScript and Chrome Extension APIs, prioritizing privacy with local-only data storage.</p>
-            <div class="button"><a href="https://github.com/TaiThanhhhh/BrainRot-Alert" target="_blank" rel="noopener noreferrer"><button><span class="index">View Project<i class="gg-arrow-right"></i></span></button></a></div>
+          <div class="work-panel">
+            <h3 class="work-title color">Enhance Credit Score</h3>
+            <p class="work-text">Look up a credit score by national ID and see what drives it, with an LLM pulling the data.</p>
+            <p class="work-stack">Flask · AWS S3 · LLM</p>
+            <a class="work-link color" href="https://vpbank-credit-page.onrender.com/" target="_blank" rel="noopener noreferrer"><span>View project</span><span aria-hidden="true">↗</span></a>
           </div>
-        </div>
-        <div class="portfolio portfolio-third">
-          <div class="portfolio-image">
-            <img src="images/enhanceCreditScore_VPBank.png" alt="portfolio-third">
+        </li>
+        <li class="work">
+          <div class="work-media">
+            <img src="images/portfolio-traffic-light.svg" alt="Illustration of a traffic light with auto, manual and SOS modes" loading="lazy">
           </div>
-          <div class="portfolio-text">
-            <h2>Boost Your Credit with VPBank</h2>
-            <p>Discover expert tips and tools from VPBank to improve your credit score, manage your financial history effectively, and unlock better loan opportunities. Access easy credit checks via CIC and build a stronger financial future today.</p>
-            <div class="button"><a href="https://vpbank-credit-page.onrender.com/" target="_blank" rel="noopener noreferrer"><button><span class="index">View Project<i class="gg-arrow-right"></i></span></button></a></div>
+          <div class="work-panel">
+            <h3 class="work-title color">Traffic Light Management System</h3>
+            <p class="work-text">Traffic lights you can watch and control live, with auto, manual and SOS modes.</p>
+            <p class="work-stack">ASP.NET · Angular · SQL Server</p>
+            <p class="work-note">Team project</p>
           </div>
-        </div>
-        <div class="portfolio portfolio-fourth">
-          <div class="portfolio-image">
-            <img src="images/barberPortfolio.jpg" alt="portfolio-fourth">
+        </li>
+        <li class="work">
+          <div class="work-media">
+            <img src="images/BrainRotAlert.jpg" alt="BrainRot Alert cover art" style="--focus: 50% 15%" loading="lazy">
           </div>
-          <div class="portfolio-text">
-            <h2>Barbershop Pricing Design</h2>
-            <p>A creative and modern pricing board designed for a barbershop, blending clean aesthetics with clear and appealing visuals. This project focuses on user-friendly layouts that attract customers while effectively showcasing services and pricing.</p>
-            <div class="button"><a href="images/barberPortfolioPrice.jpg" target="_blank" rel="noopener noreferrer"><button><span class="index">View Project<i class="gg-arrow-right"></i></span></button></a></div>
+          <div class="work-panel">
+            <h3 class="work-title color">BrainRot Alert</h3>
+            <p class="work-text">A Chrome extension that notices when you've been scrolling junk for too long and tells you to stop. Your data never leaves the browser.</p>
+            <p class="work-stack">JavaScript · Chrome Extension APIs</p>
+            <a class="work-link color" href="https://github.com/TaiThanhhhh/BrainRot-Alert" target="_blank" rel="noopener noreferrer"><span>View on GitHub</span><span aria-hidden="true">↗</span></a>
           </div>
-        </div>
-      </div>
+        </li>
+      </ol>
 
       <footer class="footer">
         <div class="footer-text">
@@ -290,7 +311,6 @@
 
     <!-- ============ Blog ============ -->
     <div id="blog">
-      <div class="color-changer" data-component="color-changer"></div>
 
       <div class="blog-header">Blogs
         <span class="header-caption"> My Latest <span class="color"> blog posts.</span></span>
@@ -379,7 +399,6 @@
 
     <!-- ============ Contact ============ -->
     <div id="contact">
-      <div class="color-changer" data-component="color-changer"></div>
 
       <div class="contact-header">Contact <span class="color"> Me</span>
         <div class="contact-header-caption"><span class="color"> Get</span> In Touch.</div>
@@ -449,10 +468,14 @@
   <script src="js/config.js"></script>
   <script src="js/modules/loader.js"></script>
   <script src="js/modules/navigation.js"></script>
+  <script src="js/modules/settings.js"></script>
   <script src="js/modules/color-switcher.js"></script>
   <script src="js/modules/theme-switcher.js"></script>
   <script src="js/modules/typewriter.js"></script>
   <script src="js/modules/cursor.js"></script>
+  <script src="js/modules/swarm-flock.js"></script>
+  <script src="js/modules/swarm-builder.js"></script>
+  <script src="js/modules/swarm.js"></script>
   <script src="js/modules/contact-form.js"></script>
   <script src="js/main.js"></script>
 </body>

@@ -1,0 +1,38 @@
+/*
+ * Settings panel (js/modules/settings.js): one gear tab for colours + home background.
+ * Reuses the original picker styles (.color-changer, .color-panel, .color-selector,
+ * .colors, .themes) from css/index.css; this file only adapts them to one panel.
+ */
+
+.settings {
+  top: 32%;
+  z-index: 12; /* above the swarm layer and the ring cursor */
+}
+
+/* The tab is a real <button> now: drop the browser button chrome. */
+.settings__tab {
+  padding: 0;
+  border: 0;
+  cursor: pointer;
+}
+
+.settings__tab:focus-visible {
+  outline: 2px solid #333333;
+  outline-offset: -2px;
+}
+
+.settings__body .heading {
+  font-size: 15px;
+}
+
+.settings__heading {
+  width: 100%;
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid rgba(0, 0, 0, 0.1);
+  text-align: center;
+}
+
+.settings__body .themes ul {
+  margin-top: 6px;
+}
