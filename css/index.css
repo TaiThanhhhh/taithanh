@@ -225,6 +225,8 @@ body{
 .header-image img{
     height: 100vh;
     float: right;
+    filter: drop-shadow(var(--ambient-rim-shadow, 0 10px 30px rgba(0, 0, 0, 0.5)));
+    transition: filter 2.5s cubic-bezier(0.2, 0, 0, 1);
 }
 .header-image{
     float: right;
@@ -235,6 +237,58 @@ body{
     height: 100vh;
 
 }
+
+/* ---------- Static Screen Atmospheric Lighting & Diurnal VFX ---------- */
+.screen-atmosphere {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    z-index: 1; /* above #particles (z-index 0), below content (z-index 2) */
+    overflow: hidden;
+}
+
+.screen-atmosphere__glow {
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(
+        ellipse 90% 70% at var(--ambient-glow-x, 65%) var(--ambient-glow-y, 80%),
+        var(--ambient-glow-color, rgba(255, 170, 90, 0.12)),
+        transparent 70%
+    );
+    opacity: var(--ambient-glow-opacity, 0.7);
+    transition: background 2.5s cubic-bezier(0.2, 0, 0, 1), opacity 2.5s ease;
+}
+
+.screen-atmosphere__canvas {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+}
+
+.screen-atmosphere__pill {
+    display: inline-block;
+    margin-bottom: 12px;
+    padding: 4px 14px;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.16);
+    color: #facc15;
+    font-family: poppins;
+    font-size: 13px;
+    font-weight: 500;
+    letter-spacing: 0.04em;
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+    animation: fadeInAtmosphere 0.8s ease-out;
+}
+
+@keyframes fadeInAtmosphere {
+    from { opacity: 0; transform: translateY(-6px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
 .header-content{
     height: 100vh;
     width: 100%;
@@ -822,7 +876,6 @@ body{
     left: -25px;
     z-index: 10;
     opacity: .6;
-    transition:  scale .5s ease;
 }
 .cursor-small{
     height: 50px;
@@ -837,7 +890,6 @@ body{
     left: -25px;
     z-index: 10;
     opacity: .6;
-    transition:  scale .4s ease;
 }
 
 #blog{

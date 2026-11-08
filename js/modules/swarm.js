@@ -1,17 +1,20 @@
 /**
- * @file Swarm mode controller: on/off switch, input wiring and the animation loop.
+ * @file Swarm mode controller: on/off switch, input wiring, interaction dispatching, and animation loop.
  *
  * When on, a flock of cursors (swarm-flock.js) flies around the pointer and
  * builds the page as it scrolls into view (swarm-builder.js). Each section is
  * rebuilt when you navigate to it.
  *
- * The mode is unavailable on touch-only devices and when the user prefers
- * reduced motion. Esc turns it off from anywhere.
+ * The mode responds to pointer movement, clicks, presses/holds, hovering over
+ * interactive targets, leaving/entering the viewport, and idle states.
+ * Unavailable on touch-only devices and when reduced motion is preferred. Esc turns off.
  */
 (function (Portfolio) {
   'use strict';
 
   const TOGGLE_SELECTOR = '[data-swarm-toggle]';
+  const INTERACTIVE_SELECTOR =
+    'a, button, input, textarea, select, [role="button"], .menubar, .navigation-close, .swarm-switch, .settings, .color-changer, .work-panel, .service, [data-interactive]';
   const FRAME_MS = 1000 / 60;
 
   const state = {
@@ -54,13 +57,12 @@
   /* ---------- Loop ---------- */
 
   function frame(now) {
-    // Elapsed time in 60fps frames. rAF timestamps mark the frame start and can be
-    // slightly earlier than performance.now() at scheduling, so clamp at 0 (never negative).
+    // Elapsed time in 60fps frames. Clamp at 0 to avoid negative delta.
     const k = Math.min(Math.max((now - state.lastTime) / FRAME_MS, 0), 3);
     state.lastTime = now;
     state.flock.update(k, now);
     state.builder.update(now);
-    state.flock.render(k);
+    state.flock.render(k, now);
     state.rafId = window.requestAnimationFrame(frame);
   }
 
@@ -75,7 +77,7 @@
     state.rafId = 0;
   }
 
-  /* ---------- Input ---------- */
+  /* ---------- Input & Interaction Events ---------- */
 
   function onPointerMove(event) {
     if (event.pointerType && event.pointerType !== 'mouse') return;
@@ -85,7 +87,45 @@
   }
 
   function onPointerDown(event) {
+    if (event.button !== 0 && event.pointerType === 'mouse') return;
+    state.flock?.setPointerDown(true);
     state.flock?.scatter(event.clientX, event.clientY);
+  }
+
+  function onPointerUp() {
+    state.flock?.setPointerDown(false);
+  }
+
+  function onPointerOver(event) {
+    const target = event.target?.closest?.(INTERACTIVE_SELECTOR);
+    if (!target) return;
+    const r = target.getBoundingClientRect();
+    if (r.width === 0 || r.height === 0) return;
+    state.flock?.setHoverTarget({
+      left: r.left,
+      top: r.top,
+      right: r.right,
+      bottom: r.bottom,
+      cx: r.left + r.width / 2,
+      cy: r.top + r.height / 2,
+      width: r.width,
+      height: r.height,
+    });
+  }
+
+  function onPointerOut(event) {
+    const target = event.target?.closest?.(INTERACTIVE_SELECTOR);
+    if (target && !target.contains(event.relatedTarget)) {
+      state.flock?.setHoverTarget(null);
+    }
+  }
+
+  function onPointerLeave() {
+    state.flock?.setPointerInside(false);
+  }
+
+  function onPointerEnter() {
+    state.flock?.setPointerInside(true);
   }
 
   function onResize() {
@@ -119,8 +159,15 @@
     state.builder.markPending(document);
 
     window.addEventListener('pointerdown', onPointerDown);
+    window.addEventListener('pointerup', onPointerUp);
+    window.addEventListener('pointercancel', onPointerUp);
+    document.addEventListener('pointerover', onPointerOver, { passive: true });
+    document.addEventListener('pointerout', onPointerOut, { passive: true });
+    document.documentElement.addEventListener('pointerleave', onPointerLeave);
+    document.documentElement.addEventListener('pointerenter', onPointerEnter);
     window.addEventListener('resize', onResize);
     document.addEventListener('portfolio:navigate', onNavigate);
+
     startLoop();
     window.requestAnimationFrame(() => state.layer?.classList.add('is-visible'));
   }
@@ -128,10 +175,18 @@
   function disable() {
     stopLoop();
     window.removeEventListener('pointerdown', onPointerDown);
+    window.removeEventListener('pointerup', onPointerUp);
+    window.removeEventListener('pointercancel', onPointerUp);
+    document.removeEventListener('pointerover', onPointerOver);
+    document.removeEventListener('pointerout', onPointerOut);
+    document.documentElement.removeEventListener('pointerleave', onPointerLeave);
+    document.documentElement.removeEventListener('pointerenter', onPointerEnter);
     window.removeEventListener('resize', onResize);
     document.removeEventListener('portfolio:navigate', onNavigate);
 
     state.builder?.revealAll();
+    state.flock?.destroy();
+
     const layer = state.layer;
     state.layer = null;
     state.flock = null;
@@ -139,7 +194,7 @@
     if (layer) {
       layer.classList.remove('is-visible');
       layer.addEventListener('transitionend', () => layer.remove(), { once: true });
-      setTimeout(() => layer.remove(), 600); // fallback if no transition runs
+      setTimeout(() => layer.remove(), 600);
     }
   }
 

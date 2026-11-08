@@ -394,6 +394,7 @@
      *   (`?speed=40`: the day runs 40x faster; `?at=night`: where each visit starts).
      */
     constructor(config, options = {}) {
+      this.useRealTime = options.speed || options.at !== undefined ? false : (config.useRealTime ?? true);
       this.cycleMs = (config.cycleMinutes * 60000) / (options.speed || 1);
       this.resumeMs = config.resumeMinutes * 60000;
       this.startPhase = options.at ?? 0;
@@ -413,6 +414,11 @@
     }
 
     phase(now) {
+      if (this.useRealTime && Portfolio.ambientCalendar) {
+        return Portfolio.ambientCalendar.calculateDiurnalPhase(
+          Portfolio.ambientCalendar.getTimeComponents().decimalHour,
+        );
+      }
       return wrap((now - this.origin) / this.cycleMs);
     }
 

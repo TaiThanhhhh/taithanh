@@ -1,15 +1,17 @@
 /**
- * @file Custom mouse follower that grows over interactive elements.
+ * @file Custom mouse follower that grows over interactive elements and responds to click/press.
  *
  * The ring follows the pointer through a single requestAnimationFrame loop with
  * time-based (exponential) smoothing, so it trails the pointer by the same amount
  * of time on any refresh rate. The loop sleeps while the ring is at rest.
+ * Responds to hover, press (pointer down), and leaving/entering the viewport.
  */
 (function (Portfolio) {
   'use strict';
 
   const CURSOR_SELECTOR = '.cursor';
-  const INTERACTIVE_SELECTOR = '.menubar, a, .navigation-close';
+  const INTERACTIVE_SELECTOR =
+    'a, button, input, textarea, select, [role="button"], .menubar, .navigation-close, .swarm-switch, .settings, .color-changer, .work-panel, .service, [data-interactive]';
   /** How fast the ring catches up with the pointer (1/s). Higher = tighter. */
   const FOLLOW_RATE = 14;
   /** Below this distance (px) the ring snaps and the loop sleeps. */
@@ -18,6 +20,8 @@
   const STATE = {
     idle: { scale: 1, opacity: 0.6, duration: 0.35, overwrite: 'auto' },
     hover: { scale: 1.4, opacity: 1, duration: 0.35, overwrite: 'auto' },
+    press: { scale: 0.88, opacity: 0.95, duration: 0.12, overwrite: 'auto' },
+    hidden: { scale: 0.7, opacity: 0, duration: 0.25, overwrite: 'auto' },
   };
 
   /** Fast per-frame property setter (gsap.quickSetter when available). */
@@ -38,6 +42,8 @@
       let seen = false;
       let rafId = 0;
       let lastTime = 0;
+      let isHovering = false;
+      let isPressed = false;
 
       function tick(now) {
         // Clamp: rAF timestamps can precede lastTime slightly; a long pause must not teleport.
@@ -57,9 +63,20 @@
         rafId = resting ? 0 : window.requestAnimationFrame(tick);
       }
 
+      function updateActiveState() {
+        if (isPressed) {
+          gsap.to(cursor, STATE.press);
+        } else if (isHovering) {
+          gsap.to(cursor, STATE.hover);
+        } else {
+          gsap.to(cursor, STATE.idle);
+        }
+      }
+
       window.addEventListener(
-        'mousemove',
+        'pointermove',
         (event) => {
+          if (event.pointerType && event.pointerType !== 'mouse') return;
           target.x = event.clientX;
           target.y = event.clientY;
           if (!seen) {
@@ -67,6 +84,8 @@
             seen = true;
             pos.x = target.x;
             pos.y = target.y;
+            setX(pos.x);
+            setY(pos.y);
           }
           if (!rafId) {
             lastTime = performance.now();
@@ -76,9 +95,46 @@
         { passive: true },
       );
 
-      document.querySelectorAll(INTERACTIVE_SELECTOR).forEach((el) => {
-        el.addEventListener('mouseenter', () => gsap.to(cursor, STATE.hover));
-        el.addEventListener('mouseleave', () => gsap.to(cursor, STATE.idle));
+      window.addEventListener('pointerdown', (event) => {
+        if (event.button !== 0 && event.pointerType === 'mouse') return;
+        isPressed = true;
+        updateActiveState();
+      });
+
+      window.addEventListener('pointerup', () => {
+        isPressed = false;
+        updateActiveState();
+      });
+
+      document.addEventListener(
+        'pointerover',
+        (event) => {
+          if (event.target?.closest?.(INTERACTIVE_SELECTOR)) {
+            isHovering = true;
+            updateActiveState();
+          }
+        },
+        { passive: true },
+      );
+
+      document.addEventListener(
+        'pointerout',
+        (event) => {
+          const targetEl = event.target?.closest?.(INTERACTIVE_SELECTOR);
+          if (targetEl && !targetEl.contains(event.relatedTarget)) {
+            isHovering = false;
+            updateActiveState();
+          }
+        },
+        { passive: true },
+      );
+
+      document.documentElement.addEventListener('pointerleave', () => {
+        gsap.to(cursor, STATE.hidden);
+      });
+
+      document.documentElement.addEventListener('pointerenter', () => {
+        updateActiveState();
       });
     },
   };

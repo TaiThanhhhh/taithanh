@@ -48,9 +48,11 @@ Hoặc mở trực tiếp `index.html` bằng trình duyệt.
 │   │   ├── swarm-flock.js     # Swarm mode: vật lý đàn chim (boids) + vẽ con trỏ
 │   │   ├── swarm-builder.js   # Swarm mode: hàng đợi việc + 4 động tác dựng trang khi cuộn
 │   │   ├── swarm.js           # Swarm mode: bật/tắt, input, vòng lặp animation
-│   │   ├── ambient-cycle.js   # Ambient mode: một ngày rút gọn (keyframe màu trời, mặt trời, mặt trăng)
+│   │   ├── ambient-calendar.js # Lịch thiên văn: chu kỳ nhật dạ thời gian thực Sài Gòn, mùa & lễ hội
+│   │   ├── ambient-cycle.js   # Ambient mode: một ngày rút gọn hoặc đồng bộ giờ thực (màu trời, mặt trời, mặt trăng)
 │   │   ├── ambient-sky.js     # Ambient mode: trời, sao, mặt trời/trăng, mây, đường chân trời, đèn cửa sổ
 │   │   ├── ambient-events.js  # Ambient mode: điều phối sự kiện (2 tầng, độ hiếm, chú thích) + tiện ích vẽ
+│   │   ├── ambient-events-calendar.js # Sự kiện lịch đặc biệt: Tết Nguyên Đán, Quốc Khánh 2/9, Giao Thừa, Trung Thu
 │   │   ├── ambient-events-night.js   # Pháo hoa, đêm pháo hoa lớn, đèn trời, drone show, LED + laser Landmark 81, đèn pha
 │   │   ├── ambient-events-sky.js     # Sao băng, vệ tinh, sao chổi, nguyệt thực, quầng trăng, mặt trời giả, tia nắng
 │   │   ├── ambient-events-weather.js # Chớp, giông đêm, mưa rào + cầu vồng, mưa xa, sương sớm, bóng mây
@@ -58,6 +60,7 @@ Hoặc mở trực tiếp `index.html` bằng trình duyệt.
 │   │   ├── ambient-events-flyby.js   # Vệt khói, chim chữ V, máy bay hạ cánh, trực thăng, dơi, én, máy bay giấy, băng rôn
 │   │   ├── ambient-murmuration.js # Ambient mode: đàn con trỏ 3D (boids topo, sóng kích động, chuyển cảnh)
 │   │   ├── ambient-scene.js   # Ambient mode: ghép các lớp + đồng hồ
+│   │   ├── screen-atmosphere.js # Khí quyển màn hình tĩnh: ánh sáng nhật dạ, viền sáng avatar & hạt vi khí hậu
 │   │   ├── ambient.js         # Ambient mode: phát hiện idle, chuyển cảnh vào/thoát, chế độ tiết kiệm
 │   │   └── contact-form.js    # Validate form + gửi mail qua EmailJS
 │   └── vendor/
@@ -138,14 +141,36 @@ bấm phím hoặc click là trở lại (cú click/phím đánh thức không t
 - Tắt khi người dùng bật "giảm chuyển động". Tham số trong `config.ambient` (thời gian chờ, số con trỏ, ngân sách khung
   hình, độ dài một ngày, nhịp sự kiện, chú thích, chữ trên băng rôn).
 
+### Khí quyển màn hình tĩnh & Sự kiện theo thời gian thực (Screen Atmosphere)
+
+Trang chủ tĩnh (`#header`) phản ứng tự nhiên với thời gian trong ngày và các dịp đặc biệt mà không cần vào chế độ Ambient:
+
+- **Đồng bộ nhật dạ thời gian thực (`ambient-calendar.js`)**:
+  - Ánh sáng môi trường biến chuyển mượt mà qua 10 thời điểm trong ngày: _Rạng đông (predawn) → Bình minh (sunrise) → Buổi sáng (morning) → Ban trưa (noon) → Buổi chiều (afternoon) → Giờ vàng (golden) → Hoàng hôn (dusk) → Giờ xanh (blue) → Ban đêm (night) → Đêm muộn (late)_.
+  - Chuyển giao qua nửa đêm (23:59:59 → 00:00:00) liền mạch toán học, không giật màu.
+- **Chiếu sáng viền silhouette (Avatar Rim Lighting)**:
+  - Bức ảnh chân dung nhận ánh sáng viền phản chiếu góc chiếu của mặt trời: rực rỡ ấm áp phía trái khi hoàng hôn buông xuống, trong trẻo tinh khôi phía phải lúc bình minh.
+- **Hạt vi khí hậu theo mùa & sự kiện (`screen-atmosphere.js`)**:
+  - Bụi vàng lấp lánh trong nắng chiều, hạt sương sáng sớm, ánh sao đêm nhẹ nhàng, hoặc cánh hoa mai bay lượn dịp Tết.
+  - Tự động ngắt hoàn toàn vòng lặp khi cuộn khỏi màn hình hoặc khi tab bị ẩn để tiết kiệm pin.
+- **Sự kiện văn hóa & Lễ hội Sài Gòn (`ambient-events-calendar.js`)**:
+  - Tự động kích hoạt khi đúng ngày: _Tết Nguyên Đán_ (hoa mai, đèn hoa đăng, Landmark 81 mừng xuân), _Quốc Khánh 2/9_ (Landmark 81 cờ đỏ sao vàng), _Tết Trung Thu_ (trăng rằm, đèn cá chép), _Đêm Giao Thừa_ (đếm ngược & pháo hoa), _Cuối tuần_ (thả diều hoàng hôn).
+
 ### Swarm mode
 
 **Bật mặc định.** Bật/tắt bằng công tắc **Swarm** ở góc trái dưới (có trên mọi trang), hoặc `Esc` để tắt. Lựa chọn được
 nhớ trong `localStorage` (`config.swarm.defaultOn` quyết định trạng thái cho người mới vào).
 
-- **Đàn chim** (`swarm-flock.js`): 16 con trỏ (tên công nghệ, màu lấy từ 6 bảng màu của site) bay theo thuật toán boids:
-  tách nhau ra, bay cùng hướng, giữ đội hình, xoáy quanh chuột; khi chuột đứng yên thì lượn theo một đường cong khắp
-  màn hình. Con trỏ xoay theo hướng bay như chim. Click để đàn tản ra.
+- **Đàn chim & VFX** (`swarm-flock.js`): 16 con trỏ (tên công nghệ, màu lấy từ 6 bảng màu của site) bay theo thuật toán boids:
+  tách nhau ra, bay cùng hướng, giữ đội hình, xoáy quanh chuột; khi chuột đứng yên thì chuyển mượt sang lượn theo đường cong Lissajous khắp
+  màn hình. Con trỏ xoay theo hướng bay, co giãn khí động học khi tăng tốc và nâng độ cao khi nhận nhiệm vụ dựng trang (`.is-traveling`).
+- **Hệ thống VFX & Phản hồi tương tác (Canvas 2D)**:
+  - _Vệt chuyển động (Motion Trails)_: vệt ribbon khí động học vuốt nhọn tự nhiên theo màu của từng con trỏ khi bay nhanh hoặc di chuyển làm nhiệm vụ, tự động biến mất khi dừng hoặc đang làm việc để giữ không gian sạch sẽ.
+  - _Sóng xung kích (Click Ripples)_: mỗi cú click chuột tạo vòng sóng lan tỏa vật lý khớp với xung lực đẩy boids (`scatter()`).
+  - _Bong bóng áp lực khi giữ chuột_: khi nhấn giữ hoặc kéo chuột (`pointerdown`/drag), đàn con trỏ duy trì vành đai áp lực kinetic quanh con trỏ.
+  - _Né tránh & đóng khung phần tử tương tác (Hover Framing)_: khi rê chuột vào nút, link hay thẻ dự án, đàn con trỏ tự động tản ra tạo vùng đệm thoáng, đóng khung tinh tế phần tử thay vì che khuất chữ.
+  - _Hiệu ứng hoàn thành (Settle Shimmer)_: khi một phần tử dựng xong, một xung viền ánh sáng nhẹ xuất hiện và tan dần trên khung phần tử.
+  - _Con trỏ chính (`cursor.js`)_: vòng tròn chuột co lại đàn hồi khi nhấn (`press`), mượt mà theo dõi và ẩn/hiện tự nhiên khi rời khỏi cửa sổ duyệt web.
 - **Tự dựng trang như một đội multi-agent** (`swarm-builder.js`): phần tử nào cuộn vào màn hình thì một nhóm con trỏ rời
   đàn tới dựng nó theo kịch bản 3 bước:
   1. _Dựng khung_: kéo khung (kèm kích thước W×H), kéo thả vào chỗ, hoặc hai con trỏ kéo giãn từ hai góc. Đôi khi

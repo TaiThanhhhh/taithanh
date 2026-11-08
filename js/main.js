@@ -17,6 +17,8 @@
     Portfolio.cursor.init();
     Portfolio.swarm.init();
     Portfolio.contactForm.init();
+    Portfolio.ambientCalendar?.init();
+    Portfolio.screenAtmosphere?.init();
     Portfolio.ambient.init();
   }
 

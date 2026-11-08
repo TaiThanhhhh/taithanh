@@ -387,6 +387,7 @@
       }
       agents.forEach((a) => {
         a.mode = 'work';
+        a.el.classList.remove('is-traveling');
         a.el.classList.add('is-working');
       });
     }
@@ -629,6 +630,10 @@
 
     finish(task) {
       const { el, ui } = task;
+      const r = this.rect(el);
+      if (r.width > 0 && r.height > 0) {
+        this.flock?.addSettle(r, task.crew[0]?.color);
+      }
       this.restoreText(task);
       STYLE_KEYS.forEach((key) => {
         el.style[key] = '';

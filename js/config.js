@@ -194,6 +194,97 @@
       captions: true,
       /** What the plane towing a banner says (one is picked each time). */
       bannerMessages: ['XIN CHÀO SÀI GÒN', 'HAVE A NICE DAY', 'THANKS FOR VISITING'],
+      /** Real-time mode: synchronizes diurnal cycle to actual time of day in Ho Chi Minh City. */
+      useRealTime: true,
+    },
+
+    /**
+     * Calendar & Astronomical Events: tracks the real time in Ho Chi Minh City,
+     * time-of-day periods, seasonal weather, holidays, and special calendar events.
+     */
+    calendar: {
+      timezone: 'Asia/Ho_Chi_Minh',
+      useLocalClock: true,
+      /** Tropical solar milestones mapping local 24h clock to diurnal phases. */
+      solarMilestones: [
+        { hour: 5.0, phase: 0.58, name: 'predawn' },
+        { hour: 6.0, phase: 0.63, name: 'sunrise' },
+        { hour: 8.5, phase: 0.72, name: 'morning' },
+        { hour: 12.0, phase: 0.82, name: 'noon' },
+        { hour: 15.5, phase: 0.93, name: 'afternoon' },
+        { hour: 17.5, phase: 0.0, name: 'golden' },
+        { hour: 18.25, phase: 0.08, name: 'dusk' },
+        { hour: 19.25, phase: 0.15, name: 'blue' },
+        { hour: 21.0, phase: 0.22, name: 'night' },
+        { hour: 25.5, phase: 0.45, name: 'late' }, // 01:30 (+24h)
+      ],
+      /** Saigon rainy season runs from May through November. */
+      rainySeasonMonths: [5, 6, 7, 8, 9, 10, 11],
+      /** Special calendar events with distinct visual atmospheres. */
+      specialEvents: [
+        {
+          id: 'tet',
+          name: 'Tết Nguyên Đán',
+          label: 'Tết Cổ Truyền - Xuân Sài Gòn',
+          dates: [
+            { month: 1, dayStart: 25, dayEnd: 31 },
+            { month: 2, dayStart: 1, dayEnd: 12 },
+          ],
+          theme: { primary: '#f59e0b', secondary: '#ef4444', banner: 'CHÚC MỪNG NĂM MỚI' },
+        },
+        {
+          id: 'newyear',
+          name: 'Đón Năm Mới',
+          label: 'Chào Năm Mới',
+          dates: [
+            { month: 12, dayStart: 31, dayEnd: 31 },
+            { month: 1, dayStart: 1, dayEnd: 1 },
+          ],
+          theme: { primary: '#fbbf24', secondary: '#3b82f6', banner: 'HAPPY NEW YEAR' },
+        },
+        {
+          id: 'nationalday',
+          name: 'Quốc Khánh',
+          label: 'Kỷ niệm Quốc Khánh 2/9',
+          dates: [{ month: 9, dayStart: 1, dayEnd: 3 }],
+          theme: { primary: '#dc2626', secondary: '#facc15', banner: 'VIỆT NAM MUÔN NĂM' },
+        },
+        {
+          id: 'midautumn',
+          name: 'Tết Trung Thu',
+          label: 'Đêm Hội Trăng Rằm',
+          dates: [{ month: 9, dayStart: 20, dayEnd: 26 }],
+          theme: { primary: '#f59e0b', secondary: '#818cf8', banner: 'TẾT TRUNG THU' },
+        },
+        {
+          id: 'programmersday',
+          name: 'Ngày Lập Trình Viên',
+          label: 'Programmer’s Day (Day 256)',
+          dayOfYear: 256,
+          theme: { primary: '#10b981', secondary: '#06b6d4', banner: 'HAPPY PROGRAMMER’S DAY' },
+        },
+        {
+          id: 'birthday',
+          name: 'Sinh Nhật Tác Giả',
+          label: 'Happy Birthday Thanh Tai!',
+          dates: [{ month: 5, dayStart: 16, dayEnd: 16 }],
+          theme: { primary: '#ec4899', secondary: '#8b5cf6', banner: 'HAPPY BIRTHDAY' },
+        },
+      ],
+    },
+
+    /**
+     * Static screen atmospheric lighting: transforms the portfolio home screen
+     * into a living, context-aware environment reacting to time of day and calendar.
+     */
+    screenAtmosphere: {
+      enabled: true,
+      adaptiveLighting: true,
+      adaptiveGreeting: true,
+      particles: true,
+      maxParticles: 35,
+      rimLighting: true,
+      colorTemperature: true,
     },
 
     /**
@@ -250,6 +341,29 @@
           wander: 0.35,
           edges: 1.5,
         },
+      },
+
+      /** Visual effects and motion graphics layer. */
+      fx: {
+        trails: true,
+        trailPoints: 5,
+        trailMinSpeed: 3.2,
+        trailMaxAge: 180,
+        trailBaseWidth: 2.2,
+        ripples: true,
+        rippleDuration: 420,
+        rippleMaxRadius: 140,
+        settleShimmer: true,
+        settleDuration: 400,
+      },
+
+      /** Interaction tuning for pointer events and hover states. */
+      interaction: {
+        pressedRadius: 200,
+        pressedRepulsion: 3.5,
+        hoverRepulsion: 1.5,
+        hoverPadding: 28,
+        resumeBlendDuration: 350,
       },
 
       /** Build-on-scroll: which elements the swarm builds, and how. */
