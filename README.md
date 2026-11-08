@@ -49,6 +49,7 @@ Hoặc mở trực tiếp `index.html` bằng trình duyệt.
 │   │   ├── swarm-flock.js     # Swarm mode: vật lý đàn chim (boids) + vẽ con trỏ
 │   │   ├── swarm-builder.js   # Swarm mode: hàng đợi việc + 4 động tác dựng trang khi cuộn
 │   │   ├── swarm.js           # Swarm mode: bật/tắt, input, vòng lặp animation
+│   │   ├── ambient-environment.js # Bus môi trường vật lý: Dynamic Wind Vector, Flash Bus, 25 tương tác, 250 biến thể
 │   │   ├── ambient-calendar.js # Lịch thiên văn: chu kỳ nhật dạ thời gian thực Sài Gòn, mùa & lễ hội
 │   │   ├── ambient-cycle.js   # Ambient mode: một ngày rút gọn hoặc đồng bộ giờ thực (màu trời, mặt trời, mặt trăng)
 │   │   ├── ambient-sky.js     # Ambient mode: trời, sao, mặt trời/trăng, mây, đường chân trời, đèn cửa sổ
@@ -158,30 +159,52 @@ Trang chủ tĩnh (`#header`) phản ứng tự nhiên với thời gian trong n
 - **Sự kiện văn hóa & Lễ hội Sài Gòn (`ambient-events-calendar.js`)**:
   - Tự động kích hoạt khi đúng ngày: _Tết Nguyên Đán_ (hoa mai, đèn hoa đăng, Landmark 81 mừng xuân), _Quốc Khánh 2/9_ (Landmark 81 cờ đỏ sao vàng), _Tết Trung Thu_ (trăng rằm, đèn cá chép), _Đêm Giao Thừa_ (đếm ngược & pháo hoa), _Cuối tuần_ (thả diều hoàng hôn).
 
+### Bus Môi Trường & Hệ Thống Tương Tác Vật Lý (`ambient-environment.js`)
+
+Cung cấp một bus truyền thông trạng thái môi trường vật lý dùng chung giữa Màn hình Tĩnh (`#header`) và Chế độ Ambient Mode:
+
+- **Dynamic Wind Vector Engine (`WindEngine`)**:
+  - Vector gió ngang động học (`speed`, `gust`, `turbulence`) với dao động tự nhiên theo hàm lượng giác kép và suy giảm lũy thừa (`Math.pow(gustDecay, dt * 60)`).
+  - Khả năng lấy mẫu theo độ cao khí quyển (`sample(altitudeNorm)`): tầng bình lưu có gió mạnh hơn (1.4x), tầng mặt đất êm dịu hơn (0.8x).
+  - Đồng bộ chi phối thực tế: tản khói pháo hoa, vệt khói máy bay, hạt mưa nghiêng, cánh hoa mai/sen, con diều chao liệng, và lực đẩy boids.
+- **Atmospheric Illumination & Flash Bus (`IlluminationBus`)**:
+  - Bus chớp sáng tức thời (`flash(intensity, rgb, decayRate)`) mô phỏng xung quang học khi sét đánh trần mây, pháo hoa nổ chùm lớn, hoặc quét laser công suất cao.
+  - Tự động phản chiếu ánh sáng tức thì lên canvas khí quyển màn hình tĩnh (`screen-atmosphere.js`) và đường chân trời thành phố.
+- **25 Tương Tác Vật Lý & Quang Học Giữa Các Đối Tượng (`INTERACTION_MATRIX`)**:
+  - Ma trận quy định tường minh tác động qua lại giữa các thực thể: _Gió làm bạt khói pháo hoa_, _Gió cuốn vệt khói ngưng tụ (contrail)_, _Sóng chấn động làm boids tản loạn_, _Chớp sáng soi bóng mây ngưng tụ_, _Mưa rào sinh cầu vồng khi nắng ló rạng_, v.v.
+- **Danh Mục 250 Biến Thể Hiệu Ứng Được Định Danh (`VARIATIONS_CATALOG`)**:
+  - Phân loại thành 10 nhóm đối tượng chuyên biệt (25 biến thể mỗi nhóm): Mây, Chim & Boids, Pháo hoa, Máy bay, Máy bay giấy, Thực vật rơi, Sấm sét, Thiên văn, Diều & Khí cầu, Trình diễn ánh sáng.
+- **6 Chuỗi Đa Tầng Liên Hoàn (Cascades)**:
+  - `cascade_thunderstorm`: Giông nhiệt đới đa tầng (Gió giật → Mây đen → Chớp → Mưa xối xả → Cầu vồng).
+  - `cascade_newyear_eve`: Đêm giao thừa (Đếm ngược → Pháo hoa rực sáng → Liễu rủ → Thả đèn trời).
+  - `cascade_tet_morning`: Sáng mùng 1 Tết (Nắng sớm → Hoa mai rơi → Én liệng → Đèn hoa đăng).
+  - `cascade_twilight_flight`: Hoàng hôn chuyển tối (Tia hoàng hôn → Đàn dơi xuất hiện → Đèn phố bật sáng).
+  - `cascade_drone_laser`: Đại nhạc hội công nghệ cao (Đèn pha quét → Laser đa sắc → Ma trận drone 3D).
+  - `cascade_national_celebration`: Đại lễ 2/9 (Khinh khí cầu cờ đỏ → Đội bay trực thăng → Pháo hoa khải hoàn).
+
 ### Kiểm thử hiệu ứng & Developer Test Lab (`dev-tester.js`)
 
-Tích hợp sẵn bảng điều khiển nổi để kiểm thử mọi thời điểm trong ngày, sự kiện lễ hội và hiệu ứng VFX:
+Bảng điều khiển trực quan toàn diện (UI panel) và API Console (`Portfolio.test`) hỗ trợ kiểm thử toàn bộ hệ thống:
 
 - **Cách mở bảng**: Bấm nút **🧪 Test Lab** ở góc phải dưới, phím tắt `Ctrl + Shift + D` (hoặc `F2`), nút trong menu Cài đặt ⚙️, hoặc URL `?test`.
-- **Khóa Ambient Mode (Lock Mode)**: Tự động khóa khi vào từ Test Lab để rê chuột không bị tự thoát màn hình chờ; bấm `[🚪 Thoát Ambient]` hoặc `Esc` để về lại.
+- **Giao diện 5 Tabs chuyên biệt**:
+  - **✨ 139 Sự Kiện**: Bộ lọc theo 8 danh mục + tìm kiếm tức thì theo từ khóa + click kích hoạt ngay hoặc bấm nút ngẫu nhiên (Random Event).
+  - **🎨 250 Biến Thể**: Danh mục tra cứu đầy đủ 250 biến thể hình thái hành vi với thẻ phân nhóm và mô tả chi tiết.
+  - **⚡ Tương Tác & Bus**: Điều chỉnh slider tốc độ gió, bấm nút thổi gió giật (+1.8 gust), phát chớp sáng sấm sét / pháo hoa, chấn động giật mình boids, và duyệt bảng 25 quy luật tương tác vật lý.
+  - **🌅 Giờ & Mùa**: Thanh trượt 24h, 9 mốc giờ nhanh (bình minh, trưa, hoàng hôn, đêm...), chuyển mùa Mưa / Khô Sài Gòn, tua nhanh 24h trong 60 giây.
+  - **🖱 Swarm VFX**: Sóng xung kích con trỏ (Click Ripple), hạt lấp lánh (Settle Shimmer), bật/tắt Swarm mode.
+- **Khóa Ambient Mode (Lock Mode)**: Tự động khóa khi vào từ Test Lab để rê chuột không bị thoát màn hình chờ; bấm `[🚪 Thoát Ambient]` hoặc `Esc` để về lại.
 - **Console API (`Portfolio.test`)**:
-  - `Portfolio.test.setHour(17.5)`: Đặt giờ bất kỳ (0..24) để quan sát ánh sáng viền avatar và màu nền.
-  - `Portfolio.test.setHoliday('tet')` / `'midautumn'` / `'nationalday'`: Đặt sự kiện ngày lễ.
-  - `Portfolio.test.triggerAmbient('fireworks')`: Bắn pháo hoa hoặc các sự kiện bất ngờ.
-  - `Portfolio.test.triggerRipple()`: Bắn sóng xung kích con trỏ.
-  - `Portfolio.test.reset()`: Trở về thời gian thực tế.
-
-### Kiểm thử hiệu ứng & Developer Test Lab (`dev-tester.js`)
-
-Tích hợp sẵn bảng điều khiển nổi để kiểm thử mọi thời điểm trong ngày, sự kiện lễ hội và hiệu ứng VFX:
-- **Cách mở bảng**: Bấm nút **🧪 Test Lab** ở góc phải dưới, phím tắt `Ctrl + Shift + D` (hoặc `F2`), nút trong menu Cài đặt ⚙️, hoặc URL `?test`.
-- **Khóa Ambient Mode (Lock Mode)**: Tự động khóa khi vào từ Test Lab để rê chuột không bị tự thoát màn hình chờ; bấm `[🚪 Thoát Ambient]` hoặc `Esc` để về lại.
-- **Console API (`Portfolio.test`)**:
-  - `Portfolio.test.setHour(17.5)`: Đặt giờ bất kỳ (0..24) để quan sát ánh sáng viền avatar và màu nền.
-  - `Portfolio.test.setHoliday('tet')` / `'midautumn'` / `'nationalday'`: Đặt sự kiện ngày lễ.
-  - `Portfolio.test.triggerAmbient('fireworks')`: Bắn pháo hoa hoặc các sự kiện bất ngờ.
-  - `Portfolio.test.triggerRipple()`: Bắn sóng xung kích con trỏ.
-  - `Portfolio.test.reset()`: Trở về thời gian thực tế.
+  - `Portfolio.test.listEvents()`: Xuất bảng danh sách 139 sự kiện độc lập trong Console.
+  - `Portfolio.test.listVariations()`: Xuất bảng 250 biến thể hiệu ứng có định danh.
+  - `Portfolio.test.listInteractions()`: Xuất bảng 25 quy luật tương tác vật lý.
+  - `Portfolio.test.triggerAmbient('tet')` / `triggerAmbient('bolide')`: Kích hoạt bất kỳ sự kiện nào trong 139 sự kiện.
+  - `Portfolio.test.triggerCascade('cascade_thunderstorm')`: Kích hoạt chuỗi hiệu ứng đa tầng.
+  - `Portfolio.test.triggerGust(2.0)`: Kích hoạt luồng gió giật tức thời.
+  - `Portfolio.test.triggerFlash(1.0)`: Kích hoạt chớp sáng quang học toàn bầu trời.
+  - `Portfolio.test.triggerStartle()`: Kích hoạt xung chấn làm đàn chim/dơi né dạt.
+  - `Portfolio.test.setHour(17.5)` / `setHoliday('tet')` / `setSeason('rainy')`: Điều chỉnh thời gian & mùa.
+  - `Portfolio.test.reset()`: Trở về 100% thời gian thực.
 
 ### Swarm mode
 

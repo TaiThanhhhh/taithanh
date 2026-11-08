@@ -795,4 +795,737 @@
       };
     },
   });
+
+  /* ---------- Pháo Hoa & Trình Diễn Ánh Sáng Mở Rộng ---------- */
+
+  // 1. Pháo hoa liễu rủ vàng (Golden Kamuro Willow)
+  fx.register({
+    name: 'fireworks_willow',
+    label: 'Pháo Hoa Liễu Rủ Vàng Kim (Kamuro Willow)',
+    weight: 1.8,
+    when: (look) => look.dark > 0.65,
+    create(stage) {
+      const { W, H } = stage;
+      const DURATION = 26000;
+      let t = 0;
+      const originX = W * 0.45;
+      const originY = H * 0.35;
+      const trails = [];
+      for (let i = 0; i < 48; i++) {
+        const angle = (i * TAU) / 48 + rand(-0.05, 0.05);
+        const speed = rand(2.2, 5.2);
+        trails.push({
+          x: originX,
+          y: originY,
+          vx: Math.cos(angle) * speed,
+          vy: Math.sin(angle) * speed,
+          gravity: rand(0.04, 0.08),
+        });
+      }
+      Portfolio.ambientEnvironment?.illumination.flash(0.75, [251, 191, 36], 0.9);
+      Portfolio.ambientEnvironment?.notifyDisturbance(originX, originY, 280, 1.2);
+
+      return {
+        update(k, elapsed) {
+          t = elapsed;
+          const wind = Portfolio.ambientEnvironment?.wind.sample(0.35) || 0;
+          trails.forEach((tr) => {
+            tr.x += (tr.vx + wind * 0.3) * k;
+            tr.y += tr.vy * k;
+            tr.vy += tr.gravity * k; // heavy willow droop
+            tr.vx *= 0.985;
+          });
+          return t < DURATION;
+        },
+        back(ctx) {
+          const a = envelope(t, DURATION, 800, 4000);
+          if (a <= 0) return;
+          ctx.save();
+          ctx.globalAlpha = a;
+          ctx.fillStyle = '#fbbf24';
+          trails.forEach((tr) => {
+            ctx.beginPath();
+            ctx.arc(tr.x, tr.y, 1.6, 0, TAU);
+            ctx.fill();
+          });
+          ctx.restore();
+        },
+      };
+    },
+  });
+
+  // 2. Pháo hoa cành cọ xòe tia (Palm Tree burst)
+  fx.register({
+    name: 'fireworks_palm',
+    label: 'Pháo Hoa Cành Cọ Nam Bộ (Palm Tree Burst)',
+    weight: 1.6,
+    when: (look) => look.dark > 0.6,
+    create(stage) {
+      const { W, H } = stage;
+      const DURATION = 24000;
+      let t = 0;
+      const cx = W * 0.6;
+      const cy = H * 0.32;
+      Portfolio.ambientEnvironment?.illumination.flash(0.65, [56, 189, 248], 0.88);
+      return {
+        update(k, elapsed) {
+          t = elapsed;
+          return t < DURATION;
+        },
+        back(ctx) {
+          const a = envelope(t, DURATION, 600, 3000);
+          if (a <= 0) return;
+          ctx.save();
+          ctx.globalAlpha = a;
+          ctx.strokeStyle = '#38bdf8';
+          ctx.lineWidth = 2.5;
+          for (let i = 0; i < 10; i++) {
+            const angle = (i * TAU) / 10;
+            const r = (t * 0.06) % 180;
+            ctx.beginPath();
+            ctx.moveTo(cx, cy);
+            ctx.quadraticCurveTo(
+              cx + Math.cos(angle) * r * 0.5,
+              cy + Math.sin(angle) * r * 0.5 + 20,
+              cx + Math.cos(angle) * r,
+              cy + Math.sin(angle) * r,
+            );
+            ctx.stroke();
+          }
+          ctx.restore();
+        },
+      };
+    },
+  });
+
+  // 3. Pháo hoa tách nhánh chữ thập (Crossette)
+  fx.register({
+    name: 'fireworks_crossette',
+    label: 'Pháo Hoa Tách Nhánh Chữ Thập (Crossette Split)',
+    weight: 1.5,
+    when: (look) => look.dark > 0.65,
+    create(stage) {
+      const { W, H } = stage;
+      const DURATION = 22000;
+      let t = 0;
+      const cx = W * 0.38;
+      const cy = H * 0.3;
+      Portfolio.ambientEnvironment?.illumination.flash(0.7, [244, 114, 182], 0.86);
+      return {
+        update(k, elapsed) {
+          t = elapsed;
+          return t < DURATION;
+        },
+        back(ctx) {
+          const a = envelope(t, DURATION, 500, 2500);
+          if (a <= 0) return;
+          ctx.save();
+          ctx.globalAlpha = a;
+          ctx.fillStyle = '#f472b6';
+          for (let i = 0; i < 8; i++) {
+            const baseAngle = (i * TAU) / 8;
+            const dist = Math.min(t * 0.05, 120);
+            const bx = cx + Math.cos(baseAngle) * dist;
+            const by = cy + Math.sin(baseAngle) * dist;
+            ctx.fillRect(bx - 2, by - 2, 4, 4);
+            if (t > 3000) {
+              const crossDist = (t - 3000) * 0.04;
+              ctx.fillRect(bx + crossDist, by, 2, 2);
+              ctx.fillRect(bx - crossDist, by, 2, 2);
+              ctx.fillRect(bx, by + crossDist, 2, 2);
+              ctx.fillRect(bx, by - crossDist, 2, 2);
+            }
+          }
+          ctx.restore();
+        },
+      };
+    },
+  });
+
+  // 4. Pháo hoa vòng tròn đồng tâm kép (Ring in Ring)
+  fx.register({
+    name: 'fireworks_ring',
+    label: 'Pháo Hoa Vòng Tròn Đồng Tâm Kép (Ring in Ring)',
+    weight: 1.5,
+    when: (look) => look.dark > 0.65,
+    create(stage) {
+      const { W, H } = stage;
+      const DURATION = 24000;
+      let t = 0;
+      const cx = W * 0.52;
+      const cy = H * 0.28;
+      Portfolio.ambientEnvironment?.illumination.flash(0.7, [250, 204, 21], 0.9);
+      return {
+        update(k, elapsed) {
+          t = elapsed;
+          return t < DURATION;
+        },
+        back(ctx) {
+          const a = envelope(t, DURATION, 600, 2500);
+          if (a <= 0) return;
+          ctx.save();
+          ctx.globalAlpha = a;
+          const r1 = Math.min(t * 0.05, 110);
+          const r2 = r1 * 0.55;
+          ctx.strokeStyle = '#facc15'; // Outer ring
+          ctx.lineWidth = 2;
+          ctx.beginPath();
+          ctx.ellipse(cx, cy, r1, r1 * 0.5, 0.4, 0, TAU);
+          ctx.stroke();
+          ctx.strokeStyle = '#38bdf8'; // Inner ring
+          ctx.beginPath();
+          ctx.ellipse(cx, cy, r2, r2 * 0.5, -0.4, 0, TAU);
+          ctx.stroke();
+          ctx.restore();
+        },
+      };
+    },
+  });
+
+  // 5. Pháo hoa hình trái tim tình yêu (Heart shell)
+  fx.register({
+    name: 'fireworks_heart',
+    label: 'Pháo Hoa Trái Tim Tình Yêu Sài Gòn (Heart Shell)',
+    weight: 1.7,
+    when: (look) => look.dark > 0.65,
+    create(stage) {
+      const { W, H } = stage;
+      const DURATION = 24000;
+      let t = 0;
+      const cx = W * 0.5;
+      const cy = H * 0.32;
+      Portfolio.ambientEnvironment?.illumination.flash(0.7, [244, 63, 94], 0.9);
+      return {
+        update(k, elapsed) {
+          t = elapsed;
+          return t < DURATION;
+        },
+        back(ctx) {
+          const a = envelope(t, DURATION, 600, 2500);
+          if (a <= 0) return;
+          ctx.save();
+          ctx.globalAlpha = a;
+          ctx.fillStyle = '#f43f5e';
+          const scale = Math.min(t * 0.005, 5);
+          for (let i = 0; i < 40; i++) {
+            const th = (i * TAU) / 40;
+            const hx = 16 * Math.pow(Math.sin(th), 3);
+            const hy = -(13 * Math.cos(th) - 5 * Math.cos(2 * th) - 2 * Math.cos(3 * th) - Math.cos(4 * th));
+            ctx.beginPath();
+            ctx.arc(cx + hx * scale, cy + hy * scale, 2, 0, TAU);
+            ctx.fill();
+          }
+          ctx.restore();
+        },
+      };
+    },
+  });
+
+  // 6. Pháo hoa mặt nước sông Sài Gòn (Aquatic water cakes)
+  fx.register({
+    name: 'fireworks_water',
+    label: 'Pháo Hoa Mặt Nước Sông Sài Gòn (Aquatic Cakes)',
+    weight: 1.8,
+    when: (look) => look.dark > 0.6,
+    create(stage) {
+      const { W, H } = stage;
+      const DURATION = 28000;
+      let t = 0;
+      const riverY = H * 0.88;
+      Portfolio.ambientEnvironment?.illumination.flash(0.6, [251, 146, 60], 0.85);
+      return {
+        update(k, elapsed) {
+          t = elapsed;
+          return t < DURATION;
+        },
+        front(ctx) {
+          const a = envelope(t, DURATION, 1000, 2500);
+          if (a <= 0) return;
+          ctx.save();
+          ctx.globalAlpha = a;
+          for (let f = 0; f < 5; f++) {
+            const fx = W * 0.25 + (f * W * 0.5) / 4;
+            const r = Math.min((t * 0.04) % 90, 70);
+            ctx.strokeStyle = '#fb923c';
+            ctx.lineWidth = 1.8;
+            ctx.beginPath();
+            ctx.arc(fx, riverY, r, Math.PI, 0); // half circle facing up from river
+            ctx.stroke();
+          }
+          ctx.restore();
+        },
+      };
+    },
+  });
+
+  // 7. Loạt pháo sao chổi đuôi rực sáng (Comet tails)
+  fx.register({
+    name: 'fireworks_comet_tails',
+    label: 'Loạt Pháo Sao Chổi Đuôi Vàng Rực Sáng (Comet Tails)',
+    weight: 1.6,
+    when: (look) => look.dark > 0.6,
+    create(stage) {
+      const { W, H } = stage;
+      const DURATION = 22000;
+      let t = 0;
+      return {
+        update(k, elapsed) {
+          t = elapsed;
+          return t < DURATION;
+        },
+        back(ctx) {
+          const a = envelope(t, DURATION, 500, 2000);
+          if (a <= 0) return;
+          ctx.save();
+          ctx.globalAlpha = a;
+          ctx.strokeStyle = '#fef08a';
+          ctx.lineWidth = 2.5;
+          for (let i = 0; i < 7; i++) {
+            const sx = W * 0.2 + (i * W * 0.6) / 6;
+            const sy = H * 0.85;
+            const ey = H * 0.28 - i * 10;
+            const prog = Math.min(t * 0.001, 1);
+            ctx.beginPath();
+            ctx.moveTo(sx, sy);
+            ctx.lineTo(sx + (i - 3) * 15 * prog, sy - (sy - ey) * prog);
+            ctx.stroke();
+          }
+          ctx.restore();
+        },
+      };
+    },
+  });
+
+  // 8. Loạt pháo tên lửa rít gió (Whistling rockets)
+  fx.register({
+    name: 'fireworks_whistle',
+    label: 'Pháo Tên Lửa Rít Gió Xoắn Ốc (Whistling Rockets)',
+    weight: 1.5,
+    when: (look) => look.dark > 0.6,
+    create(stage) {
+      const { W, H } = stage;
+      const DURATION = 20000;
+      let t = 0;
+      return {
+        update(k, elapsed) {
+          t = elapsed;
+          return t < DURATION;
+        },
+        back(ctx) {
+          const a = envelope(t, DURATION, 500, 1500);
+          if (a <= 0) return;
+          ctx.save();
+          ctx.globalAlpha = a;
+          ctx.strokeStyle = '#38bdf8';
+          ctx.lineWidth = 2;
+          for (let i = 0; i < 4; i++) {
+            const rx = W * 0.3 + i * 140;
+            ctx.beginPath();
+            for (let y = H * 0.85; y > H * 0.3; y -= 8) {
+              const spiral = Math.sin(y * 0.08 + t * 0.01) * 12;
+              if (y === H * 0.85) ctx.moveTo(rx + spiral, y);
+              else ctx.lineTo(rx + spiral, y);
+            }
+            ctx.stroke();
+          }
+          ctx.restore();
+        },
+      };
+    },
+  });
+
+  // 9. Pháo gấm thêu vàng bạc (Brocade Crown)
+  fx.register({
+    name: 'fireworks_brocade',
+    label: 'Pháo Hoa Gấm Thêu Hoàng Gia (Brocade Crown)',
+    weight: 2.0,
+    when: (look) => look.dark > 0.65,
+    create(stage) {
+      const { W, H } = stage;
+      const DURATION = 30000;
+      let t = 0;
+      const cx = W * 0.48;
+      const cy = H * 0.28;
+      Portfolio.ambientEnvironment?.illumination.flash(0.85, [254, 240, 138], 0.92);
+      return {
+        update(k, elapsed) {
+          t = elapsed;
+          return t < DURATION;
+        },
+        back(ctx) {
+          const a = envelope(t, DURATION, 800, 4000);
+          if (a <= 0) return;
+          ctx.save();
+          ctx.globalAlpha = a;
+          ctx.strokeStyle = '#fef08a';
+          ctx.lineWidth = 1.5;
+          const maxR = Math.min(t * 0.05, 160);
+          for (let i = 0; i < 32; i++) {
+            const th = (i * TAU) / 32;
+            ctx.beginPath();
+            ctx.moveTo(cx, cy);
+            ctx.lineTo(cx + Math.cos(th) * maxR, cy + Math.sin(th) * maxR + maxR * 0.15);
+            ctx.stroke();
+          }
+          ctx.restore();
+        },
+      };
+    },
+  });
+
+  // 10. Thác nước ánh sáng cầu Ba Son (Niagara waterfall)
+  fx.register({
+    name: 'fireworks_waterfall',
+    label: 'Thác Nước Ánh Sáng Cầu Ba Son (Niagara Falls)',
+    weight: 1.8,
+    when: (look) => look.dark > 0.65,
+    create(stage) {
+      const { W, H } = stage;
+      const DURATION = 28000;
+      let t = 0;
+      return {
+        update(k, elapsed) {
+          t = elapsed;
+          return t < DURATION;
+        },
+        front(ctx) {
+          const a = envelope(t, DURATION, 1200, 3000);
+          if (a <= 0) return;
+          ctx.save();
+          ctx.globalAlpha = a * 0.85;
+          const bridgeY = H * 0.72;
+          ctx.fillStyle = '#ffffff';
+          for (let x = W * 0.25; x < W * 0.75; x += 12) {
+            const dropLen = (t * 0.04 + Math.sin(x) * 20) % 90;
+            ctx.fillRect(x, bridgeY, 1.8, dropLen);
+          }
+          ctx.restore();
+        },
+      };
+    },
+  });
+
+  // 11. Hoa đăng trôi theo dòng nước sông Sài Gòn
+  fx.register({
+    name: 'lantern_flotilla',
+    label: 'Đoàn Hoa Đăng Trôi Dạt Sông Sài Gòn (Flotilla)',
+    weight: 1.6,
+    when: (look) => look.dark > 0.55,
+    create(stage) {
+      const { W, H } = stage;
+      const DURATION = 36000;
+      let t = 0;
+      return {
+        update(k, elapsed) {
+          t = elapsed;
+          return t < DURATION;
+        },
+        front(ctx) {
+          const a = envelope(t, DURATION, 2000, 2000);
+          if (a <= 0) return;
+          ctx.save();
+          ctx.globalAlpha = a * 0.9;
+          const y = H * 0.9;
+          for (let i = 0; i < 30; i++) {
+            const lx = ((i * W) / 30 + t * 0.012) % W;
+            ctx.fillStyle = i % 2 === 0 ? '#f59e0b' : '#ef4444';
+            ctx.beginPath();
+            ctx.arc(lx, y + Math.sin(i + t * 0.003) * 4, 3, 0, TAU);
+            ctx.fill();
+          }
+          ctx.restore();
+        },
+      };
+    },
+  });
+
+  // 12. Drone show tạo hình bản đồ Việt Nam & Cờ đỏ sao vàng
+  fx.register({
+    name: 'drones_vietnam',
+    label: 'Drone Show: Bản Đồ Việt Nam & Cờ Đỏ Sao Vàng',
+    weight: 2.2,
+    when: (look) => look.dark > 0.65,
+    create(stage) {
+      const { W, H } = stage;
+      const DURATION = 32000;
+      let t = 0;
+      const cx = W * 0.45;
+      const cy = H * 0.28;
+      return {
+        update(k, elapsed) {
+          t = elapsed;
+          return t < DURATION;
+        },
+        back(ctx) {
+          const a = envelope(t, DURATION, 2000, 2500);
+          if (a <= 0) return;
+          ctx.save();
+          ctx.globalAlpha = a;
+          // Draw S-shape map with red drone LEDs
+          ctx.fillStyle = '#ef4444';
+          for (let i = -15; i <= 15; i++) {
+            const dy = i * 6;
+            const dx = Math.sin(i * 0.2) * 22;
+            ctx.beginPath();
+            ctx.arc(cx + dx, cy + dy, 2.5, 0, TAU);
+            ctx.fill();
+          }
+          // Center gold star
+          ctx.fillStyle = '#facc15';
+          ctx.beginPath();
+          ctx.arc(cx, cy, 6, 0, TAU);
+          ctx.fill();
+          ctx.restore();
+        },
+      };
+    },
+  });
+
+  // 13. Drone show tạo hình hoa sen khổng lồ
+  fx.register({
+    name: 'drones_lotus',
+    label: 'Drone Show: Đóa Hoa Sen Khổng Lồ Phát Sáng',
+    weight: 2.0,
+    when: (look) => look.dark > 0.65,
+    create(stage) {
+      const { W, H } = stage;
+      const DURATION = 30000;
+      let t = 0;
+      const cx = W * 0.52;
+      const cy = H * 0.3;
+      return {
+        update(k, elapsed) {
+          t = elapsed;
+          return t < DURATION;
+        },
+        back(ctx) {
+          const a = envelope(t, DURATION, 2000, 2500);
+          if (a <= 0) return;
+          ctx.save();
+          ctx.globalAlpha = a;
+          ctx.fillStyle = '#f472b6'; // pink lotus petals
+          for (let p = 0; p < 8; p++) {
+            const th = (p * TAU) / 8;
+            for (let d = 10; d < 50; d += 10) {
+              const x = cx + Math.cos(th) * d;
+              const y = cy + Math.sin(th) * d * 0.7;
+              ctx.beginPath();
+              ctx.arc(x, y, 2.5, 0, TAU);
+              ctx.fill();
+            }
+          }
+          ctx.restore();
+        },
+      };
+    },
+  });
+
+  // 14. Drone show chữ 'THANH TAI - FULLSTACK DEV'
+  fx.register({
+    name: 'drones_code',
+    label: "Drone Show: 'THANH TAI - FULLSTACK DEV' Trên Trời",
+    weight: 2.0,
+    when: (look) => look.dark > 0.65,
+    create(stage) {
+      const { W, H } = stage;
+      const DURATION = 30000;
+      let t = 0;
+      return {
+        update(k, elapsed) {
+          t = elapsed;
+          return t < DURATION;
+        },
+        back(ctx) {
+          const a = envelope(t, DURATION, 2000, 2000);
+          if (a <= 0) return;
+          ctx.save();
+          ctx.globalAlpha = a * 0.9;
+          ctx.fillStyle = '#38bdf8';
+          ctx.font = 'bold 15px monospace';
+          ctx.textAlign = 'center';
+          ctx.fillText('<THANH TAI / FULLSTACK DEV>', W * 0.5, H * 0.22);
+          ctx.restore();
+        },
+      };
+    },
+  });
+
+  // 15. Landmark 81 dải sóng âm nhạc sống động (Audio Equalizer)
+  fx.register({
+    name: 'landmark_equalizer',
+    label: 'Landmark 81: Dải Sóng Âm Nhạc Sống Động (Audio Equalizer)',
+    weight: 1.8,
+    when: (look) => look.dark > 0.5,
+    create(stage) {
+      const { H } = stage;
+      const L = stage.landmark;
+      const DURATION = 32000;
+      let t = 0;
+      return {
+        update(k, elapsed) {
+          t = elapsed;
+          return t < DURATION;
+        },
+        front(ctx) {
+          const a = envelope(t, DURATION, 1500, 2000);
+          if (a <= 0 || !L) return;
+          ctx.save();
+          stage.traceLandmark(ctx);
+          ctx.clip();
+          const top = H - L.h;
+          const left = L.x - L.w / 2;
+          for (let y = top; y < H; y += 4) {
+            const v = Math.sin(y * 0.05 + t * 0.008) * 0.5 + 0.5;
+            ctx.fillStyle = v > 0.5 ? '#10b981' : '#3b82f6';
+            ctx.fillRect(left, y, L.w * v, 3);
+          }
+          ctx.restore();
+        },
+      };
+    },
+  });
+
+  // 16. Landmark 81 hiệu ứng thác nước số Matrix
+  fx.register({
+    name: 'landmark_waterfall',
+    label: 'Landmark 81: Thác Nước Ánh Sáng Xanh Ngọc Đổ Xuống',
+    weight: 1.8,
+    when: (look) => look.dark > 0.5,
+    create(stage) {
+      const { H } = stage;
+      const L = stage.landmark;
+      const DURATION = 32000;
+      let t = 0;
+      return {
+        update(k, elapsed) {
+          t = elapsed;
+          return t < DURATION;
+        },
+        front(ctx) {
+          const a = envelope(t, DURATION, 1500, 2000);
+          if (a <= 0 || !L) return;
+          ctx.save();
+          stage.traceLandmark(ctx);
+          ctx.clip();
+          const top = H - L.h;
+          const left = L.x - L.w / 2;
+          for (let y = top; y < H; y += 6) {
+            const wave = (y + t * 0.08) % 60;
+            ctx.fillStyle = wave < 25 ? '#38bdf8' : '#0284c7';
+            ctx.fillRect(left, y, L.w, 4);
+          }
+          ctx.restore();
+        },
+      };
+    },
+  });
+
+  // 17. Loạt laser quét đan chéo bầu trời (Laser Cross)
+  fx.register({
+    name: 'laser_cross',
+    label: 'Laser Show: Chùm Laser Đan Chéo Bầu Trời Đêm',
+    weight: 1.7,
+    when: (look) => look.dark > 0.65,
+    create(stage) {
+      const { W, H } = stage;
+      const DURATION = 26000;
+      let t = 0;
+      return {
+        update(k, elapsed) {
+          t = elapsed;
+          return t < DURATION;
+        },
+        back(ctx) {
+          const a = envelope(t, DURATION, 1200, 2500);
+          if (a <= 0) return;
+          ctx.save();
+          ctx.globalAlpha = a * 0.7;
+          ctx.strokeStyle = '#22c55e'; // green laser
+          ctx.lineWidth = 1.5;
+          const swing = Math.sin(t * 0.003) * (W * 0.25);
+          ctx.beginPath();
+          ctx.moveTo(W * 0.2, H * 0.85);
+          ctx.lineTo(W * 0.8 + swing, 0);
+          ctx.moveTo(W * 0.8, H * 0.85);
+          ctx.lineTo(W * 0.2 - swing, 0);
+          ctx.stroke();
+          ctx.restore();
+        },
+      };
+    },
+  });
+
+  // 18. Dàn đèn pha 6 luồng quét nhịp nhàng (Skyline Searchlights)
+  fx.register({
+    name: 'searchlights_skyline',
+    label: 'Dàn Đèn Pha 6 Luồng Quét Đồng Nhịp Chân Trời',
+    weight: 1.8,
+    when: (look) => look.dark > 0.65,
+    create(stage) {
+      const { W, H } = stage;
+      const DURATION = 32000;
+      let t = 0;
+      return {
+        update(k, elapsed) {
+          t = elapsed;
+          return t < DURATION;
+        },
+        back(ctx) {
+          const a = envelope(t, DURATION, 2000, 2500);
+          if (a <= 0) return;
+          ctx.save();
+          ctx.globalAlpha = a * 0.35;
+          ctx.strokeStyle = '#e0f2fe';
+          ctx.lineWidth = 18;
+          for (let i = 0; i < 6; i++) {
+            const bx = W * 0.2 + (i * W * 0.6) / 5;
+            const angle = Math.sin(t * 0.0015 + i * 0.8) * 0.5;
+            ctx.beginPath();
+            ctx.moveTo(bx, H * 0.85);
+            ctx.lineTo(bx + Math.sin(angle) * H * 1.2, 0);
+            ctx.stroke();
+          }
+          ctx.restore();
+        },
+      };
+    },
+  });
+
+  // 19. Tòa nhà Bitexco thắp sáng búp sen (Bitexco Lotus Light)
+  fx.register({
+    name: 'bitexco_light',
+    label: 'Tòa Tháp Bitexco: Búp Sen Thắp Sáng Sân Đỗ Trực Thăng',
+    weight: 1.6,
+    when: (look) => look.dark > 0.55,
+    create(stage) {
+      const { W, H } = stage;
+      const DURATION = 30000;
+      let t = 0;
+      return {
+        update(k, elapsed) {
+          t = elapsed;
+          return t < DURATION;
+        },
+        front(ctx) {
+          const a = envelope(t, DURATION, 1500, 2000);
+          if (a <= 0) return;
+          ctx.save();
+          ctx.globalAlpha = a * 0.85;
+          const bx = W * 0.28;
+          const by = H * 0.55;
+          ctx.fillStyle = '#38bdf8';
+          ctx.beginPath();
+          ctx.arc(bx, by, 4.5, 0, TAU);
+          ctx.fill();
+          // Helipad ring
+          ctx.strokeStyle = '#facc15';
+          ctx.lineWidth = 1.2;
+          ctx.beginPath();
+          ctx.ellipse(bx + 10, by + 4, 8, 3, 0.2, 0, TAU);
+          ctx.stroke();
+          ctx.restore();
+        },
+      };
+    },
+  });
 })((window.Portfolio = window.Portfolio || {}));

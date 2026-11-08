@@ -81,7 +81,7 @@
      * @returns {number} 0..1 phase
      */
     calculateDiurnalPhase(decimalHour) {
-      const milestones = this.config.solarMilestones || [
+      const milestones = this.config?.solarMilestones || [
         { hour: 5.0, phase: 0.58 },
         { hour: 6.0, phase: 0.63 },
         { hour: 8.5, phase: 0.72 },
@@ -132,13 +132,13 @@
      */
     detectSpecialEvents(month, day, dayOfYear) {
       if (this.overrideHolidayId) {
-        const events = this.config.specialEvents || [];
+        const events = this.config?.specialEvents || [];
         const found = events.find((e) => e.id === this.overrideHolidayId);
         if (found) return [found];
         return [{ id: this.overrideHolidayId, name: this.overrideHolidayId }];
       }
 
-      const events = this.config.specialEvents || [];
+      const events = this.config?.specialEvents || [];
       const active = [];
 
       for (const ev of events) {
@@ -166,7 +166,7 @@
      */
     detectSeason(month) {
       if (this.overrideSeason) return this.overrideSeason;
-      const rainyMonths = this.config.rainySeasonMonths || [5, 6, 7, 8, 9, 10, 11];
+      const rainyMonths = this.config?.rainySeasonMonths || [5, 6, 7, 8, 9, 10, 11];
       return rainyMonths.includes(month) ? 'rainy' : 'dry';
     }
 

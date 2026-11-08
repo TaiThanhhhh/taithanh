@@ -377,4 +377,526 @@
       };
     },
   });
+
+  /* ---------- Các Hiện Tượng Thời Tiết & Khí Hậu Sài Gòn Mở Rộng ---------- */
+
+  // 7. Chớp phân nhánh rễ cây nhiều tầng (Forked Lightning)
+  fx.register({
+    name: 'lightning_fork',
+    label: 'Tia Sét Phân Nhánh Rễ Cây Đa Tầng (Forked Lightning)',
+    weight: 1.4,
+    when: (look) => look.dark > 0.5,
+    create(stage) {
+      const { W, H } = stage;
+      const DURATION = 6000;
+      let t = 0;
+      const lx = W * 0.45;
+      Portfolio.ambientEnvironment?.illumination.flash(0.95, [240, 240, 255], 0.82);
+      Portfolio.ambientEnvironment?.notifyDisturbance(lx, H * 0.3, 300, 1.5);
+      return {
+        update(k, elapsed) {
+          t = elapsed;
+          return t < DURATION;
+        },
+        back(ctx) {
+          const a = envelope(t, DURATION, 100, 1200);
+          if (a <= 0) return;
+          ctx.save();
+          ctx.globalAlpha = a;
+          ctx.strokeStyle = '#e0f2fe';
+          ctx.lineWidth = 2.5;
+          ctx.beginPath();
+          ctx.moveTo(lx, 0);
+          ctx.lineTo(lx - 20, H * 0.2);
+          ctx.lineTo(lx + 15, H * 0.4);
+          ctx.lineTo(lx - 10, H * 0.65);
+          // Branch 1
+          ctx.moveTo(lx - 20, H * 0.2);
+          ctx.lineTo(lx - 60, H * 0.35);
+          // Branch 2
+          ctx.moveTo(lx + 15, H * 0.4);
+          ctx.lineTo(lx + 50, H * 0.55);
+          ctx.stroke();
+          ctx.restore();
+        },
+      };
+    },
+  });
+
+  // 8. Chớp nội bộ đám mây rực sáng (Sheet Lightning)
+  fx.register({
+    name: 'lightning_sheet',
+    label: 'Chớp Nội Bộ Tán Mây Rực Sáng (Sheet Lightning)',
+    weight: 1.6,
+    when: (look) => look.dark > 0.5,
+    create(stage) {
+      const { W, H } = stage;
+      const DURATION = 8000;
+      let t = 0;
+      Portfolio.ambientEnvironment?.illumination.flash(0.8, [192, 132, 252], 0.88);
+      return {
+        update(k, elapsed) {
+          t = elapsed;
+          return t < DURATION;
+        },
+        back(ctx) {
+          const a = envelope(t, DURATION, 150, 1500);
+          if (a <= 0) return;
+          ctx.save();
+          ctx.globalAlpha = a * 0.45;
+          ctx.fillStyle = '#c084fc'; // purple flash
+          ctx.fillRect(0, 0, W, H * 0.6);
+          ctx.restore();
+        },
+      };
+    },
+  });
+
+  // 9. Cơn mưa tầm tã đặc trưng mùa mưa Sài Gòn (Heavy Rain)
+  fx.register({
+    name: 'heavy_rain',
+    label: 'Cơn Mưa Rào Xối Xả Mùa Mưa Sài Gòn (Heavy Downpour)',
+    weight: 2.0,
+    when: (_look) => true,
+    create(stage) {
+      const { W, H } = stage;
+      const DURATION = 32000;
+      let t = 0;
+      const drops = Array.from({ length: 90 }, () => ({
+        x: rand(0, W),
+        y: rand(-H, 0),
+        speed: rand(18, 28),
+        len: rand(22, 38),
+      }));
+      Portfolio.ambientEnvironment?.wind.setWind(-1.2, -2.0);
+      return {
+        update(k, elapsed) {
+          t = elapsed;
+          const wind = Portfolio.ambientEnvironment?.wind.sample(0.5) || -1.2;
+          drops.forEach((d) => {
+            d.y += d.speed * k;
+            d.x += wind * 4 * k;
+            if (d.y > H) {
+              d.y = rand(-40, 0);
+              d.x = rand(0, W);
+            }
+          });
+          return t < DURATION;
+        },
+        front(ctx) {
+          const a = envelope(t, DURATION, 2000, 2000);
+          if (a <= 0) return;
+          ctx.save();
+          ctx.globalAlpha = a * 0.55;
+          ctx.strokeStyle = '#bae6fd';
+          ctx.lineWidth = 1.2;
+          ctx.beginPath();
+          drops.forEach((d) => {
+            ctx.moveTo(d.x, d.y);
+            ctx.lineTo(d.x - 6, d.y + d.len);
+          });
+          ctx.stroke();
+          ctx.restore();
+        },
+      };
+    },
+  });
+
+  // 10. Mưa phùn bay lất phất se lạnh (Drizzle)
+  fx.register({
+    name: 'drizzle',
+    label: 'Mưa Phùn Bay Lất Phất Se Lạnh (Saigon Drizzle)',
+    weight: 1.5,
+    when: (_look) => true,
+    create(stage) {
+      const { W, H } = stage;
+      const DURATION = 28000;
+      let t = 0;
+      const motes = Array.from({ length: 45 }, () => ({
+        x: rand(0, W),
+        y: rand(0, H),
+        vy: rand(2, 4),
+        vx: rand(-1, 0.5),
+      }));
+      return {
+        update(k, elapsed) {
+          t = elapsed;
+          motes.forEach((m) => {
+            m.y += m.vy * k;
+            m.x += m.vx * k;
+            if (m.y > H) m.y = 0;
+          });
+          return t < DURATION;
+        },
+        front(ctx) {
+          const a = envelope(t, DURATION, 2000, 2000);
+          if (a <= 0) return;
+          ctx.save();
+          ctx.globalAlpha = a * 0.4;
+          ctx.fillStyle = '#e0f2fe';
+          motes.forEach((m) => {
+            ctx.fillRect(m.x, m.y, 1.5, 3.5);
+          });
+          ctx.restore();
+        },
+      };
+    },
+  });
+
+  // 11. Mưa bóng mây nắng vàng (Sun Shower)
+  fx.register({
+    name: 'sun_shower',
+    label: 'Mưa Bóng Mây Nắng Vàng Rực Rỡ (Sun Shower)',
+    weight: 1.6,
+    when: (look) => look.dark < 0.45,
+    create(stage) {
+      const { W, H } = stage;
+      const DURATION = 26000;
+      let t = 0;
+      const drops = Array.from({ length: 50 }, () => ({
+        x: rand(0, W),
+        y: rand(-H, 0),
+        speed: rand(14, 22),
+      }));
+      return {
+        update(k, elapsed) {
+          t = elapsed;
+          drops.forEach((d) => {
+            d.y += d.speed * k;
+            if (d.y > H) d.y = rand(-20, 0);
+          });
+          return t < DURATION;
+        },
+        front(ctx) {
+          const a = envelope(t, DURATION, 1500, 2000);
+          if (a <= 0) return;
+          ctx.save();
+          ctx.globalAlpha = a * 0.65;
+          ctx.strokeStyle = '#fef08a'; // golden sunlit rain
+          ctx.lineWidth = 1.4;
+          ctx.beginPath();
+          drops.forEach((d) => {
+            ctx.moveTo(d.x, d.y);
+            ctx.lineTo(d.x - 3, d.y + 18);
+          });
+          ctx.stroke();
+          ctx.restore();
+        },
+      };
+    },
+  });
+
+  // 12. Cầu vồng rực rỡ sau cơn mưa (Rainbow)
+  fx.register({
+    name: 'rainbow',
+    label: 'Cầu Vồng 7 Sắc Rực Rỡ Sau Mưa (42deg Rainbow Arc)',
+    weight: 1.8,
+    when: (look) => look.dark < 0.5,
+    create(stage) {
+      const { W, H } = stage;
+      const DURATION = 32000;
+      let t = 0;
+      const cx = W * 0.5;
+      const cy = H * 0.95;
+      const r = Math.min(W, H) * 0.68;
+      const colors = ['#ef4444', '#f97316', '#eab308', '#22c55e', '#06b6d4', '#3b82f6', '#a855f7'];
+      return {
+        update(k, elapsed) {
+          t = elapsed;
+          return t < DURATION;
+        },
+        back(ctx) {
+          const a = envelope(t, DURATION, 3000, 3000);
+          if (a <= 0) return;
+          ctx.save();
+          ctx.globalAlpha = a * 0.42;
+          colors.forEach((col, idx) => {
+            ctx.strokeStyle = col;
+            ctx.lineWidth = 6;
+            ctx.beginPath();
+            ctx.arc(cx, cy, r - idx * 5.5, Math.PI, 0);
+            ctx.stroke();
+          });
+          ctx.restore();
+        },
+      };
+    },
+  });
+
+  // 13. Cầu vồng đôi hiếm gặp (Double Rainbow)
+  fx.register({
+    name: 'double_rainbow',
+    label: 'Hiện Tượng Cầu Vồng Đôi Hiếm Gặp (Double Rainbow)',
+    weight: 1.2,
+    when: (look) => look.dark < 0.45,
+    create(stage) {
+      const { W, H } = stage;
+      const DURATION = 32000;
+      let t = 0;
+      const cx = W * 0.48;
+      const cy = H * 0.98;
+      const r1 = Math.min(W, H) * 0.65;
+      const r2 = r1 + 55;
+      return {
+        update(k, elapsed) {
+          t = elapsed;
+          return t < DURATION;
+        },
+        back(ctx) {
+          const a = envelope(t, DURATION, 3000, 3000);
+          if (a <= 0) return;
+          ctx.save();
+          // Primary bow
+          ctx.globalAlpha = a * 0.45;
+          ctx.strokeStyle = '#38bdf8';
+          ctx.lineWidth = 14;
+          ctx.beginPath();
+          ctx.arc(cx, cy, r1, Math.PI, 0);
+          ctx.stroke();
+          // Secondary inverted bow
+          ctx.globalAlpha = a * 0.22;
+          ctx.strokeStyle = '#f472b6';
+          ctx.lineWidth = 10;
+          ctx.beginPath();
+          ctx.arc(cx, cy, r2, Math.PI, 0);
+          ctx.stroke();
+          ctx.restore();
+        },
+      };
+    },
+  });
+
+  // 14. Làn sương giăng nhẹ mặt nước sông Sài Gòn (River Mist)
+  fx.register({
+    name: 'river_mist',
+    label: 'Làn Sương Giăng Nhẹ Mặt Nước Sông Sài Gòn (River Mist)',
+    weight: 1.7,
+    when: (_look) => true,
+    create(stage) {
+      const { W, H } = stage;
+      const DURATION = 36000;
+      let t = 0;
+      return {
+        update(k, elapsed) {
+          t = elapsed;
+          return t < DURATION;
+        },
+        front(ctx) {
+          const a = envelope(t, DURATION, 3000, 3000);
+          if (a <= 0) return;
+          ctx.save();
+          ctx.globalAlpha = a * 0.28;
+          const my = H * 0.86;
+          const grad = ctx.createLinearGradient(0, my, 0, H);
+          grad.addColorStop(0, 'rgba(255, 255, 255, 0.4)');
+          grad.addColorStop(1, 'rgba(255, 255, 255, 0)');
+          ctx.fillStyle = grad;
+          ctx.fillRect(0, my, W, H - my);
+          ctx.restore();
+        },
+      };
+    },
+  });
+
+  // 15. Ảo ảnh không khí bốc hơi nắng trưa Sài Gòn (Heat Haze Mirage)
+  fx.register({
+    name: 'heat_haze',
+    label: 'Ảo Ảnh Không Khí Nắng Nóng Bốc Hơi (Heat Haze Mirage)',
+    weight: 1.4,
+    when: (look) => look.dark < 0.25,
+    create(stage) {
+      const { W, H } = stage;
+      const DURATION = 30000;
+      let t = 0;
+      return {
+        update(k, elapsed) {
+          t = elapsed;
+          return t < DURATION;
+        },
+        front(ctx) {
+          const a = envelope(t, DURATION, 2000, 2000);
+          if (a <= 0) return;
+          ctx.save();
+          ctx.globalAlpha = a * 0.18;
+          ctx.strokeStyle = '#fef08a';
+          ctx.lineWidth = 1;
+          for (let x = 0; x < W; x += 30) {
+            ctx.beginPath();
+            const yStart = H * 0.85;
+            ctx.moveTo(x, yStart);
+            ctx.quadraticCurveTo(x + Math.sin(t * 0.005 + x) * 10, yStart - 30, x, yStart - 60);
+            ctx.stroke();
+          }
+          ctx.restore();
+        },
+      };
+    },
+  });
+
+  // 16. Đám mây vũ tích khổng lồ hình đe (Cumulonimbus Anvil)
+  fx.register({
+    name: 'cumulonimbus',
+    label: 'Đám Mây Vũ Tích Khổng Lồ Hình Đe (Cumulonimbus Anvil)',
+    weight: 1.6,
+    when: (_look) => true,
+    create(stage) {
+      const { W, H } = stage;
+      const DURATION = 34000;
+      let t = 0;
+      return {
+        update(k, elapsed) {
+          t = elapsed;
+          return t < DURATION;
+        },
+        back(ctx) {
+          const a = envelope(t, DURATION, 3000, 3000);
+          if (a <= 0) return;
+          ctx.save();
+          ctx.globalAlpha = a * 0.55;
+          ctx.fillStyle = '#334155';
+          const cx = W * 0.65;
+          const cy = H * 0.35;
+          ctx.beginPath();
+          ctx.ellipse(cx, cy, 140, 60, 0, 0, TAU);
+          ctx.ellipse(cx + 60, cy - 30, 110, 40, 0, 0, TAU);
+          ctx.fill();
+          ctx.restore();
+        },
+      };
+    },
+  });
+
+  // 17. Đám mây vú Mammatus kỳ vĩ sau cơn dông (Mammatus)
+  fx.register({
+    name: 'mammatus',
+    label: 'Đám Mây Dạng Túi Vú Kỳ Vĩ (Mammatus Cloud Pouches)',
+    weight: 1.3,
+    when: (look) => look.dark > 0.3 && look.dark < 0.7,
+    create(stage) {
+      const { W, H } = stage;
+      const DURATION = 32000;
+      let t = 0;
+      return {
+        update(k, elapsed) {
+          t = elapsed;
+          return t < DURATION;
+        },
+        back(ctx) {
+          const a = envelope(t, DURATION, 3000, 3000);
+          if (a <= 0) return;
+          ctx.save();
+          ctx.globalAlpha = a * 0.45;
+          ctx.fillStyle = '#475569';
+          for (let i = 0; i < 8; i++) {
+            const x = W * 0.2 + i * 85;
+            const y = H * 0.22 + Math.sin(i) * 12;
+            ctx.beginPath();
+            ctx.arc(x, y, 35, 0, Math.PI);
+            ctx.fill();
+          }
+          ctx.restore();
+        },
+      };
+    },
+  });
+
+  // 18. Mây ngũ sắc tán xạ ánh nắng hoàng hôn (Golden Clouds)
+  fx.register({
+    name: 'golden_clouds',
+    label: 'Mây Ngũ Sắc Tán Xạ Ánh Nắng Hoàng Hôn (Golden Clouds)',
+    weight: 1.7,
+    when: (look) => look.dark > 0.15 && look.dark < 0.55,
+    create(stage) {
+      const { W, H } = stage;
+      const DURATION = 34000;
+      let t = 0;
+      return {
+        update(k, elapsed) {
+          t = elapsed;
+          return t < DURATION;
+        },
+        back(ctx) {
+          const a = envelope(t, DURATION, 2500, 2500);
+          if (a <= 0) return;
+          ctx.save();
+          ctx.globalAlpha = a * 0.6;
+          const cx = W * 0.4;
+          const cy = H * 0.3;
+          const g = ctx.createRadialGradient(cx, cy, 20, cx, cy, 180);
+          g.addColorStop(0, '#fef08a');
+          g.addColorStop(0.5, '#f97316');
+          g.addColorStop(1, 'rgba(239, 68, 68, 0)');
+          ctx.fillStyle = g;
+          ctx.beginPath();
+          ctx.arc(cx, cy, 180, 0, TAU);
+          ctx.fill();
+          ctx.restore();
+        },
+      };
+    },
+  });
+
+  // 19. Màn khói sương lam chiều hoàng hôn (Twilight Haze)
+  fx.register({
+    name: 'twilight_haze',
+    label: 'Màn Khói Sương Lam Chiều Hoàng Hôn (Twilight Haze)',
+    weight: 1.5,
+    when: (look) => look.dark > 0.3 && look.dark < 0.65,
+    create(stage) {
+      const { W, H } = stage;
+      const DURATION = 36000;
+      let t = 0;
+      return {
+        update(k, elapsed) {
+          t = elapsed;
+          return t < DURATION;
+        },
+        back(ctx) {
+          const a = envelope(t, DURATION, 3000, 3000);
+          if (a <= 0) return;
+          ctx.save();
+          ctx.globalAlpha = a * 0.25;
+          ctx.fillStyle = '#c084fc'; // purple haze
+          ctx.fillRect(0, H * 0.4, W, H * 0.45);
+          ctx.restore();
+        },
+      };
+    },
+  });
+
+  // 20. Đợt gió giật xào xạc cành lá (Gust Wind)
+  fx.register({
+    name: 'gust_wind',
+    label: 'Đợt Gió Giật Xào Xạc Mùa Mưa (Sudden Wind Gust)',
+    weight: 1.8,
+    when: (_look) => true,
+    create(_stage) {
+      Portfolio.ambientEnvironment?.wind.triggerGust(2.8);
+      const DURATION = 12000;
+      let t = 0;
+      return {
+        update(k, elapsed) {
+          t = elapsed;
+          return t < DURATION;
+        },
+      };
+    },
+  });
+
+  // 21. Chuỗi giông bão liên hoàn (Storm Cascade)
+  fx.register({
+    name: 'storm_cascade',
+    label: 'Chuỗi Giông Bão: Gió Giật → Mây Đen → Sét Đánh → Mưa Rào',
+    tier: 'major',
+    weight: 2.5,
+    when: (_look) => true,
+    create(_stage) {
+      Portfolio.ambientEnvironment?.triggerCascade('cascade_thunderstorm');
+      return {
+        update() {
+          return true;
+        },
+      };
+    },
+  });
 })((window.Portfolio = window.Portfolio || {}));

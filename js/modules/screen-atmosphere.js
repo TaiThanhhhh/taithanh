@@ -296,30 +296,46 @@
       }
     }
 
+    onAtmosphericFlash(intensity, color = [255, 255, 255]) {
+      if (!this.header) return;
+      const rgb = color.join(',');
+      this.header.style.setProperty('--ambient-glow-color', `rgba(${rgb}, ${(intensity * 0.45).toFixed(3)})`);
+      setTimeout(() => {
+        this.applyAtmosphere(true);
+      }, 350);
+    }
+
     step(dt) {
       this.applyAtmosphere(false);
       const state = Portfolio.ambientCalendar?.getState();
       const isRainy = state?.season === 'rainy';
-      const isTet = state?.activeHoliday?.id === 'tet';
+      const holiday = state?.activeHoliday?.id;
+      const isTet = holiday === 'tet';
+      const isMidAutumn = holiday === 'midautumn';
 
       const w = this.width;
       const h = this.height;
+      const wind = Portfolio.ambientEnvironment?.wind.sample(0.6) || 0.4;
 
       this.particles.forEach((p) => {
         p.pulse += p.pulseSpeed;
 
         if (isTet) {
-          // Drifting Mai blossom motion (tumble down-right)
-          p.x += (0.45 + Math.sin(p.pulse) * 0.3) * 60 * dt;
-          p.y += (0.8 + Math.cos(p.pulse * 0.7) * 0.2) * 60 * dt;
+          // Drifting Mai blossom motion (tumble down-right with wind influence)
+          p.x += (wind + Math.sin(p.pulse) * 0.4) * 50 * dt;
+          p.y += (0.9 + Math.cos(p.pulse * 0.7) * 0.25) * 55 * dt;
+        } else if (isMidAutumn) {
+          // Gentle floating fireflies (buoyant sinusoidal wandering)
+          p.x += (Math.sin(p.pulse * 0.8) * 0.6 + wind * 0.2) * 50 * dt;
+          p.y += (p.vy - 0.2 + Math.cos(p.pulse) * 0.4) * 45 * dt;
         } else if (isRainy && (state.period === 'afternoon' || state.period === 'dusk')) {
-          // Gentle ambient rain streak
-          p.x += -0.4 * 60 * dt;
-          p.y += 2.2 * 60 * dt;
+          // Gentle ambient rain streak responsive to wind
+          p.x += (wind * 1.8 - 0.4) * 60 * dt;
+          p.y += 2.4 * 60 * dt;
         } else {
-          // Ambient buoyant dust motes
-          p.x += (p.vx + Math.sin(p.pulse) * 0.12) * 60 * dt;
-          p.y += p.vy * 60 * dt;
+          // Ambient buoyant dust motes carrying with ambient wind
+          p.x += (p.vx + wind * 0.4 + Math.sin(p.pulse) * 0.15) * 55 * dt;
+          p.y += p.vy * 55 * dt;
         }
 
         // Boundary wrap
@@ -336,11 +352,13 @@
 
       const state = Portfolio.ambientCalendar?.getState();
       const period = state?.period || 'night';
-      const isTet = state?.activeHoliday?.id === 'tet';
+      const holiday = state?.activeHoliday?.id;
 
       let particleColor = '255, 255, 255';
-      if (isTet) {
+      if (holiday === 'tet') {
         particleColor = '251, 191, 36'; // golden Mai petals
+      } else if (holiday === 'midautumn') {
+        particleColor = '254, 240, 138'; // gentle lantern warm glow
       } else if (period === 'golden' || period === 'afternoon') {
         particleColor = '255, 185, 100'; // warm golden dust
       } else if (period === 'sunrise' || period === 'morning') {
