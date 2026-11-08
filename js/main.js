@@ -20,6 +20,7 @@
     Portfolio.ambientCalendar?.init();
     Portfolio.screenAtmosphere?.init();
     Portfolio.ambient.init();
+    Portfolio.devTester?.init();
   }
 
   if (document.readyState === 'loading') {

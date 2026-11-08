@@ -32,6 +32,7 @@ Hoặc mở trực tiếp `index.html` bằng trình duyệt.
 │   ├── settings.css           # Panel cài đặt gộp
 │   ├── swarm.css              # Con trỏ, khung dựng, chữ đang viết và công tắc Swarm
 │   ├── ambient.css            # Cảnh Ambient + chuyển cảnh trang <-> cảnh
+│   ├── dev-tester.css         # Panel kiểm thử trực quan VFX & sự kiện
 │   └── color-*.css            # Bảng màu accent, nạp động khi người dùng chọn
 ├── js/
 │   ├── config.js              # Cấu hình tập trung: section, timing, EmailJS, preset particles
@@ -62,6 +63,7 @@ Hoặc mở trực tiếp `index.html` bằng trình duyệt.
 │   │   ├── ambient-scene.js   # Ambient mode: ghép các lớp + đồng hồ
 │   │   ├── screen-atmosphere.js # Khí quyển màn hình tĩnh: ánh sáng nhật dạ, viền sáng avatar & hạt vi khí hậu
 │   │   ├── ambient.js         # Ambient mode: phát hiện idle, chuyển cảnh vào/thoát, chế độ tiết kiệm
+│   │   ├── dev-tester.js      # Bộ công cụ kiểm thử trực quan VFX, ngày đêm, khóa Ambient & console API
 │   │   └── contact-form.js    # Validate form + gửi mail qua EmailJS
 │   └── vendor/
 │       └── particles.min.js   # Thư viện bên thứ ba (không lint/format)
@@ -155,6 +157,31 @@ Trang chủ tĩnh (`#header`) phản ứng tự nhiên với thời gian trong n
   - Tự động ngắt hoàn toàn vòng lặp khi cuộn khỏi màn hình hoặc khi tab bị ẩn để tiết kiệm pin.
 - **Sự kiện văn hóa & Lễ hội Sài Gòn (`ambient-events-calendar.js`)**:
   - Tự động kích hoạt khi đúng ngày: _Tết Nguyên Đán_ (hoa mai, đèn hoa đăng, Landmark 81 mừng xuân), _Quốc Khánh 2/9_ (Landmark 81 cờ đỏ sao vàng), _Tết Trung Thu_ (trăng rằm, đèn cá chép), _Đêm Giao Thừa_ (đếm ngược & pháo hoa), _Cuối tuần_ (thả diều hoàng hôn).
+
+### Kiểm thử hiệu ứng & Developer Test Lab (`dev-tester.js`)
+
+Tích hợp sẵn bảng điều khiển nổi để kiểm thử mọi thời điểm trong ngày, sự kiện lễ hội và hiệu ứng VFX:
+
+- **Cách mở bảng**: Bấm nút **🧪 Test Lab** ở góc phải dưới, phím tắt `Ctrl + Shift + D` (hoặc `F2`), nút trong menu Cài đặt ⚙️, hoặc URL `?test`.
+- **Khóa Ambient Mode (Lock Mode)**: Tự động khóa khi vào từ Test Lab để rê chuột không bị tự thoát màn hình chờ; bấm `[🚪 Thoát Ambient]` hoặc `Esc` để về lại.
+- **Console API (`Portfolio.test`)**:
+  - `Portfolio.test.setHour(17.5)`: Đặt giờ bất kỳ (0..24) để quan sát ánh sáng viền avatar và màu nền.
+  - `Portfolio.test.setHoliday('tet')` / `'midautumn'` / `'nationalday'`: Đặt sự kiện ngày lễ.
+  - `Portfolio.test.triggerAmbient('fireworks')`: Bắn pháo hoa hoặc các sự kiện bất ngờ.
+  - `Portfolio.test.triggerRipple()`: Bắn sóng xung kích con trỏ.
+  - `Portfolio.test.reset()`: Trở về thời gian thực tế.
+
+### Kiểm thử hiệu ứng & Developer Test Lab (`dev-tester.js`)
+
+Tích hợp sẵn bảng điều khiển nổi để kiểm thử mọi thời điểm trong ngày, sự kiện lễ hội và hiệu ứng VFX:
+- **Cách mở bảng**: Bấm nút **🧪 Test Lab** ở góc phải dưới, phím tắt `Ctrl + Shift + D` (hoặc `F2`), nút trong menu Cài đặt ⚙️, hoặc URL `?test`.
+- **Khóa Ambient Mode (Lock Mode)**: Tự động khóa khi vào từ Test Lab để rê chuột không bị tự thoát màn hình chờ; bấm `[🚪 Thoát Ambient]` hoặc `Esc` để về lại.
+- **Console API (`Portfolio.test`)**:
+  - `Portfolio.test.setHour(17.5)`: Đặt giờ bất kỳ (0..24) để quan sát ánh sáng viền avatar và màu nền.
+  - `Portfolio.test.setHoliday('tet')` / `'midautumn'` / `'nationalday'`: Đặt sự kiện ngày lễ.
+  - `Portfolio.test.triggerAmbient('fireworks')`: Bắn pháo hoa hoặc các sự kiện bất ngờ.
+  - `Portfolio.test.triggerRipple()`: Bắn sóng xung kích con trỏ.
+  - `Portfolio.test.reset()`: Trở về thời gian thực tế.
 
 ### Swarm mode
 

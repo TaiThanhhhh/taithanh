@@ -344,6 +344,15 @@
       return registry.map((def) => def.name);
     }
 
+    static get allDefs() {
+      return registry.map((def) => ({
+        name: def.name,
+        label: def.label || def.name,
+        tier: tierOf(def),
+        rarity: def.rarity || 'common',
+      }));
+    }
+
     resize(stage) {
       this.stop();
       this.stage = stage;
@@ -361,7 +370,28 @@
 
     /** Plays an event now, whatever the hour (for trying them out). */
     trigger(name, now) {
-      const def = registry.find((d) => d.name === name);
+      const aliases = {
+        shooting_star: 'shootingstar',
+        heat_lightning: 'lightning',
+        balloon: 'balloons',
+        balloon_glow: 'balloonglow',
+        plane: 'landing',
+        airplane: 'landing',
+        jet: 'contrail',
+        mai: 'blossoms',
+        tet_saigon: 'tet',
+        drone: 'drones',
+        laser: 'lasers',
+        meteor: 'meteors',
+        kite: 'kites',
+        bubble: 'bubbles',
+        seed: 'seeds',
+        swallow: 'swallows',
+        bat: 'bats',
+        searchlight: 'searchlights',
+      };
+      const resolved = aliases[name] || name;
+      const def = registry.find((d) => d.name === resolved);
       if (!def || !this.stage) return false;
       this.begin(def, now);
       return true;

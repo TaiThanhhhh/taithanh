@@ -40,6 +40,10 @@
         <div class="colors"><ul>${swatches}</ul></div>
         <div class="heading settings__heading">Background</div>
         <div class="themes"><ul>${backgrounds}</ul></div>
+        <div class="heading settings__heading">Testing & VFX</div>
+        <div class="dev-lab-trigger-wrap">
+          <button type="button" class="dev-lab-btn" data-open-dev-lab title="Test mọi sự kiện & VFX">🧪 Test Lab</button>
+        </div>
       </div>`;
   }
 
@@ -62,6 +66,11 @@
       root.querySelector('.settings__tab').addEventListener('click', (event) => {
         event.preventDefault();
         setOpen(root, !root.classList.contains(OPEN_CLASS));
+      });
+      root.querySelector('[data-open-dev-lab]')?.addEventListener('click', (event) => {
+        event.preventDefault();
+        setOpen(root, false);
+        Portfolio.devTester?.toggle();
       });
       document.addEventListener('click', (event) => {
         if (!root.contains(event.target)) setOpen(root, false);

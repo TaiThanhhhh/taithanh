@@ -236,17 +236,19 @@
       }
 
       // Adaptive greeting
-      if (this.config.adaptiveGreeting && this.greetingEl && period !== this.currentPeriod) {
+      if (this.config.adaptiveGreeting && this.greetingEl && (force || period !== this.currentPeriod)) {
         this.greetingEl.textContent = state.greetingEn;
         this.currentPeriod = period;
       }
 
       // Calendar holiday indicator badge
-      if (state.activeHoliday && !this.pillEl && this.boxEl) {
-        this.pillEl = document.createElement('div');
-        this.pillEl.className = 'screen-atmosphere__pill';
+      if (state.activeHoliday && this.boxEl) {
+        if (!this.pillEl) {
+          this.pillEl = document.createElement('div');
+          this.pillEl.className = 'screen-atmosphere__pill';
+          this.boxEl.prepend(this.pillEl);
+        }
         this.pillEl.textContent = `✨ ${state.activeHoliday.name}`;
-        this.boxEl.prepend(this.pillEl);
       } else if (!state.activeHoliday && this.pillEl) {
         this.pillEl.remove();
         this.pillEl = null;

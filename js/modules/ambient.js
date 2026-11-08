@@ -27,6 +27,7 @@
     scene: null,
     active: false, // scene shown (or entering)
     exiting: false, // swarm collapsing back into the pointer
+    locked: false, // when true, moving pointer or clicking does not wake
     idleMs: 0,
     idleTimer: 0,
     rafId: 0,
@@ -87,6 +88,7 @@
     state.active = true;
     state.exiting = false;
 
+    state.root.hidden = false;
     state.scene = state.scene || new Portfolio.AmbientScene(state.root, state.config, state.options);
     state.scene.resize();
     state.scene.reset(performance.now(), state.pointer); // the pointer bursts into the swarm
@@ -94,7 +96,6 @@
 
     Portfolio.themeSwitcher.pause();
     Portfolio.swarm.setPaused?.(true);
-    state.root.hidden = false;
     // Next frame, so the transitions start from the current state.
     window.requestAnimationFrame(() => {
       html.classList.add('is-ambient');
@@ -144,10 +145,17 @@
     enter();
   }
 
+  function isTesterElement(target) {
+    return !!target?.closest?.('.dev-tester-panel, .dev-tester-pill');
+  }
+
   function onPointerMove(event) {
     state.pointer.x = event.clientX;
     state.pointer.y = event.clientY;
+    if (isTesterElement(event.target)) return;
+
     if (state.active) {
+      if (state.locked) return;
       // Ignore sensor jitter: only a real movement wakes the page.
       if (!state.wakeFrom) state.wakeFrom = { x: event.clientX, y: event.clientY };
       const moved = Math.hypot(event.clientX - state.wakeFrom.x, event.clientY - state.wakeFrom.y);
@@ -158,7 +166,15 @@
   }
 
   function onInput(event) {
+    if (isTesterElement(event.target)) return;
+
     if (state.active) {
+      if (state.locked) {
+        if (event.type === 'keydown' && event.key === 'Escape') {
+          exit();
+        }
+        return;
+      }
       // The input that wakes the page must not also act on the page: a click must
       // not open a link underneath, a key (e.g. Esc) must not trigger a shortcut.
       if (event.cancelable && event.type !== 'wheel' && event.type !== 'touchstart') event.preventDefault();
@@ -178,6 +194,18 @@
       return state.active;
     },
 
+    get locked() {
+      return state.locked;
+    },
+
+    set locked(val) {
+      state.locked = !!val;
+    },
+
+    setLocked(val) {
+      state.locked = !!val;
+    },
+
     enter,
     exit,
 
@@ -193,6 +221,7 @@
      */
     trigger(name) {
       if (!state.config) return false;
+      state.locked = true; // Keep ambient active during testing so pointer movement doesn't instantly dismiss it
       enter();
       return state.scene.trigger(name);
     },
@@ -208,6 +237,7 @@
       };
       const params = new URLSearchParams(window.location.search);
       state.idleMs = params.has('ambient') ? state.config.idleMsWhenRequested : state.config.idleMs;
+      state.locked = params.has('locked') || params.has('pin') || params.has('test') || params.has('debug');
       // To try things out: ?ambient&speed=40 (a day in a minute), &at=night, &event=fireworks.
       state.options = {
         speed: Math.max(Number(params.get('speed')) || 1, 0.01),

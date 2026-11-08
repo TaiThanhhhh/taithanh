@@ -34,6 +34,9 @@
       this.config = null;
       this.cachedNow = 0;
       this.cachedState = null;
+      this.overrideDate = null;
+      this.overrideHolidayId = null;
+      this.overrideSeason = null;
     }
 
     init() {
@@ -46,7 +49,7 @@
      * @returns {{date: Date, hours: number, minutes: number, seconds: number, decimalHour: number, month: number, day: number, dayOfWeek: number, dayOfYear: number}}
      */
     getTimeComponents(baseDate) {
-      const d = baseDate || new Date();
+      const d = baseDate || this.overrideDate || new Date();
       const hours = d.getHours();
       const minutes = d.getMinutes();
       const seconds = d.getSeconds();
@@ -128,6 +131,13 @@
      * @returns {object[]} Active special events
      */
     detectSpecialEvents(month, day, dayOfYear) {
+      if (this.overrideHolidayId) {
+        const events = this.config.specialEvents || [];
+        const found = events.find((e) => e.id === this.overrideHolidayId);
+        if (found) return [found];
+        return [{ id: this.overrideHolidayId, name: this.overrideHolidayId }];
+      }
+
       const events = this.config.specialEvents || [];
       const active = [];
 
@@ -155,6 +165,7 @@
      * @returns {'rainy'|'dry'}
      */
     detectSeason(month) {
+      if (this.overrideSeason) return this.overrideSeason;
       const rainyMonths = this.config.rainySeasonMonths || [5, 6, 7, 8, 9, 10, 11];
       return rainyMonths.includes(month) ? 'rainy' : 'dry';
     }
@@ -209,6 +220,32 @@
         greetingEn,
         greetingVi,
       };
+    }
+
+    setOverrideHour(hour) {
+      const d = new Date();
+      const h = Math.floor(hour);
+      const m = Math.floor((hour - h) * 60);
+      d.setHours(h, m, 0, 0);
+      this.overrideDate = d;
+      Portfolio.screenAtmosphere?.applyAtmosphere(true);
+    }
+
+    setOverrideHoliday(holidayId) {
+      this.overrideHolidayId = holidayId;
+      Portfolio.screenAtmosphere?.applyAtmosphere(true);
+    }
+
+    setOverrideSeason(season) {
+      this.overrideSeason = season;
+      Portfolio.screenAtmosphere?.applyAtmosphere(true);
+    }
+
+    resetOverride() {
+      this.overrideDate = null;
+      this.overrideHolidayId = null;
+      this.overrideSeason = null;
+      Portfolio.screenAtmosphere?.applyAtmosphere(true);
     }
   }
 
