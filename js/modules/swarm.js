@@ -16,6 +16,7 @@
 
   const state = {
     enabled: false,
+    paused: false,
     layer: null,
     flock: null,
     builder: null,
@@ -53,16 +54,18 @@
   /* ---------- Loop ---------- */
 
   function frame(now) {
-    const k = Math.min((now - state.lastTime) / FRAME_MS, 3); // frame-rate independent
+    // Elapsed time in 60fps frames. rAF timestamps mark the frame start and can be
+    // slightly earlier than performance.now() at scheduling, so clamp at 0 (never negative).
+    const k = Math.min(Math.max((now - state.lastTime) / FRAME_MS, 0), 3);
     state.lastTime = now;
     state.flock.update(k, now);
     state.builder.update(now);
-    state.flock.render();
+    state.flock.render(k);
     state.rafId = window.requestAnimationFrame(frame);
   }
 
   function startLoop() {
-    if (state.rafId || !state.enabled) return;
+    if (state.rafId || !state.enabled || state.paused) return;
     state.lastTime = performance.now();
     state.rafId = window.requestAnimationFrame(frame);
   }
@@ -161,6 +164,13 @@
 
   Portfolio.swarm = {
     setEnabled,
+
+    /** Freezes the loop without turning the mode off (e.g. while ambient mode covers the page). */
+    setPaused(paused) {
+      state.paused = paused;
+      if (paused) stopLoop();
+      else startLoop();
+    },
 
     get enabled() {
       return state.enabled;

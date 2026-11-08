@@ -28,7 +28,7 @@
   const STYLE_KEYS = ['opacity', 'translate', 'rotate', 'scale', 'transition'];
   const SCAN_INTERVAL_MS = 200;
   const SCALE_FROM = 0.6;
-  /** Fraction of the remaining distance a scripted cursor covers per frame (smooth follow). */
+  /** Fraction of the remaining distance a scripted cursor covers per 60fps frame (smooth follow). */
   const FOLLOW = 0.4;
   const STATE_COLORS = { error: '#ff4d4f', ok: '#22c55e' };
   const TYPO_LETTERS = 'etaoinshrdlucmfwypvbgk';
@@ -85,6 +85,8 @@
     }
 
     update(now) {
+      // Elapsed time in 60fps frames, for frame-rate independent smoothing.
+      this.k = this.now ? Math.min(Math.max((now - this.now) / Portfolio.motion.FRAME_MS, 0), 3) : 1;
       this.now = now;
       this.rects.clear();
       // Read phase: measure everything the scripts need this frame in one go,
@@ -425,8 +427,9 @@
 
     /** Smoothly moves a scripted cursor towards a point. */
     place(agent, x, y) {
-      agent.x += (x - agent.x) * FOLLOW;
-      agent.y += (y - agent.y) * FOLLOW;
+      const f = Portfolio.motion.smoothing(FOLLOW, this.k);
+      agent.x += (x - agent.x) * f;
+      agent.y += (y - agent.y) * f;
       agent.vx = 0;
       agent.vy = 0;
     }

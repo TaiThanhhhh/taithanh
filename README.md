@@ -31,11 +31,13 @@ Hoặc mở trực tiếp `index.html` bằng trình duyệt.
 │   ├── portfolio.css          # Trang Portfolio: lưới zig-zag, ảnh 16:10, nút viền quét màu
 │   ├── settings.css           # Panel cài đặt gộp
 │   ├── swarm.css              # Con trỏ, khung dựng, chữ đang viết và công tắc Swarm
+│   ├── ambient.css            # Cảnh Ambient + chuyển cảnh trang <-> cảnh
 │   └── color-*.css            # Bảng màu accent, nạp động khi người dùng chọn
 ├── js/
 │   ├── config.js              # Cấu hình tập trung: section, timing, EmailJS, preset particles
 │   ├── main.js                # Entry point, khởi tạo các module theo thứ tự
 │   ├── modules/
+│   │   ├── motion.js          # Tiện ích animation không phụ thuộc tần số quét (60/75/144/240 Hz)
 │   │   ├── loader.js          # Màn hình intro
 │   │   ├── navigation.js      # Menu fullscreen + chuyển section kèm hiệu ứng wipe
 │   │   ├── settings.js        # Panel cài đặt duy nhất (bánh răng): Colors + Background, dùng chung mọi trang
@@ -46,6 +48,17 @@ Hoặc mở trực tiếp `index.html` bằng trình duyệt.
 │   │   ├── swarm-flock.js     # Swarm mode: vật lý đàn chim (boids) + vẽ con trỏ
 │   │   ├── swarm-builder.js   # Swarm mode: hàng đợi việc + 4 động tác dựng trang khi cuộn
 │   │   ├── swarm.js           # Swarm mode: bật/tắt, input, vòng lặp animation
+│   │   ├── ambient-cycle.js   # Ambient mode: một ngày rút gọn (keyframe màu trời, mặt trời, mặt trăng)
+│   │   ├── ambient-sky.js     # Ambient mode: trời, sao, mặt trời/trăng, mây, đường chân trời, đèn cửa sổ
+│   │   ├── ambient-events.js  # Ambient mode: điều phối sự kiện (2 tầng, độ hiếm, chú thích) + tiện ích vẽ
+│   │   ├── ambient-events-night.js   # Pháo hoa, đêm pháo hoa lớn, đèn trời, drone show, LED + laser Landmark 81, đèn pha
+│   │   ├── ambient-events-sky.js     # Sao băng, vệ tinh, sao chổi, nguyệt thực, quầng trăng, mặt trời giả, tia nắng
+│   │   ├── ambient-events-weather.js # Chớp, giông đêm, mưa rào + cầu vồng, mưa xa, sương sớm, bóng mây
+│   │   ├── ambient-events-day.js     # Khinh khí cầu (cả ban đêm), diều, bóng bay, bong bóng, hoa dầu, hoa mai
+│   │   ├── ambient-events-flyby.js   # Vệt khói, chim chữ V, máy bay hạ cánh, trực thăng, dơi, én, máy bay giấy, băng rôn
+│   │   ├── ambient-murmuration.js # Ambient mode: đàn con trỏ 3D (boids topo, sóng kích động, chuyển cảnh)
+│   │   ├── ambient-scene.js   # Ambient mode: ghép các lớp + đồng hồ
+│   │   ├── ambient.js         # Ambient mode: phát hiện idle, chuyển cảnh vào/thoát, chế độ tiết kiệm
 │   │   └── contact-form.js    # Validate form + gửi mail qua EmailJS
 │   └── vendor/
 │       └── particles.min.js   # Thư viện bên thứ ba (không lint/format)
@@ -57,6 +70,9 @@ Hoặc mở trực tiếp `index.html` bằng trình duyệt.
 
 - **Namespace duy nhất** `window.Portfolio`: mỗi file là một IIFE `'use strict'` gắn module của mình vào namespace,
   không rò biến toàn cục. Dùng script thường (không ES module) để site vẫn chạy khi mở qua `file://`.
+- **Mượt ở mọi tần số quét**: mọi chuyển động tính theo thời gian thực, không theo số khung hình (`motion.js`).
+  Con trỏ tròn dùng một vòng lặp làm mượt theo hàm mũ (không tạo tween mỗi lần rê chuột); particles.js chạy ở mỗi
+  khung hình thứ n của màn hình để giữ ~60 bước/giây như thiết kế (144 Hz → cách 1 khung, 240 Hz → cách 3 khung).
 - **Config tách khỏi logic**: mọi selector, thời gian animation, key bên thứ ba đều nằm trong `js/config.js`.
 - **Một panel cài đặt**: `settings.js` render một lần vào `[data-component="settings"]` (nằm ngoài các section nên
   dùng được ở mọi trang); `color-switcher.js` và `theme-switcher.js` chỉ lo phần áp dụng.
@@ -75,6 +91,52 @@ Hoặc mở trực tiếp `index.html` bằng trình duyệt.
 1. Tạo `css/color-<tên>.css` (copy từ một file màu sẵn có).
 2. Thêm `'color-<tên>'` vào `colorThemes` trong `js/config.js`.
 3. Thêm class `.color-<tên>` (màu của ô swatch) trong `css/index.css`.
+
+### Ambient mode: Sài Gòn một ngày (nền động cho màn hình phụ)
+
+Khi trang **Home** không được dùng trong 30 giây, nó chuyển thành một nền động để làm việc / chơi game bên cạnh; rê chuột,
+bấm phím hoặc click là trở lại (cú click/phím đánh thức không tác động lên trang).
+
+- **Dùng làm nền màn hình phụ**: mở `index.html?ambient` → vào Ambient sau 8 giây không dùng.
+- **Một ngày rút gọn** (không theo giờ thật, mặc định 40 phút một vòng, `cycleMinutes`): mỗi lần vào bắt đầu từ hoàng
+  hôn → chạng vạng → blue hour → đêm → khuya → rạng đông → bình minh → sáng → trưa → chiều → hoàng hôn. Màu chuyển dần
+  liên tục (không nhảy cảnh). Mặt trời mọc cạnh Bitexco, lặn sau Landmark 81; mặt trăng mỗi lần một pha (thỉnh thoảng
+  trăng tròn). Đèn cửa sổ bật dần từng ô lúc chạng vạng và tắt dần lúc khuya; ban ngày kính cửa sổ phản chiếu trời. Rời
+  máy ít hơn `resumeMinutes` (10 phút) rồi quay lại idle thì ngày chạy tiếp, không bắt đầu lại. Sau hoàng hôn và
+  trước bình minh có vành đai Venus (dải hồng phía đối diện mặt trời, trên bóng xanh của Trái Đất).
+- **Cảnh**: mây được tô theo giờ (hồng lúc hoàng hôn, trắng ban ngày, đèn thành phố hắt từ dưới ban đêm), đường chân
+  trời hai lớp có sương (Landmark 81, Bitexco), thỉnh thoảng một chiếc máy bay. Đồng hồ chữ mảnh trôi rất chậm (chống lưu
+  ảnh OLED).
+- **Đàn con trỏ**: ~1.200 con trỏ bay như chim sáo trong không gian 3D: mỗi con theo 7 con gần nhất (tương tác topo,
+  Ballerini et al. 2008), thỉnh thoảng có "sóng kích động" lan qua đàn (Procaccini 2011, Hemelrijk 2019). Ban đêm phát
+  sáng, ban ngày thành bóng đen như đàn sáo thật. 16 con trỏ màu của Swarm bay trong đàn, đôi khi một con hiện tên. Cả
+  đàn giật mình né ra khi pháo hoa nổ gần hay có sấm.
+- **36 sự kiện bất ngờ, hai tầng**, chọn theo giờ trong ngày, theo độ hiếm (thường / ít gặp / hiếm) và không lặp lại các
+  sự kiện vừa xem:
+  - **Sự kiện chính** (mỗi 1–2,5 phút sau khi cái trước kết thúc, `eventGapMinutes`; lần đầu sau 25–60 giây), có dòng
+    chú thích nhỏ dưới đồng hồ (`captions`), sự kiện hiếm có nhãn "hiếm gặp":
+    - Đêm: pháo hoa theo các loại pháo thật (cúc, liễu, cọ, vòng, crossette, lấp lánh, đổi màu), đêm pháo hoa lớn
+      (hiếm), thả đèn trời, drone show (trái tim/ngôi sao → con trỏ của site → "XIN CHÀO" / "SÀI GÒN" / `</>`), Landmark
+      81 trình diễn LED, laser show từ đỉnh Landmark 81, đèn pha quét trời, mưa sao băng, sao chổi (hiếm), nguyệt thực
+      toàn phần (hiếm, chỉ khi trăng tròn), quầng trăng, chớp xa, giông đêm, khinh khí cầu thắp lửa, sương sớm.
+    - Ngày: khinh khí cầu, thả diều trên sân thượng, chùm bóng bay, bong bóng xà phòng, mùa hoa dầu bay (quả dầu xoay
+      như chong chóng), hoa mai bay, mưa rào rồi cầu vồng (đôi khi cầu vồng đôi), mưa xa cuối trời, bóng mây trôi qua các
+      tòa nhà, quầng mặt trời và mặt trời giả (hiếm), tia nắng xuyên mây, máy bay kéo băng rôn (`bannerMessages`).
+  - **Chi tiết nhỏ** chạy xen giữa (mỗi 20–45 giây, `detailGapSeconds`): sao băng, ISS / đoàn vệ tinh Starlink, máy bay
+    hạ cánh Tân Sơn Nhất (đèn hạ cánh, đèn mạn, đèn chớp), trực thăng (ban đêm có đèn rọi), dơi lúc chạng vạng, chim én,
+    vệt khói máy bay, đàn chim bay chữ V, máy bay giấy nhào lộn.
+- **Thử nhanh**: `index.html?ambient&speed=40` (một ngày trong 1 phút), `&at=night` (golden, dusk, blue, night, late,
+  predawn, sunrise, morning, noon, afternoon), `&event=fireworks`; hoặc trong console:
+  `Portfolio.ambient.trigger('kites')` (danh sách: `Portfolio.ambient.events`).
+- **Chuyển cảnh**: vào: trang Home lùi ra sau (mờ + thu nhỏ nhẹ), con trỏ của bạn tuôn ra thành cả đàn; thoát: cả đàn
+  ùa về thu vào con trỏ trong khi trang hiện rõ lại.
+- **Nhẹ máy**: hình dạng sky/mây/sao/đường chân trời vẽ một lần rồi để CSS (GPU) di chuyển; màu theo giờ áp dụng mỗi
+  giây qua CSS custom properties, chỉ tô lại canvas khi màu thật sự đổi. Canvas sự kiện chỉ có bộ nhớ khi đang có sự
+  kiện (0×0 lúc nghỉ). Chỉ đàn con trỏ tính mỗi khung hình (typed arrays + lưới không gian). Tự giảm số con trỏ nếu vượt `frameBudgetMs` (mặc định 4 ms), tự xuống 30 fps khi cửa sổ
+  không được focus (bạn đang ở game/app khác), trang bên dưới ngừng vẽ hoàn toàn, dừng hẳn khi tab bị ẩn. Đã kiểm tra
+  không rò rỉ bộ nhớ.
+- Tắt khi người dùng bật "giảm chuyển động". Tham số trong `config.ambient` (thời gian chờ, số con trỏ, ngân sách khung
+  hình, độ dài một ngày, nhịp sự kiện, chú thích, chữ trên băng rôn).
 
 ### Swarm mode
 

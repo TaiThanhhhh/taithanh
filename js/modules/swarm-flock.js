@@ -37,6 +37,7 @@
     constructor(layer, config, origin) {
       this.layer = layer;
       this.config = config;
+      this.k = 1;
       this.pointer = { x: origin.x, y: origin.y, lastMove: -Infinity };
 
       this.resize();
@@ -205,7 +206,8 @@
         forces.push([this.steer(a, -gy, gx, f.maxSpeed, f.maxForce), w.swirl * strength]);
       }
 
-      a.wander += (Math.random() - 0.5) * 0.45;
+      // Random walk: scale by sqrt(time) so the jitter per second is the same at any refresh rate.
+      a.wander += (Math.random() - 0.5) * 0.45 * Math.sqrt(Math.max(this.k, 0));
       forces.push([[Math.cos(a.wander) * f.maxForce, Math.sin(a.wander) * f.maxForce], w.wander]);
 
       // Soft walls: turn back before leaving the screen.
@@ -223,6 +225,7 @@
 
     /** @param {number} k Frame scale (1 = one 60fps frame). */
     update(k, now) {
+      this.k = k;
       const f = this.config.flock;
       const pointerActive = now - this.pointer.lastMove < f.pointerMemory;
 
@@ -271,12 +274,14 @@
       });
     }
 
-    render() {
+    /** @param {number} k Frame scale (1 = one 60fps frame). */
+    render(k) {
       this.agents.forEach((a) => {
         // Bank towards the direction of travel; straighten up while working.
         const heading = (Math.atan2(a.vy, a.vx) * 180) / Math.PI;
         const targetRot = a.mode === 'work' ? 0 : wrapDeg(heading - ARROW_HEADING_DEG);
-        a.rot = wrapDeg(a.rot + wrapDeg(targetRot - a.rot) * (a.mode === 'work' ? 0.35 : 0.18));
+        const ease = Portfolio.motion.smoothing(a.mode === 'work' ? 0.35 : 0.18, k);
+        a.rot = wrapDeg(a.rot + wrapDeg(targetRot - a.rot) * ease);
         a.el.style.transform = `translate3d(${a.x.toFixed(1)}px, ${a.y.toFixed(1)}px, 0) rotate(${a.rot.toFixed(1)}deg)`;
       });
     }

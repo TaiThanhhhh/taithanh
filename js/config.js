@@ -159,6 +159,44 @@
     },
 
     /**
+     * Ambient mode: when the home page is left alone, it turns into a living
+     * background: a day over Saigon compressed into `cycleMinutes`, the cursor
+     * murmuration, surprises every couple of minutes (fireworks, a comet, kites, a
+     * storm...) and small details in between (a shooting star, a plane landing, bats).
+     * Open index.html?ambient on a second monitor to enter it sooner.
+     * To try things out, add &speed=40 (a day in a minute), &at=<keyframe> (golden,
+     * dusk, blue, night, late, predawn, sunrise, morning, noon, afternoon) or
+     * &event=<name> (list: Portfolio.ambient.events).
+     */
+    ambient: {
+      idleMs: 30000,
+      /** Idle delay when the page is opened with ?ambient (dedicated background tab). */
+      idleMsWhenRequested: 8000,
+      /** Pointer movement (px) that counts as "back to work". */
+      wakeDistance: 6,
+      /** Cursors in the murmuration; lowered automatically on machines that can't keep up. */
+      cursors: 1200,
+      /** Per-frame time (ms) the murmuration may use before shedding cursors; low leaves room for games. */
+      frameBudgetMs: 4,
+      maxFps: 60,
+      /** One whole day (golden hour → night → day → golden hour again), in minutes. */
+      cycleMinutes: 40,
+      /** Going idle again within this many minutes resumes the day where it was. */
+      resumeMinutes: 10,
+      /** Random gap between two surprise events, in minutes. */
+      eventGapMinutes: [1, 2.5],
+      /** The first one comes sooner (in seconds), so a short break can catch one too. */
+      firstEventSeconds: [25, 60],
+      /** Small details in between (shooting star, plane landing, bats...): gap in seconds. */
+      detailGapSeconds: [20, 45],
+      firstDetailSeconds: [8, 20],
+      /** Name the surprise going on under the clock. */
+      captions: true,
+      /** What the plane towing a banner says (one is picked each time). */
+      bannerMessages: ['XIN CHÀO SÀI GÒN', 'HAVE A NICE DAY', 'THANKS FOR VISITING'],
+    },
+
+    /**
      * Swarm mode: a flock of cursors that flies around the pointer and builds the
      * page as it scrolls into view. Labels are the site owner's stack; colours are
      * the site's six palettes.

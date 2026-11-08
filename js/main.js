@@ -17,6 +17,7 @@
     Portfolio.cursor.init();
     Portfolio.swarm.init();
     Portfolio.contactForm.init();
+    Portfolio.ambient.init();
   }
 
   if (document.readyState === 'loading') {

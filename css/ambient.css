@@ -1,0 +1,349 @@
+/*
+ * Ambient mode (js/modules/ambient*.js): the cursor swarm over Saigon, through a
+ * whole day. Layers are listed back to front. Colours come from the day cycle
+ * (ambient-cycle.js) as custom properties on .ambient (--sky-0..4, --glow,
+ * --stars, ...); the fallbacks below are the night.
+ *
+ * Transition timings must match ENTER_MS / EXIT_MS in js/modules/ambient.js.
+ */
+
+/* ---------- Page <-> scene transition ---------- */
+
+/* Exit (0.9 s): the home page comes back into focus. */
+#header {
+  transform-origin: 50% 58%;
+  transition:
+    filter 0.9s cubic-bezier(0.2, 0, 0, 1),
+    transform 0.9s cubic-bezier(0.2, 0, 0, 1);
+}
+
+/* Enter (1.5 s): the home page recedes, like a camera pulling focus to the night. */
+.is-ambient #header {
+  filter: blur(9px) brightness(0.7);
+  transform: scale(0.965);
+  transition-duration: 1.5s;
+}
+
+/* Once the scene is opaque, the page underneath is not painted at all. */
+.is-ambient-settled #all {
+  visibility: hidden;
+}
+
+/* The ring cursor would sit on top of the scene. */
+.is-ambient .cursor {
+  opacity: 0 !important;
+}
+
+/* ---------- Scene ---------- */
+
+.ambient {
+  position: fixed;
+  inset: 0;
+  z-index: 40; /* above everything, including the settings tab and swarm switch */
+  overflow: hidden;
+  background: var(--sky-0, #03050c);
+  opacity: 0;
+  pointer-events: none;
+  cursor: none;
+  transition: opacity 0.9s cubic-bezier(0.4, 0, 1, 1);
+}
+
+.ambient.is-active {
+  opacity: 1;
+  pointer-events: auto;
+  transition: opacity 1.5s cubic-bezier(0.2, 0, 0, 1);
+}
+
+.ambient[hidden] {
+  display: none;
+}
+
+.ambient > * {
+  position: absolute;
+}
+
+/* Sky from the zenith down to the horizon (at night: deep navy above, the city's glow below). */
+.ambient__sky-gradient {
+  inset: 0;
+  background: linear-gradient(
+    to bottom,
+    var(--sky-0, #03050c) 0%,
+    var(--sky-1, #070b19) 38%,
+    var(--sky-2, #111327) 64%,
+    var(--sky-3, #1d1729) 82%,
+    var(--sky-4, #2a1c2b) 100%
+  );
+}
+
+.ambient__city-glow {
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 55%;
+  background: radial-gradient(
+    ellipse 90% 70% at 62% 100%,
+    var(--glow, rgba(255, 150, 96, 0.13)),
+    transparent 70%
+  );
+  pointer-events: none;
+}
+
+/*
+ * Belt of Venus: just after sunset and before sunrise, a pink band above the horizon
+ * opposite the sun, over the bluish shadow of the Earth rising from the horizon.
+ * --belt-x is the side opposite the sun (0..1 across the screen).
+ */
+.ambient__belt {
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 62%;
+  background: linear-gradient(
+    to bottom,
+    transparent 18%,
+    rgba(236, 156, 176, 0.34) 34%,
+    rgba(214, 140, 172, 0.16) 48%,
+    rgba(52, 62, 112, 0.36) 60%,
+    rgba(40, 48, 92, 0.3) 100%
+  );
+  opacity: var(--belt, 0);
+  -webkit-mask-image: linear-gradient(
+    to right,
+    transparent calc(var(--belt-x, 0.25) * 100% - 65%),
+    #000 calc(var(--belt-x, 0.25) * 100%),
+    transparent calc(var(--belt-x, 0.25) * 100% + 65%)
+  );
+  mask-image: linear-gradient(
+    to right,
+    transparent calc(var(--belt-x, 0.25) * 100% - 65%),
+    #000 calc(var(--belt-x, 0.25) * 100%),
+    transparent calc(var(--belt-x, 0.25) * 100% + 65%)
+  );
+  pointer-events: none;
+}
+
+/* Stars fade out by day (the twinkle animates the opacity of a layer inside). */
+.ambient__starfield {
+  inset: 0;
+  opacity: var(--stars, 1);
+}
+
+.ambient__stars {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 80%;
+  animation: ambient-stars 900s ease-in-out infinite alternate;
+}
+
+/* A sparse layer of stars breathes in and out: twinkling with no JavaScript. */
+.ambient__stars--twinkle {
+  animation:
+    ambient-stars 900s ease-in-out infinite alternate,
+    ambient-twinkle 5.5s ease-in-out infinite alternate;
+}
+
+@keyframes ambient-stars {
+  to {
+    transform: translate3d(-24px, 6px, 0);
+  }
+}
+
+@keyframes ambient-twinkle {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0.25;
+  }
+}
+
+/* Sun and moon: placed by JavaScript about once a second; the transition smooths the steps. */
+.ambient__sun,
+.ambient__moon {
+  left: 0;
+  top: 0;
+  opacity: 0;
+  will-change: transform;
+  transition:
+    transform 1s linear,
+    opacity 1s linear;
+}
+
+.ambient__sun {
+  border-radius: 50%;
+  background: radial-gradient(
+    circle closest-side,
+    var(--sun-core, #fff) 0 7.5%,
+    var(--sun-halo, rgba(255, 246, 220, 0.3)) 9%,
+    var(--sun-halo-soft, rgba(255, 246, 220, 0.09)) 28%,
+    transparent 72%
+  );
+}
+
+/* Clouds drift across on the compositor (no JavaScript per frame). */
+.ambient__cloud {
+  left: 0;
+  will-change: transform;
+  animation-name: ambient-cloud;
+  animation-timing-function: linear;
+  animation-iteration-count: infinite;
+}
+
+@keyframes ambient-cloud {
+  from {
+    transform: translate3d(-65vw, 0, 0);
+  }
+  to {
+    transform: translate3d(110vw, 0, 0);
+  }
+}
+
+.ambient__birds,
+.ambient__fx {
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+/* Surprise events: 0x0 (nothing to composite) except while one runs. */
+.ambient__fx {
+  pointer-events: none;
+}
+
+.ambient__skyline,
+.ambient__lights {
+  left: 0;
+  bottom: 0;
+  width: 100%;
+  height: 62%;
+}
+
+/* A plane on approach to Tan Son Nhat: a blinking light crossing slowly. */
+.ambient__plane {
+  top: 13%;
+  left: 0;
+  width: 3px;
+  height: 3px;
+  border-radius: 50%;
+  background: #ffffff;
+  opacity: var(--plane, 0.9);
+  animation:
+    ambient-plane 140s linear infinite,
+    ambient-blink 1.4s steps(1, end) infinite;
+}
+
+@keyframes ambient-plane {
+  from {
+    transform: translate3d(104vw, 0, 0);
+  }
+  to {
+    transform: translate3d(-4vw, 9vh, 0);
+  }
+}
+
+@keyframes ambient-blink {
+  0% {
+    background: #ffffff;
+    box-shadow: 0 0 6px 1px rgba(255, 255, 255, 0.7);
+  }
+  12% {
+    background: #ff4545;
+    box-shadow: 0 0 6px 1px rgba(255, 69, 69, 0.7);
+  }
+  24% {
+    background: rgba(255, 255, 255, 0.15);
+    box-shadow: none;
+  }
+}
+
+/* Keeps the clock legible over the brightest part of the skyline. */
+.ambient__vignette {
+  left: 0;
+  bottom: 0;
+  width: 70vw;
+  height: 70vh;
+  background: radial-gradient(
+    ellipse at 0% 100%,
+    rgba(3, 4, 10, 0.5) 0%,
+    rgba(3, 4, 10, 0.2) 38%,
+    rgba(3, 4, 10, 0) 70%
+  );
+  opacity: var(--vignette, 1); /* lighter by day */
+  pointer-events: none;
+}
+
+/* ---------- Clock ---------- */
+.ambient__hud {
+  left: 7vw;
+  bottom: 9vh;
+  color: rgba(240, 242, 250, 0.9);
+  text-shadow:
+    0 1px 18px rgba(0, 0, 0, var(--hud-shadow, 0.4)),
+    0 0 2px rgba(0, 0, 0, calc(var(--hud-shadow, 0.4) * 0.4)); /* crisper edges against a bright sky */
+  transition: transform 60s linear;
+}
+
+.ambient__time {
+  font-family: raleway;
+  font-weight: 300;
+  font-size: clamp(64px, 9.5vw, 184px);
+  line-height: 0.92;
+  letter-spacing: -0.02em;
+  font-variant-numeric: lining-nums tabular-nums;
+  font-feature-settings:
+    'lnum' 1,
+    'tnum' 1;
+}
+
+.ambient__date {
+  margin-top: 22px;
+  font-family: poppins;
+  font-size: 13px;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  opacity: 0.7;
+}
+
+/* The surprise going on, named quietly under the date. */
+.ambient__caption {
+  margin-top: 14px;
+  font-family: poppins;
+  font-size: 12px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  opacity: 0;
+  transform: translateY(6px);
+  transition:
+    opacity 1.2s ease,
+    transform 1.2s ease;
+}
+
+.ambient__caption::before {
+  content: '\2726';
+  margin-right: 0.8em;
+}
+
+.ambient__caption.is-shown {
+  opacity: 0.62;
+  transform: none;
+}
+
+.ambient__rare {
+  margin-left: 0.9em;
+  padding: 2px 8px;
+  border: 1px solid currentColor;
+  border-radius: 999px;
+  font-size: 10px;
+  letter-spacing: 0.14em;
+}
+
+/* Fine film grain over everything: hides gradient banding (static, very low contrast). */
+.ambient::after {
+  content: '';
+  inset: 0;
+  pointer-events: none;
+  opacity: 0.05;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 1  0 0 0 0 1  0 0 0 0 1  0 0 0 0.9 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
+}
