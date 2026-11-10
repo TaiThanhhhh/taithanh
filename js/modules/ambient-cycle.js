@@ -309,7 +309,14 @@
 
   /** The sun rises at 0.6 and sets at 0.045 of the next day, just after golden hour. */
   const SUN = { rise: 0.6, span: 0.445 };
-  const MOON = { rise: 0.1, span: 0.5 };
+  const SYNODIC = 29.53;
+  /**
+   * The moon rises later every day of its month: with the sun at new moon, at sunset when
+   * full (so a young crescent hangs in the west after sunset, the full moon rises at dusk
+   * and stays up all night, an old moon rises before dawn).
+   */
+  const moonArc = (age) => ({ rise: (SUN.rise + age / SYNODIC) % 1, span: 0.5 });
+  const NIGHT = 0.25;
 
   const clamp01 = (x) => Math.min(1, Math.max(0, x));
   const smooth = (x) => {
@@ -347,7 +354,7 @@
     return {
       // Rises by Bitexco, sets just behind Landmark 81.
       x: 0.36 + 0.4 * u,
-      y: 0.95 - 0.72 * altitude,
+      y: 0.9 - 0.68 * altitude, // sets just below the far bank (the river starts at 0.88)
       altitude,
       alpha: 1,
       core: mix([255, 250, 236], [255, 168, 96], low),
@@ -359,13 +366,17 @@
   function moonAt(u, dark) {
     return {
       x: 0.38 + 0.56 * u,
-      y: 0.92 - 0.66 * Math.sin(Math.PI * u),
+      y: 0.89 - 0.62 * Math.sin(Math.PI * u),
       alpha: smooth((dark - 0.45) / 0.4),
     };
   }
 
-  /** The look of the day at `phase` (0..1). */
-  function lookAt(phase) {
+  /**
+   * The look of the day at `phase` (0..1).
+   * @param {number} phase
+   * @param {{age: number, illumination: number}} [moon] Tonight's moon (real phase); none at new moon.
+   */
+  function lookAt(phase, moon = { age: 14.8, illumination: 1 }) {
     const p = wrap(phase);
     let i = KEYFRAMES.length - 1;
     while (KEYFRAMES[i].at > p) i--;
@@ -379,9 +390,9 @@
       if (key !== 'at' && key !== 'name') look[key] = mix(a[key], b[key], u);
     });
     const sun = arc(p, SUN);
-    const moon = arc(p, MOON);
+    const moonUp = moon.illumination > 0.03 ? arc(p, moonArc(moon.age)) : null;
     look.sun = sun === null ? null : sunAt(sun);
-    look.moon = moon === null ? null : moonAt(moon, look.dark);
+    look.moon = moonUp === null ? null : moonAt(moonUp, look.dark);
     // Opposite the sun: where it set (evening) or where it will rise (morning).
     look.beltX = 1 - (look.sun ? look.sun.x : p < 0.3 ? 0.76 : 0.36);
     return look;
@@ -394,12 +405,15 @@
      *   (`?speed=40`: the day runs 40x faster; `?at=night`: where each visit starts).
      */
     constructor(config, options = {}) {
-      this.useRealTime = options.speed || options.at !== undefined ? false : (config.useRealTime ?? true);
+      this.useRealTime = options.speed || options.at !== undefined ? false : !!config.useRealTime;
       this.cycleMs = (config.cycleMinutes * 60000) / (options.speed || 1);
       this.resumeMs = config.resumeMinutes * 60000;
       this.startPhase = options.at ?? 0;
       this.origin = null;
       this.stoppedAt = -Infinity;
+      /** A time-lapse to a phase, then held there (a live show at night): {from, to, start, ms}. */
+      this.held = null;
+      this.moon = { age: 14.8, illumination: 1 };
     }
 
     /** Starts the day at golden hour, or resumes it after a short wake. */
@@ -413,17 +427,52 @@
       this.stoppedAt = now;
     }
 
-    phase(now) {
+    /** Phase the day would be at by its own clock. */
+    clockPhase(now) {
       if (this.useRealTime && Portfolio.ambientCalendar) {
-        return Portfolio.ambientCalendar.calculateDiurnalPhase(
-          Portfolio.ambientCalendar.getTimeComponents().decimalHour,
-        );
+        return Portfolio.ambientCalendar.getState().phase;
       }
       return wrap((now - this.origin) / this.cycleMs);
     }
 
+    phase(now) {
+      const h = this.held;
+      if (!h) return this.clockPhase(now);
+      const u = h.ms ? clamp01((now - h.start) / h.ms) : 1;
+      // Forward through the hours, like a time-lapse: dusk, blue hour, then night.
+      return wrap(h.from + wrap(h.to - h.from) * smooth(u));
+    }
+
+    /**
+     * Brings the night for a show the city is putting on right now, and keeps it until
+     * `release`. In real-time mode the clock already says night, so nothing changes.
+     */
+    holdNight(now, look) {
+      if (this.held || this.useRealTime) return;
+      const from = this.phase(now);
+      const dark = look ? look.dark : 0;
+      this.held = { from, to: dark > 0.85 ? from : NIGHT, start: now, ms: dark > 0.85 ? 0 : 14000 };
+    }
+
+    get holding() {
+      return !!this.held;
+    }
+
+    /** The day runs on from where it was held. */
+    release(now) {
+      if (!this.held) return;
+      const p = this.phase(now);
+      this.held = null;
+      this.origin = now - p * this.cycleMs;
+    }
+
+    /** Tonight's moon, from the lunar calendar (ambient-calendar.js). */
+    setMoon(moon) {
+      if (moon) this.moon = moon;
+    }
+
     look(now) {
-      return lookAt(this.phase(now));
+      return lookAt(this.phase(now), this.moon);
     }
 
     /**

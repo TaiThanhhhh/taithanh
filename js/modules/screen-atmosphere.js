@@ -315,7 +315,7 @@
 
       const w = this.width;
       const h = this.height;
-      const wind = Portfolio.ambientEnvironment?.wind.sample(0.6) || 0.4;
+      const wind = 0.4; // a light breeze to the right, like the clouds in ambient mode
 
       this.particles.forEach((p) => {
         p.pulse += p.pulseSpeed;

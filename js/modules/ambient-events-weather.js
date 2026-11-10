@@ -1,8 +1,14 @@
 /**
- * @file Ambient weather (registered with ambient-events.js): distant lightning, a night
- * thunderstorm, a passing shower and its rainbow, virga (rain that never reaches
- * the ground) far away, morning fog over the city, and cloud shadows sweeping
- * across the buildings.
+ * @file Ambient weather (registered with ambient-events.js), after Saigon's seasons:
+ * in the rainy season (May–Nov) afternoon downpours with thunder, night storms and
+ * distant lightning, virga far away; a rainbow when the sun comes back; in the dry
+ * season (Dec–Apr) clear skies and, around Tết, hazy mornings when fog covers the
+ * city; cloud shadows sweeping across the buildings on sunny days.
+ *
+ * Lightning: a stepped leader feeling its way down, the return stroke, then one to
+ * three restrikes (fx.strikeAt); each stroke lights the clouds from inside (the
+ * skyline stays black against them) and the thunder reaches the flock a few seconds
+ * later, as far as the strike is.
  */
 (function (Portfolio) {
   'use strict';
@@ -11,25 +17,27 @@
   const { TAU, rand, envelope, clamp01 } = fx;
   const FRAME_MS = Portfolio.motion.FRAME_MS;
 
-  /** Brightness of a flash `dt` ms after the strike: most flicker twice. */
-  const flash = (strike, dt) => {
-    if (dt < 0) return 0;
-    const second = strike.double && dt > 130 ? 0.7 * Math.exp(-(dt - 130) / 110) : 0;
-    return Math.min(1, Math.exp(-dt / 90) + second);
-  };
-
-  /** Strikes over a stretch of time; thunder startles the whole flock. */
+  /**
+   * Strikes over a stretch of time. Some come down to the rooftops (a visible bolt),
+   * the others stay inside the clouds and only light them up. `near` (0..1) sets how
+   * soon the thunder follows: about three seconds a kilometre.
+   */
   function strikes(stage, from, until, gap, boltChance) {
     const { W, H } = stage;
     const list = [];
     for (let at = from; at < until; at += rand(gap[0], gap[1])) {
       const x = rand(0.1, 0.9) * W;
+      const near = Math.random();
       list.push({
         at,
         x,
-        double: Math.random() < 0.6,
+        near,
+        cloud: H * rand(0.16, 0.3),
+        timing: fx.strikeTiming(),
         bolt: Math.random() < boltChance ? fx.bolt(x, H * rand(0.18, 0.3), stage.rooftop, H / 1080) : null,
+        thunderAt: at + 600 + (1 - near) * 5500,
         heard: false,
+        strokes: 0,
       });
     }
     return list;
@@ -37,37 +45,64 @@
 
   function thunder(stage, list, t) {
     list.forEach((s) => {
-      if (s.heard || t < s.at) return;
+      if (s.heard || t < s.thunderAt) return;
       s.heard = true;
-      if (stage.startle) stage.startle(s.x, stage.H * 0.4, stage.H * 2);
+      // A close one makes the whole flock flinch; a far rumble only those nearby.
+      if (stage.startle) stage.startle(s.x, stage.H * 0.4, stage.H * (0.6 + 1.6 * s.near));
     });
   }
 
-  /** The sky lights up from inside the clouds; the skyline stays black in front of it. */
+  /**
+   * Draws the strikes going on: the bolt (growing down, then flashing), a glow inside
+   * the cloud it comes from, and each stroke lighting the clouds on the light layer.
+   * @returns {number} Brightness of the brightest stroke (0..1), to light the rain.
+   */
   function drawStrikes(ctx, stage, list, t, strength = 1) {
     const { W, H } = stage;
     const scale = H / 1080;
     let brightest = 0;
     list.forEach((s) => {
-      const I = flash(s, t - s.at);
+      const dt = t - s.at;
+      if (dt < 0 || dt > 2500) return;
+      const { reach, I } = fx.strikeAt(s.timing, dt);
       if (I < 0.01) return;
-      brightest = Math.max(brightest, I);
-      const g = ctx.createRadialGradient(s.x, H * 0.28, 0, s.x, H * 0.28, W * 0.5);
-      g.addColorStop(0, `rgba(205, 200, 255, ${0.32 * I * strength})`);
-      g.addColorStop(1, 'rgba(205, 200, 255, 0)');
-      ctx.fillStyle = g;
-      ctx.fillRect(0, 0, W, H);
-      if (s.bolt) fx.drawBolt(ctx, s.bolt, I, scale);
+      // Each new stroke (return stroke, restrikes) throws light on the clouds.
+      const strokes =
+        reach < 1 ? 0 : 1 + s.timing.restrikes.filter((at) => dt - s.timing.leader >= at).length;
+      if (strokes > s.strokes) {
+        s.strokes = strokes;
+        if (stage.flash) {
+          const power = (0.55 + 0.45 * s.near) * strength * (strokes === 1 ? 1 : 0.75);
+          stage.flash(s.x, s.cloud, power, [214, 208, 255], 0.55 + 0.25 * s.near, 110);
+        }
+      }
+      brightest = Math.max(brightest, I * (reach < 1 ? 0.2 : 1));
+      if (reach >= 1) {
+        // The cloud the strike comes from glows from inside.
+        const r = W * 0.16;
+        const g = ctx.createRadialGradient(s.x, s.cloud, 0, s.x, s.cloud, r);
+        g.addColorStop(0, `rgba(225, 220, 255, ${0.28 * I * strength})`);
+        g.addColorStop(1, 'rgba(225, 220, 255, 0)');
+        ctx.fillStyle = g;
+        ctx.fillRect(s.x - r, s.cloud - r, r * 2, r * 2);
+      }
+      if (s.bolt) fx.drawBolt(ctx, s.bolt, I, scale, reach);
     });
     return brightest;
   }
+
+  /** More rain in the rainy season, most of it in the afternoon. */
+  const rainySeason = (cal, look) =>
+    cal.season === 'rainy' ? (['afternoon', 'golden'].includes(look.name) ? 3 : 1.4) : 0.12;
 
   /* ---------- Distant lightning ---------- */
 
   fx.register({
     name: 'lightning',
     label: 'Chớp xa',
+    group: 'weather',
     weight: 0.8,
+    boost: (cal) => (cal.season === 'rainy' ? 1.6 : 0.2),
     when: (look) => look.dark > 0.45,
     create(stage) {
       const DURATION = 22000;
@@ -91,6 +126,8 @@
   fx.register({
     name: 'storm',
     label: 'Giông đêm',
+    group: 'weather',
+    season: 'rainy',
     rarity: 'uncommon',
     when: (look) => look.dark > 0.5,
     create(stage) {
@@ -110,7 +147,7 @@
         update(k, elapsed) {
           t = elapsed;
           amount = clamp01(Math.min(t / 7000, (RAIN_END - t) / 8000));
-          rain.update(k);
+          rain.update(k, amount);
           thunder(stage, list, t);
           return t < DURATION;
         },
@@ -138,14 +175,19 @@
   fx.register({
     name: 'shower',
     label: 'Mưa rào bất chợt',
+    group: 'weather',
     weight: 0.8,
+    boost: rainySeason,
     when: (look) => look.dark < 0.3,
-    create(stage) {
+    create(stage, extra = {}) {
       const { W, H } = stage;
       const DURATION = 82000;
       const RAIN_END = 46000;
       const BOW_AT = 40000;
-      const rain = fx.rain(stage);
+      const rainy = !extra.cal || extra.cal.season === 'rainy';
+      const rain = fx.rain(stage, { count: rainy ? 420 : 280 });
+      // A rainy-season downpour comes with thunder.
+      const list = rainy ? strikes(stage, 7000, RAIN_END - 9000, [5000, 11000], 0.7) : [];
       // The rainbow stands opposite the sun; now and then a bright double rainbow.
       const sun = stage.look.sun;
       const bowX = sun ? Math.min(0.8, Math.max(0.2, 1 - sun.x)) * W : 0;
@@ -165,13 +207,16 @@
         update(k, elapsed) {
           t = elapsed;
           amount = clamp01(Math.min(t / 6000, (RAIN_END - t) / 8000));
-          rain.update(k);
+          rain.update(k, amount);
+          thunder(stage, list, t);
           return t < DURATION;
         },
         back(ctx) {
           if (amount > 0) {
-            ctx.fillStyle = `rgba(92, 102, 118, ${0.42 * amount})`; // overcast
+            // Overcast; a rainy-season downpour turns the sky a heavy grey.
+            ctx.fillStyle = `rgba(88, 96, 110, ${(rainy ? 0.66 : 0.42) * amount})`;
             ctx.fillRect(0, 0, W, H);
+            drawStrikes(ctx, stage, list, t, 0.7);
           }
           if (!sun || t < BOW_AT) return;
           const a = envelope(t - BOW_AT, DURATION - BOW_AT, 7000, 12000);
@@ -192,7 +237,7 @@
         },
         front(ctx) {
           if (amount <= 0) return;
-          ctx.fillStyle = `rgba(170, 180, 195, ${0.12 * amount})`; // mist over the city
+          ctx.fillStyle = `rgba(160, 168, 180, ${(rainy ? 0.24 : 0.12) * amount})`; // mist over the city
           ctx.fillRect(0, 0, W, H);
           rain.draw(ctx, amount);
         },
@@ -205,7 +250,9 @@
   fx.register({
     name: 'virga',
     label: 'Mưa xa cuối trời',
+    group: 'weather',
     rarity: 'uncommon',
+    boost: (cal) => (cal.season === 'rainy' ? 1.5 : 0.3),
     when: (look) => look.dark < 0.35,
     create(stage) {
       const { W, H } = stage;
@@ -271,8 +318,11 @@
 
   fx.register({
     name: 'fog',
-    label: 'Sương sớm',
-    when: (look) => ['late', 'predawn', 'sunrise', 'morning'].includes(look.name),
+    label: 'Sương mù phủ thành phố',
+    place: 'Sáng mùa khô',
+    group: 'weather',
+    // Saigon's foggy mornings come in the dry season, around Tết (Dec–Feb).
+    when: (look, _stage, cal) => !!cal.haze && ['late', 'predawn', 'sunrise', 'morning'].includes(look.name),
     create(stage) {
       const { W, H } = stage;
       const scale = H / 1080;
@@ -335,6 +385,7 @@
   fx.register({
     name: 'cloudshadows',
     label: 'Bóng mây trôi qua thành phố',
+    group: 'weather',
     when: (look) => look.dark < 0.2 && !!look.sun,
     create(stage) {
       const { W, H } = stage;
@@ -372,529 +423,7 @@
           // Only on the buildings, never on the sky between them.
           ctx.globalAlpha = 1;
           ctx.globalCompositeOperation = 'destination-in';
-          ctx.drawImage(stage.silhouette, 0, stage.skylineTop, W, H - stage.skylineTop);
-        },
-      };
-    },
-  });
-
-  /* ---------- Các Hiện Tượng Thời Tiết & Khí Hậu Sài Gòn Mở Rộng ---------- */
-
-  // 7. Chớp phân nhánh rễ cây nhiều tầng (Forked Lightning)
-  fx.register({
-    name: 'lightning_fork',
-    label: 'Tia Sét Phân Nhánh Rễ Cây Đa Tầng (Forked Lightning)',
-    weight: 1.4,
-    when: (look) => look.dark > 0.5,
-    create(stage) {
-      const { W, H } = stage;
-      const DURATION = 6000;
-      let t = 0;
-      const lx = W * 0.45;
-      Portfolio.ambientEnvironment?.illumination.flash(0.95, [240, 240, 255], 0.82);
-      Portfolio.ambientEnvironment?.notifyDisturbance(lx, H * 0.3, 300, 1.5);
-      return {
-        update(k, elapsed) {
-          t = elapsed;
-          return t < DURATION;
-        },
-        back(ctx) {
-          const a = envelope(t, DURATION, 100, 1200);
-          if (a <= 0) return;
-          ctx.save();
-          ctx.globalAlpha = a;
-          ctx.strokeStyle = '#e0f2fe';
-          ctx.lineWidth = 2.5;
-          ctx.beginPath();
-          ctx.moveTo(lx, 0);
-          ctx.lineTo(lx - 20, H * 0.2);
-          ctx.lineTo(lx + 15, H * 0.4);
-          ctx.lineTo(lx - 10, H * 0.65);
-          // Branch 1
-          ctx.moveTo(lx - 20, H * 0.2);
-          ctx.lineTo(lx - 60, H * 0.35);
-          // Branch 2
-          ctx.moveTo(lx + 15, H * 0.4);
-          ctx.lineTo(lx + 50, H * 0.55);
-          ctx.stroke();
-          ctx.restore();
-        },
-      };
-    },
-  });
-
-  // 8. Chớp nội bộ đám mây rực sáng (Sheet Lightning)
-  fx.register({
-    name: 'lightning_sheet',
-    label: 'Chớp Nội Bộ Tán Mây Rực Sáng (Sheet Lightning)',
-    weight: 1.6,
-    when: (look) => look.dark > 0.5,
-    create(stage) {
-      const { W, H } = stage;
-      const DURATION = 8000;
-      let t = 0;
-      Portfolio.ambientEnvironment?.illumination.flash(0.8, [192, 132, 252], 0.88);
-      return {
-        update(k, elapsed) {
-          t = elapsed;
-          return t < DURATION;
-        },
-        back(ctx) {
-          const a = envelope(t, DURATION, 150, 1500);
-          if (a <= 0) return;
-          ctx.save();
-          ctx.globalAlpha = a * 0.45;
-          ctx.fillStyle = '#c084fc'; // purple flash
-          ctx.fillRect(0, 0, W, H * 0.6);
-          ctx.restore();
-        },
-      };
-    },
-  });
-
-  // 9. Cơn mưa tầm tã đặc trưng mùa mưa Sài Gòn (Heavy Rain)
-  fx.register({
-    name: 'heavy_rain',
-    label: 'Cơn Mưa Rào Xối Xả Mùa Mưa Sài Gòn (Heavy Downpour)',
-    weight: 2.0,
-    when: (_look) => true,
-    create(stage) {
-      const { W, H } = stage;
-      const DURATION = 32000;
-      let t = 0;
-      const drops = Array.from({ length: 90 }, () => ({
-        x: rand(0, W),
-        y: rand(-H, 0),
-        speed: rand(18, 28),
-        len: rand(22, 38),
-      }));
-      Portfolio.ambientEnvironment?.wind.setWind(-1.2, -2.0);
-      return {
-        update(k, elapsed) {
-          t = elapsed;
-          const wind = Portfolio.ambientEnvironment?.wind.sample(0.5) || -1.2;
-          drops.forEach((d) => {
-            d.y += d.speed * k;
-            d.x += wind * 4 * k;
-            if (d.y > H) {
-              d.y = rand(-40, 0);
-              d.x = rand(0, W);
-            }
-          });
-          return t < DURATION;
-        },
-        front(ctx) {
-          const a = envelope(t, DURATION, 2000, 2000);
-          if (a <= 0) return;
-          ctx.save();
-          ctx.globalAlpha = a * 0.55;
-          ctx.strokeStyle = '#bae6fd';
-          ctx.lineWidth = 1.2;
-          ctx.beginPath();
-          drops.forEach((d) => {
-            ctx.moveTo(d.x, d.y);
-            ctx.lineTo(d.x - 6, d.y + d.len);
-          });
-          ctx.stroke();
-          ctx.restore();
-        },
-      };
-    },
-  });
-
-  // 10. Mưa phùn bay lất phất se lạnh (Drizzle)
-  fx.register({
-    name: 'drizzle',
-    label: 'Mưa Phùn Bay Lất Phất Se Lạnh (Saigon Drizzle)',
-    weight: 1.5,
-    when: (_look) => true,
-    create(stage) {
-      const { W, H } = stage;
-      const DURATION = 28000;
-      let t = 0;
-      const motes = Array.from({ length: 45 }, () => ({
-        x: rand(0, W),
-        y: rand(0, H),
-        vy: rand(2, 4),
-        vx: rand(-1, 0.5),
-      }));
-      return {
-        update(k, elapsed) {
-          t = elapsed;
-          motes.forEach((m) => {
-            m.y += m.vy * k;
-            m.x += m.vx * k;
-            if (m.y > H) m.y = 0;
-          });
-          return t < DURATION;
-        },
-        front(ctx) {
-          const a = envelope(t, DURATION, 2000, 2000);
-          if (a <= 0) return;
-          ctx.save();
-          ctx.globalAlpha = a * 0.4;
-          ctx.fillStyle = '#e0f2fe';
-          motes.forEach((m) => {
-            ctx.fillRect(m.x, m.y, 1.5, 3.5);
-          });
-          ctx.restore();
-        },
-      };
-    },
-  });
-
-  // 11. Mưa bóng mây nắng vàng (Sun Shower)
-  fx.register({
-    name: 'sun_shower',
-    label: 'Mưa Bóng Mây Nắng Vàng Rực Rỡ (Sun Shower)',
-    weight: 1.6,
-    when: (look) => look.dark < 0.45,
-    create(stage) {
-      const { W, H } = stage;
-      const DURATION = 26000;
-      let t = 0;
-      const drops = Array.from({ length: 50 }, () => ({
-        x: rand(0, W),
-        y: rand(-H, 0),
-        speed: rand(14, 22),
-      }));
-      return {
-        update(k, elapsed) {
-          t = elapsed;
-          drops.forEach((d) => {
-            d.y += d.speed * k;
-            if (d.y > H) d.y = rand(-20, 0);
-          });
-          return t < DURATION;
-        },
-        front(ctx) {
-          const a = envelope(t, DURATION, 1500, 2000);
-          if (a <= 0) return;
-          ctx.save();
-          ctx.globalAlpha = a * 0.65;
-          ctx.strokeStyle = '#fef08a'; // golden sunlit rain
-          ctx.lineWidth = 1.4;
-          ctx.beginPath();
-          drops.forEach((d) => {
-            ctx.moveTo(d.x, d.y);
-            ctx.lineTo(d.x - 3, d.y + 18);
-          });
-          ctx.stroke();
-          ctx.restore();
-        },
-      };
-    },
-  });
-
-  // 12. Cầu vồng rực rỡ sau cơn mưa (Rainbow)
-  fx.register({
-    name: 'rainbow',
-    label: 'Cầu Vồng 7 Sắc Rực Rỡ Sau Mưa (42deg Rainbow Arc)',
-    weight: 1.8,
-    when: (look) => look.dark < 0.5,
-    create(stage) {
-      const { W, H } = stage;
-      const DURATION = 32000;
-      let t = 0;
-      const cx = W * 0.5;
-      const cy = H * 0.95;
-      const r = Math.min(W, H) * 0.68;
-      const colors = ['#ef4444', '#f97316', '#eab308', '#22c55e', '#06b6d4', '#3b82f6', '#a855f7'];
-      return {
-        update(k, elapsed) {
-          t = elapsed;
-          return t < DURATION;
-        },
-        back(ctx) {
-          const a = envelope(t, DURATION, 3000, 3000);
-          if (a <= 0) return;
-          ctx.save();
-          ctx.globalAlpha = a * 0.42;
-          colors.forEach((col, idx) => {
-            ctx.strokeStyle = col;
-            ctx.lineWidth = 6;
-            ctx.beginPath();
-            ctx.arc(cx, cy, r - idx * 5.5, Math.PI, 0);
-            ctx.stroke();
-          });
-          ctx.restore();
-        },
-      };
-    },
-  });
-
-  // 13. Cầu vồng đôi hiếm gặp (Double Rainbow)
-  fx.register({
-    name: 'double_rainbow',
-    label: 'Hiện Tượng Cầu Vồng Đôi Hiếm Gặp (Double Rainbow)',
-    weight: 1.2,
-    when: (look) => look.dark < 0.45,
-    create(stage) {
-      const { W, H } = stage;
-      const DURATION = 32000;
-      let t = 0;
-      const cx = W * 0.48;
-      const cy = H * 0.98;
-      const r1 = Math.min(W, H) * 0.65;
-      const r2 = r1 + 55;
-      return {
-        update(k, elapsed) {
-          t = elapsed;
-          return t < DURATION;
-        },
-        back(ctx) {
-          const a = envelope(t, DURATION, 3000, 3000);
-          if (a <= 0) return;
-          ctx.save();
-          // Primary bow
-          ctx.globalAlpha = a * 0.45;
-          ctx.strokeStyle = '#38bdf8';
-          ctx.lineWidth = 14;
-          ctx.beginPath();
-          ctx.arc(cx, cy, r1, Math.PI, 0);
-          ctx.stroke();
-          // Secondary inverted bow
-          ctx.globalAlpha = a * 0.22;
-          ctx.strokeStyle = '#f472b6';
-          ctx.lineWidth = 10;
-          ctx.beginPath();
-          ctx.arc(cx, cy, r2, Math.PI, 0);
-          ctx.stroke();
-          ctx.restore();
-        },
-      };
-    },
-  });
-
-  // 14. Làn sương giăng nhẹ mặt nước sông Sài Gòn (River Mist)
-  fx.register({
-    name: 'river_mist',
-    label: 'Làn Sương Giăng Nhẹ Mặt Nước Sông Sài Gòn (River Mist)',
-    weight: 1.7,
-    when: (_look) => true,
-    create(stage) {
-      const { W, H } = stage;
-      const DURATION = 36000;
-      let t = 0;
-      return {
-        update(k, elapsed) {
-          t = elapsed;
-          return t < DURATION;
-        },
-        front(ctx) {
-          const a = envelope(t, DURATION, 3000, 3000);
-          if (a <= 0) return;
-          ctx.save();
-          ctx.globalAlpha = a * 0.28;
-          const my = H * 0.86;
-          const grad = ctx.createLinearGradient(0, my, 0, H);
-          grad.addColorStop(0, 'rgba(255, 255, 255, 0.4)');
-          grad.addColorStop(1, 'rgba(255, 255, 255, 0)');
-          ctx.fillStyle = grad;
-          ctx.fillRect(0, my, W, H - my);
-          ctx.restore();
-        },
-      };
-    },
-  });
-
-  // 15. Ảo ảnh không khí bốc hơi nắng trưa Sài Gòn (Heat Haze Mirage)
-  fx.register({
-    name: 'heat_haze',
-    label: 'Ảo Ảnh Không Khí Nắng Nóng Bốc Hơi (Heat Haze Mirage)',
-    weight: 1.4,
-    when: (look) => look.dark < 0.25,
-    create(stage) {
-      const { W, H } = stage;
-      const DURATION = 30000;
-      let t = 0;
-      return {
-        update(k, elapsed) {
-          t = elapsed;
-          return t < DURATION;
-        },
-        front(ctx) {
-          const a = envelope(t, DURATION, 2000, 2000);
-          if (a <= 0) return;
-          ctx.save();
-          ctx.globalAlpha = a * 0.18;
-          ctx.strokeStyle = '#fef08a';
-          ctx.lineWidth = 1;
-          for (let x = 0; x < W; x += 30) {
-            ctx.beginPath();
-            const yStart = H * 0.85;
-            ctx.moveTo(x, yStart);
-            ctx.quadraticCurveTo(x + Math.sin(t * 0.005 + x) * 10, yStart - 30, x, yStart - 60);
-            ctx.stroke();
-          }
-          ctx.restore();
-        },
-      };
-    },
-  });
-
-  // 16. Đám mây vũ tích khổng lồ hình đe (Cumulonimbus Anvil)
-  fx.register({
-    name: 'cumulonimbus',
-    label: 'Đám Mây Vũ Tích Khổng Lồ Hình Đe (Cumulonimbus Anvil)',
-    weight: 1.6,
-    when: (_look) => true,
-    create(stage) {
-      const { W, H } = stage;
-      const DURATION = 34000;
-      let t = 0;
-      return {
-        update(k, elapsed) {
-          t = elapsed;
-          return t < DURATION;
-        },
-        back(ctx) {
-          const a = envelope(t, DURATION, 3000, 3000);
-          if (a <= 0) return;
-          ctx.save();
-          ctx.globalAlpha = a * 0.55;
-          ctx.fillStyle = '#334155';
-          const cx = W * 0.65;
-          const cy = H * 0.35;
-          ctx.beginPath();
-          ctx.ellipse(cx, cy, 140, 60, 0, 0, TAU);
-          ctx.ellipse(cx + 60, cy - 30, 110, 40, 0, 0, TAU);
-          ctx.fill();
-          ctx.restore();
-        },
-      };
-    },
-  });
-
-  // 17. Đám mây vú Mammatus kỳ vĩ sau cơn dông (Mammatus)
-  fx.register({
-    name: 'mammatus',
-    label: 'Đám Mây Dạng Túi Vú Kỳ Vĩ (Mammatus Cloud Pouches)',
-    weight: 1.3,
-    when: (look) => look.dark > 0.3 && look.dark < 0.7,
-    create(stage) {
-      const { W, H } = stage;
-      const DURATION = 32000;
-      let t = 0;
-      return {
-        update(k, elapsed) {
-          t = elapsed;
-          return t < DURATION;
-        },
-        back(ctx) {
-          const a = envelope(t, DURATION, 3000, 3000);
-          if (a <= 0) return;
-          ctx.save();
-          ctx.globalAlpha = a * 0.45;
-          ctx.fillStyle = '#475569';
-          for (let i = 0; i < 8; i++) {
-            const x = W * 0.2 + i * 85;
-            const y = H * 0.22 + Math.sin(i) * 12;
-            ctx.beginPath();
-            ctx.arc(x, y, 35, 0, Math.PI);
-            ctx.fill();
-          }
-          ctx.restore();
-        },
-      };
-    },
-  });
-
-  // 18. Mây ngũ sắc tán xạ ánh nắng hoàng hôn (Golden Clouds)
-  fx.register({
-    name: 'golden_clouds',
-    label: 'Mây Ngũ Sắc Tán Xạ Ánh Nắng Hoàng Hôn (Golden Clouds)',
-    weight: 1.7,
-    when: (look) => look.dark > 0.15 && look.dark < 0.55,
-    create(stage) {
-      const { W, H } = stage;
-      const DURATION = 34000;
-      let t = 0;
-      return {
-        update(k, elapsed) {
-          t = elapsed;
-          return t < DURATION;
-        },
-        back(ctx) {
-          const a = envelope(t, DURATION, 2500, 2500);
-          if (a <= 0) return;
-          ctx.save();
-          ctx.globalAlpha = a * 0.6;
-          const cx = W * 0.4;
-          const cy = H * 0.3;
-          const g = ctx.createRadialGradient(cx, cy, 20, cx, cy, 180);
-          g.addColorStop(0, '#fef08a');
-          g.addColorStop(0.5, '#f97316');
-          g.addColorStop(1, 'rgba(239, 68, 68, 0)');
-          ctx.fillStyle = g;
-          ctx.beginPath();
-          ctx.arc(cx, cy, 180, 0, TAU);
-          ctx.fill();
-          ctx.restore();
-        },
-      };
-    },
-  });
-
-  // 19. Màn khói sương lam chiều hoàng hôn (Twilight Haze)
-  fx.register({
-    name: 'twilight_haze',
-    label: 'Màn Khói Sương Lam Chiều Hoàng Hôn (Twilight Haze)',
-    weight: 1.5,
-    when: (look) => look.dark > 0.3 && look.dark < 0.65,
-    create(stage) {
-      const { W, H } = stage;
-      const DURATION = 36000;
-      let t = 0;
-      return {
-        update(k, elapsed) {
-          t = elapsed;
-          return t < DURATION;
-        },
-        back(ctx) {
-          const a = envelope(t, DURATION, 3000, 3000);
-          if (a <= 0) return;
-          ctx.save();
-          ctx.globalAlpha = a * 0.25;
-          ctx.fillStyle = '#c084fc'; // purple haze
-          ctx.fillRect(0, H * 0.4, W, H * 0.45);
-          ctx.restore();
-        },
-      };
-    },
-  });
-
-  // 20. Đợt gió giật xào xạc cành lá (Gust Wind)
-  fx.register({
-    name: 'gust_wind',
-    label: 'Đợt Gió Giật Xào Xạc Mùa Mưa (Sudden Wind Gust)',
-    weight: 1.8,
-    when: (_look) => true,
-    create(_stage) {
-      Portfolio.ambientEnvironment?.wind.triggerGust(2.8);
-      const DURATION = 12000;
-      let t = 0;
-      return {
-        update(k, elapsed) {
-          t = elapsed;
-          return t < DURATION;
-        },
-      };
-    },
-  });
-
-  // 21. Chuỗi giông bão liên hoàn (Storm Cascade)
-  fx.register({
-    name: 'storm_cascade',
-    label: 'Chuỗi Giông Bão: Gió Giật → Mây Đen → Sét Đánh → Mưa Rào',
-    tier: 'major',
-    weight: 2.5,
-    when: (_look) => true,
-    create(_stage) {
-      Portfolio.ambientEnvironment?.triggerCascade('cascade_thunderstorm');
-      return {
-        update() {
-          return true;
+          ctx.drawImage(stage.silhouette, 0, stage.skylineTop, W, stage.skylineH);
         },
       };
     },

@@ -1,501 +1,611 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="description" content="Thanh Tai Nguyen, software engineer in Ho Chi Minh City. Full-stack and real-time apps with Angular and Spring Boot.">
-  <meta name="keywords" content="Thanh Tai Nguyen, software engineer, full-stack developer, Angular, Spring Boot, ASP.NET Core, MQTT, RabbitMQ, Kafka, MongoDB, IoT, Ho Chi Minh City, portfolio, resume">
-  <meta name="author" content="Tài Thành">
-  <title>Thanh Tai Nguyen Personal Website</title>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="description"
+      content="Thanh Tai Nguyen, software engineer in Ho Chi Minh City. Full-stack and real-time apps with Angular and Spring Boot."
+    />
+    <meta
+      name="keywords"
+      content="Thanh Tai Nguyen, software engineer, full-stack developer, Angular, Spring Boot, ASP.NET Core, MQTT, RabbitMQ, Kafka, MongoDB, IoT, Ho Chi Minh City, portfolio, resume"
+    />
+    <meta name="author" content="Tài Thành" />
+    <title>Thanh Tai Nguyen Personal Website</title>
 
-  <link rel="icon" type="image/png" href="images/logo.png">
-  <link rel="stylesheet" href="css/index.css">
-  <link rel="stylesheet" href="css/about.css">
-  <link rel="stylesheet" href="css/portfolio.css">
-  <link rel="stylesheet" href="css/settings.css">
-  <link rel="stylesheet" href="css/swarm.css">
-  <link rel="stylesheet" href="css/ambient.css">
-  <link rel="stylesheet" href="css/dev-tester.css">
+    <link rel="icon" type="image/png" href="images/logo.png" />
+    <link rel="stylesheet" href="css/index.css" />
+    <link rel="stylesheet" href="css/about.css" />
+    <link rel="stylesheet" href="css/portfolio.css" />
+    <link rel="stylesheet" href="css/settings.css" />
+    <link rel="stylesheet" href="css/swarm.css" />
+    <link rel="stylesheet" href="css/ambient.css" />
+    <link rel="stylesheet" href="css/dev-tester.css" />
 
-  <!-- Google Analytics (gtag.js) -->
-  <script async src="https://www.googletagmanager.com/gtag/js?id=G-GCQ408M3J9"></script>
-  <script>
-    window.dataLayer = window.dataLayer || [];
-    function gtag() { dataLayer.push(arguments); }
-    gtag('js', new Date());
-    gtag('config', 'G-GCQ408M3J9');
-  </script>
+    <!-- Google Analytics (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-GCQ408M3J9"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag() {
+        dataLayer.push(arguments);
+      }
+      gtag('js', new Date());
+      gtag('config', 'G-GCQ408M3J9');
+    </script>
 
-  <!-- Google Tag Manager -->
-  <script>
-    (function (w, d, s, l, i) {
-      w[l] = w[l] || [];
-      w[l].push({ 'gtm.start': new Date().getTime(), event: 'gtm.js' });
-      var f = d.getElementsByTagName(s)[0];
-      var j = d.createElement(s);
-      var dl = l != 'dataLayer' ? '&l=' + l : '';
-      j.async = true;
-      j.src = 'https://www.googletagmanager.com/gtm.js?id=' + i + dl;
-      f.parentNode.insertBefore(j, f);
-    })(window, document, 'script', 'dataLayer', 'GTM-TWMNP6CN');
-  </script>
+    <!-- Google Tag Manager -->
+    <script>
+      (function (w, d, s, l, i) {
+        w[l] = w[l] || [];
+        w[l].push({ 'gtm.start': new Date().getTime(), event: 'gtm.js' });
+        var f = d.getElementsByTagName(s)[0];
+        var j = d.createElement(s);
+        var dl = l != 'dataLayer' ? '&l=' + l : '';
+        j.async = true;
+        j.src = 'https://www.googletagmanager.com/gtm.js?id=' + i + dl;
+        f.parentNode.insertBefore(j, f);
+      })(window, document, 'script', 'dataLayer', 'GTM-TWMNP6CN');
+    </script>
 
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.2.6/gsap.min.js"></script>
-</head>
-<body>
-  <div id="all">
-    <!-- Mouse follower -->
-    <div class="cursor"></div>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.2.6/gsap.min.js"></script>
+  </head>
+  <body>
+    <div id="all">
+      <!-- Mouse follower -->
+      <div class="cursor"></div>
 
-    <!-- Intro loader -->
-    <div id="loader">
-      <span class="color">Thanh Tai</span>Nguyen
-    </div>
+      <!-- Intro loader -->
+      <div id="loader"><span class="color">Thanh Tai</span>Nguyen</div>
 
-    <!-- Page transition wipes -->
-    <div id="breaker"></div>
-    <div id="breaker-two"></div>
+      <!-- Page transition wipes -->
+      <div id="breaker"></div>
+      <div id="breaker-two"></div>
 
-    <!-- ============ Fullscreen navigation ============ -->
-    <div id="navigation-content">
-      <div class="logo">
-        <img src="images/logo.png" alt="logo">
-      </div>
-      <div class="navigation-close">
-        <span class="close-first"></span>
-        <span class="close-second"></span>
-      </div>
-      <nav class="navigation-links">
-        <a href="#" data-text="HOME" id="home-link" data-section="home">HOME</a>
-        <a href="#" data-text="ABOUT" id="about-link" data-section="about">ABOUT</a>
-        <a href="#" data-text="BLOG" id="blog-link" data-section="blog">BLOG</a>
-        <a href="#" data-text="PORTFOLIO" id="portfolio-link" data-section="portfolio">PORTFOLIO</a>
-        <a href="#" data-text="CONTACT" id="contact-link" data-section="contact">CONTACT</a>
-      </nav>
-    </div>
-
-    <!-- Menu bar -->
-    <div id="navigation-bar">
-      <img src="images/logo.png" alt="logo">
-      <div class="menubar">
-        <span class="first-span"></span>
-        <span class="second-span"></span>
-        <span class="third-span"></span>
-      </div>
-    </div>
-
-    <!-- Settings (colours + home background), shared by every page -->
-    <div class="color-changer settings" data-component="settings"></div>
-
-    <!-- Swarm mode switch -->
-    <button type="button" class="swarm-switch" data-swarm-toggle aria-pressed="false" title="Swarm cursors (Esc to turn off)">
-      <span class="swarm-switch__label">Swarm</span>
-      <span class="swarm-switch__track color" aria-hidden="true"></span>
-    </button>
-
-    <!-- ============ Home ============ -->
-    <div id="header">
-      <div id="particles"></div>
-
-      <div class="social-media-links">
-        <a href="https://www.linkedin.com/in/taithanh/" target="_blank" rel="noopener noreferrer"><img src="images/linkedin logo.png" class="social-media" alt="linkedin-logo"></a>
-        <a href="https://github.com/TaiThanhhhh" target="_blank" rel="noopener noreferrer"><img src="images/github-logo.svg" class="social-media" alt="github-logo"></a>
-        <a href="https://www.instagram.com/aitt.16/" target="_blank" rel="noopener noreferrer"><img src="images/instagram logo.png" class="social-media" alt="instagram-logo"></a>
-        <a href="https://www.facebook.com/thanh.tai.944485/" target="_blank" rel="noopener noreferrer"><img src="images/facebook logo.png" class="social-media" alt="facebook-logo"></a>
-        <a href="https://www.threads.net/@aitt.16" target="_blank" rel="noopener noreferrer"><img src="images/threads_logo.png" class="social-media" alt="threads-logo"></a>
+      <!-- ============ Fullscreen navigation ============ -->
+      <div id="navigation-content">
+        <div class="logo">
+          <img src="images/logo.png" alt="logo" />
+        </div>
+        <div class="navigation-close">
+          <span class="close-first"></span>
+          <span class="close-second"></span>
+        </div>
+        <nav class="navigation-links">
+          <a href="#" data-text="HOME" id="home-link" data-section="home">HOME</a>
+          <a href="#" data-text="ABOUT" id="about-link" data-section="about">ABOUT</a>
+          <a href="#" data-text="BLOG" id="blog-link" data-section="blog">BLOG</a>
+          <a href="#" data-text="PORTFOLIO" id="portfolio-link" data-section="portfolio">PORTFOLIO</a>
+          <a href="#" data-text="CONTACT" id="contact-link" data-section="contact">CONTACT</a>
+        </nav>
       </div>
 
-      <div class="header-content">
-        <div class="header-content-box">
-          <div class="firstline"><span class="color">Thanh Tai </span>Nguyen</div>
-          <div class="secondline">
-            I'm a
-            <span class="txt-rotate color" data-period="1200" data-rotate='[" Software Engineer.", " Full-stack Developer.", " Backend Engineer."]'></span>
-            <span class="slash">|</span>
-          </div>
-          <div class="contact">
-            <a href="mailto:taithanh16052002@gmail.com"><img src="images/mail.png" alt="email-pic" class="contactpic"></a>
-            <a href="tel:+84981208297"><img src="images/call.png" alt="phone-pic" class="contactpic"></a>
-          </div>
+      <!-- Menu bar -->
+      <div id="navigation-bar">
+        <img src="images/logo.png" alt="logo" />
+        <div class="menubar">
+          <span class="first-span"></span>
+          <span class="second-span"></span>
+          <span class="third-span"></span>
         </div>
       </div>
 
-      <div class="header-image"></div>
-    </div>
+      <!-- Settings (colours + home background), shared by every page -->
+      <div class="color-changer settings" data-component="settings"></div>
 
-    <!-- ============ About ============ -->
-    <div id="about">
+      <!-- Swarm mode switch -->
+      <button
+        type="button"
+        class="swarm-switch"
+        data-swarm-toggle
+        aria-pressed="false"
+        title="Swarm cursors (Esc to turn off)"
+      >
+        <span class="swarm-switch__label">Swarm</span>
+        <span class="swarm-switch__track color" aria-hidden="true"></span>
+      </button>
 
-      <div id="about-content">
-        <div class="about-header">
-          About <span class="color">Me</span>
-          <span class="header-caption">Get to Know <span class="color"> me.</span></span>
+      <!-- ============ Home ============ -->
+      <div id="header">
+        <div id="particles"></div>
+
+        <div class="social-media-links">
+          <a href="https://www.linkedin.com/in/taithanh/" target="_blank" rel="noopener noreferrer"
+            ><img src="images/linkedin logo.png" class="social-media" alt="linkedin-logo"
+          /></a>
+          <a href="https://github.com/TaiThanhhhh" target="_blank" rel="noopener noreferrer"
+            ><img src="images/github-logo.svg" class="social-media" alt="github-logo"
+          /></a>
+          <a href="https://www.instagram.com/aitt.16/" target="_blank" rel="noopener noreferrer"
+            ><img src="images/instagram logo.png" class="social-media" alt="instagram-logo"
+          /></a>
+          <a href="https://www.facebook.com/thanh.tai.944485/" target="_blank" rel="noopener noreferrer"
+            ><img src="images/facebook logo.png" class="social-media" alt="facebook-logo"
+          /></a>
+          <a href="https://www.threads.net/@aitt.16" target="_blank" rel="noopener noreferrer"
+            ><img src="images/threads_logo.png" class="social-media" alt="threads-logo"
+          /></a>
         </div>
-        <div class="about-main">
-          <div class="about-first-paragraph">
-            <span class="about-first-line">
+
+        <div class="header-content">
+          <div class="header-content-box">
+            <div class="firstline"><span class="color">Thanh Tai </span>Nguyen</div>
+            <div class="secondline">
               I'm a
-              <span class="color">Software Engineer</span>
-              based in HCMC, Vietnam</span>
-            <br>
-            <span class="about-second-line">I build full-stack and real-time apps with Angular and Spring Boot. Right now I'm at J317, making live dashboards and reports for the oil and gas industry.</span>
-            <div class="cv">
-              <a href="ThanhTai_Nguyen_Resume_FullStackDeveloper.pdf" download><button>Download <span class="colors">CV</span></button></a>
+              <span
+                class="txt-rotate color"
+                data-period="1200"
+                data-rotate='[" Software Engineer.", " Full-stack Developer.", " Backend Engineer."]'
+              ></span>
+              <span class="slash">|</span>
+            </div>
+            <div class="contact">
+              <a href="mailto:taithanh16052002@gmail.com"
+                ><img src="images/mail.png" alt="email-pic" class="contactpic"
+              /></a>
+              <a href="tel:+84981208297"><img src="images/call.png" alt="phone-pic" class="contactpic" /></a>
             </div>
           </div>
-          <div class="about-img">
-            <img src="images/ThanhTai_Vt.jpg" alt="Thanh Tai Nguyen">
-          </div>
         </div>
+
+        <div class="header-image"></div>
       </div>
 
-      <!-- Experience -->
-      <section id="experience" aria-labelledby="experience-heading">
-        <h2 id="experience-heading" class="experience-heading">My <span class="color">Experience</span></h2>
-        <ol class="journey">
-          <li class="journey-item">
-            <p class="journey-year color">2020 – 2025</p>
-            <h3 class="journey-role">Engineer's Degree in IT</h3>
-            <p class="journey-place">HCMC University of Industry and Trade</p>
-            <p class="journey-text">GPA 3.44. First prize in the faculty research competition, 2024.</p>
+      <!-- ============ About ============ -->
+      <div id="about">
+        <div id="about-content">
+          <div class="about-header">
+            About <span class="color">Me</span>
+            <span class="header-caption">Get to Know <span class="color"> me.</span></span>
+          </div>
+          <div class="about-main">
+            <div class="about-first-paragraph">
+              <span class="about-first-line">
+                I'm a
+                <span class="color">Software Engineer</span>
+                based in HCMC, Vietnam</span
+              >
+              <br />
+              <span class="about-second-line"
+                >I build full-stack and real-time apps with Angular and Spring Boot. Right now I'm at J317,
+                making live dashboards and reports for the oil and gas industry.</span
+              >
+              <div class="cv">
+                <a href="ThanhTai_Nguyen_Resume_FullStackDeveloper.pdf" download
+                  ><button>Download <span class="colors">CV</span></button></a
+                >
+              </div>
+            </div>
+            <div class="about-img">
+              <img src="images/ThanhTai_Vt.jpg" alt="Thanh Tai Nguyen" />
+            </div>
+          </div>
+        </div>
+
+        <!-- Experience -->
+        <section id="experience" aria-labelledby="experience-heading">
+          <h2 id="experience-heading" class="experience-heading">My <span class="color">Experience</span></h2>
+          <ol class="journey">
+            <li class="journey-item">
+              <p class="journey-year color">2020 – 2025</p>
+              <h3 class="journey-role">Engineer's Degree in IT</h3>
+              <p class="journey-place">HCMC University of Industry and Trade</p>
+              <p class="journey-text">GPA 3.44. First prize in the faculty research competition, 2024.</p>
+            </li>
+            <li class="journey-item">
+              <p class="journey-year color">2024 – 2025</p>
+              <h3 class="journey-role">Full Stack Developer</h3>
+              <p class="journey-place">NewTech</p>
+              <p class="journey-text">
+                Started as an intern and stayed on full-time. Made the APIs faster and added logging that cut
+                downtime.
+              </p>
+            </li>
+            <li class="journey-item journey-item--current color">
+              <p class="journey-year">2025 – now</p>
+              <h3 class="journey-role">Software Engineer</h3>
+              <p class="journey-place">J317</p>
+              <p class="journey-text">
+                Live sensor dashboards and automated reports for oil and gas. Got the main dashboard loading
+                in under 10 seconds, down from over a minute.
+              </p>
+            </li>
+          </ol>
+        </section>
+
+        <!-- Services -->
+        <div id="services">
+          <div class="services-heading"><span class="color">My</span> Services</div>
+          <div class="services-content">
+            <div class="service-one service">
+              <div class="service-img">
+                <img src="images/CSharp.png" alt="Backend" />
+              </div>
+              <div class="service-description">
+                <h2>Backend Developer</h2>
+                <p>Fast, reliable APIs with ASP.NET Core and Spring Boot.</p>
+              </div>
+            </div>
+            <div class="service-two service">
+              <div class="service-img">
+                <img src="images/Angular.png" alt="Frontend" />
+              </div>
+              <div class="service-description">
+                <h2>Frontend Developer</h2>
+                <p>Clean, responsive interfaces with Angular.</p>
+              </div>
+            </div>
+            <div class="service-three service">
+              <div class="service-img">
+                <img src="images/bulb.png" alt="Real-time and IoT" />
+              </div>
+              <div class="service-description">
+                <h2>Real-time &amp; IoT</h2>
+                <p>Live data from devices to dashboards, over MQTT and message queues.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Skills: bar width comes from --level (css/about.css); the progress class only sets the accent colour. -->
+        <div id="skills">
+          <div class="skills-header">My <span class="color"> Skills</span></div>
+          <div class="skills-content" style="text-align: center">
+            <div class="skill-html skill">
+              <div class="skill-text"><div class="html">Angular / TypeScript</div></div>
+              <div class="html-prog prog">
+                <div class="html-progress skill-level" style="--level: 90%">90%</div>
+              </div>
+            </div>
+            <div class="skill-html skill">
+              <div class="skill-text"><div class="html">Spring Boot / Java</div></div>
+              <div class="html-prog prog">
+                <div class="js-progress skill-level" style="--level: 85%">85%</div>
+              </div>
+            </div>
+            <div class="skill-html skill">
+              <div class="skill-text"><div class="html">ASP.NET / C#</div></div>
+              <div class="html-prog prog">
+                <div class="adobe-progress skill-level" style="--level: 90%">90%</div>
+              </div>
+            </div>
+            <div class="skill-html skill">
+              <div class="skill-text"><div class="html">SQL / MongoDB</div></div>
+              <div class="html-prog prog">
+                <div class="php-progress skill-level" style="--level: 87%">87%</div>
+              </div>
+            </div>
+            <div class="skill-html skill">
+              <div class="skill-text"><div class="html">RabbitMQ / Kafka / MQTT</div></div>
+              <div class="html-prog prog">
+                <div class="jquery-progress skill-level" style="--level: 80%">80%</div>
+              </div>
+            </div>
+            <div class="skill-html skill">
+              <div class="skill-text"><div class="html">Python</div></div>
+              <div class="html-prog prog">
+                <div class="seo-progress skill-level" style="--level: 70%">70%</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <footer class="footer">
+          <div class="footer-text">
+            <img src="./images/copyright.png" alt="copyright-img" class="images" height="14" /> Thanh Tai
+            Nguyen
+          </div>
+        </footer>
+      </div>
+
+      <!-- ============ Portfolio ============ -->
+      <div id="portfolio">
+        <div class="portfolio-header">
+          <span class="color"> My </span> Portfolio
+          <span class="header-caption"> Some Of My <span class="color"> Works</span></span>
+        </div>
+        <ol class="work-list">
+          <li class="work">
+            <div class="work-media">
+              <img
+                src="images/portfolio-evoedge.svg"
+                alt="Illustration of the EvoEdge live monitoring dashboard"
+                loading="lazy"
+              />
+            </div>
+            <div class="work-panel">
+              <h3 class="work-title color">EvoEdge &amp; EvoAutomate</h3>
+              <p class="work-text">Live well monitoring and automated job reports for oil and gas teams.</p>
+              <p class="work-stack">Angular · Spring Boot · MQTT · RabbitMQ</p>
+              <p class="work-note">Internal product at J317</p>
+            </div>
           </li>
-          <li class="journey-item">
-            <p class="journey-year color">2024 – 2025</p>
-            <h3 class="journey-role">Full Stack Developer</h3>
-            <p class="journey-place">NewTech</p>
-            <p class="journey-text">Started as an intern and stayed on full-time. Made the APIs faster and added logging that cut downtime.</p>
+          <li class="work">
+            <div class="work-media">
+              <img
+                src="images/enhanceCreditScore_VPBank.png"
+                alt="Credit score lookup page with a score gauge and contributing factors"
+                loading="lazy"
+              />
+            </div>
+            <div class="work-panel">
+              <h3 class="work-title color">Enhance Credit Score</h3>
+              <p class="work-text">
+                Look up a credit score by national ID and see what drives it, with an LLM pulling the data.
+              </p>
+              <p class="work-stack">Flask · AWS S3 · LLM</p>
+              <a
+                class="work-link color"
+                href="https://vpbank-credit-page.onrender.com/"
+                target="_blank"
+                rel="noopener noreferrer"
+                ><span>View project</span><span aria-hidden="true">↗</span></a
+              >
+            </div>
           </li>
-          <li class="journey-item journey-item--current color">
-            <p class="journey-year">2025 – now</p>
-            <h3 class="journey-role">Software Engineer</h3>
-            <p class="journey-place">J317</p>
-            <p class="journey-text">Live sensor dashboards and automated reports for oil and gas. Got the main dashboard loading in under 10 seconds, down from over a minute.</p>
+          <li class="work">
+            <div class="work-media">
+              <img
+                src="images/portfolio-traffic-light.svg"
+                alt="Illustration of a traffic light with auto, manual and SOS modes"
+                loading="lazy"
+              />
+            </div>
+            <div class="work-panel">
+              <h3 class="work-title color">Traffic Light Management System</h3>
+              <p class="work-text">
+                Traffic lights you can watch and control live, with auto, manual and SOS modes.
+              </p>
+              <p class="work-stack">ASP.NET · Angular · SQL Server</p>
+              <p class="work-note">Team project</p>
+            </div>
+          </li>
+          <li class="work">
+            <div class="work-media">
+              <img
+                src="images/BrainRotAlert.jpg"
+                alt="BrainRot Alert cover art"
+                style="--focus: 50% 15%"
+                loading="lazy"
+              />
+            </div>
+            <div class="work-panel">
+              <h3 class="work-title color">BrainRot Alert</h3>
+              <p class="work-text">
+                A Chrome extension that notices when you've been scrolling junk for too long and tells you to
+                stop. Your data never leaves the browser.
+              </p>
+              <p class="work-stack">JavaScript · Chrome Extension APIs</p>
+              <a
+                class="work-link color"
+                href="https://github.com/TaiThanhhhh/BrainRot-Alert"
+                target="_blank"
+                rel="noopener noreferrer"
+                ><span>View on GitHub</span><span aria-hidden="true">↗</span></a
+              >
+            </div>
           </li>
         </ol>
-      </section>
 
-      <!-- Services -->
-      <div id="services">
-
-        <div class="services-heading">
-          <span class="color">My</span> Services
-        </div>
-        <div class="services-content">
-          <div class="service-one service">
-            <div class="service-img">
-              <img src="images/CSharp.png" alt="Backend">
-            </div>
-            <div class="service-description">
-              <h2>Backend Developer</h2>
-              <p>Fast, reliable APIs with ASP.NET Core and Spring Boot.</p>
-            </div>
+        <footer class="footer">
+          <div class="footer-text">
+            <img src="./images/copyright.png" alt="copyright-img" class="images" height="14" /> Thanh Tai
+            Nguyen
           </div>
-          <div class="service-two service">
-            <div class="service-img">
-              <img src="images/Angular.png" alt="Frontend">
-            </div>
-            <div class="service-description">
-              <h2>Frontend Developer</h2>
-              <p>Clean, responsive interfaces with Angular.</p>
-            </div>
-          </div>
-          <div class="service-three service">
-            <div class="service-img">
-              <img src="images/bulb.png" alt="Real-time and IoT">
-            </div>
-            <div class="service-description">
-              <h2>Real-time &amp; IoT</h2>
-              <p>Live data from devices to dashboards, over MQTT and message queues.</p>
-            </div>
-          </div>
-        </div>
+        </footer>
       </div>
 
-      <!-- Skills: bar width comes from --level (css/about.css); the progress class only sets the accent colour. -->
-      <div id="skills">
-        <div class="skills-header">
-          My <span class="color"> Skills</span>
+      <!-- ============ Blog ============ -->
+      <div id="blog">
+        <div class="blog-header">
+          Blogs
+          <span class="header-caption"> My Latest <span class="color"> blog posts.</span></span>
         </div>
-        <div class="skills-content" style="text-align: center;">
-          <div class="skill-html skill">
-            <div class="skill-text"><div class="html">Angular / TypeScript</div></div>
-            <div class="html-prog prog"><div class="html-progress skill-level" style="--level: 90%">90%</div></div>
-          </div>
-          <div class="skill-html skill">
-            <div class="skill-text"><div class="html">Spring Boot / Java</div></div>
-            <div class="html-prog prog"><div class="js-progress skill-level" style="--level: 85%">85%</div></div>
-          </div>
-          <div class="skill-html skill">
-            <div class="skill-text"><div class="html">ASP.NET / C#</div></div>
-            <div class="html-prog prog"><div class="adobe-progress skill-level" style="--level: 90%">90%</div></div>
-          </div>
-          <div class="skill-html skill">
-            <div class="skill-text"><div class="html">SQL / MongoDB</div></div>
-            <div class="html-prog prog"><div class="php-progress skill-level" style="--level: 87%">87%</div></div>
-          </div>
-          <div class="skill-html skill">
-            <div class="skill-text"><div class="html">RabbitMQ / Kafka / MQTT</div></div>
-            <div class="html-prog prog"><div class="jquery-progress skill-level" style="--level: 80%">80%</div></div>
-          </div>
-          <div class="skill-html skill">
-            <div class="skill-text"><div class="html">Python</div></div>
-            <div class="html-prog prog"><div class="seo-progress skill-level" style="--level: 70%">70%</div></div>
-          </div>
-        </div>
-      </div>
-
-      <footer class="footer">
-        <div class="footer-text">
-          <img src="./images/copyright.png" alt="copyright-img" class="images" height="14"> Thanh Tai Nguyen
-        </div>
-      </footer>
-    </div>
-
-    <!-- ============ Portfolio ============ -->
-    <div id="portfolio">
-
-      <div class="portfolio-header"><span class="color"> My </span> Portfolio
-        <span class="header-caption"> Some Of My <span class="color"> Works</span></span>
-      </div>
-      <ol class="work-list">
-        <li class="work">
-          <div class="work-media">
-            <img src="images/portfolio-evoedge.svg" alt="Illustration of the EvoEdge live monitoring dashboard" loading="lazy">
-          </div>
-          <div class="work-panel">
-            <h3 class="work-title color">EvoEdge &amp; EvoAutomate</h3>
-            <p class="work-text">Live well monitoring and automated job reports for oil and gas teams.</p>
-            <p class="work-stack">Angular · Spring Boot · MQTT · RabbitMQ</p>
-            <p class="work-note">Internal product at J317</p>
-          </div>
-        </li>
-        <li class="work">
-          <div class="work-media">
-            <img src="images/enhanceCreditScore_VPBank.png" alt="Credit score lookup page with a score gauge and contributing factors" loading="lazy">
-          </div>
-          <div class="work-panel">
-            <h3 class="work-title color">Enhance Credit Score</h3>
-            <p class="work-text">Look up a credit score by national ID and see what drives it, with an LLM pulling the data.</p>
-            <p class="work-stack">Flask · AWS S3 · LLM</p>
-            <a class="work-link color" href="https://vpbank-credit-page.onrender.com/" target="_blank" rel="noopener noreferrer"><span>View project</span><span aria-hidden="true">↗</span></a>
-          </div>
-        </li>
-        <li class="work">
-          <div class="work-media">
-            <img src="images/portfolio-traffic-light.svg" alt="Illustration of a traffic light with auto, manual and SOS modes" loading="lazy">
-          </div>
-          <div class="work-panel">
-            <h3 class="work-title color">Traffic Light Management System</h3>
-            <p class="work-text">Traffic lights you can watch and control live, with auto, manual and SOS modes.</p>
-            <p class="work-stack">ASP.NET · Angular · SQL Server</p>
-            <p class="work-note">Team project</p>
-          </div>
-        </li>
-        <li class="work">
-          <div class="work-media">
-            <img src="images/BrainRotAlert.jpg" alt="BrainRot Alert cover art" style="--focus: 50% 15%" loading="lazy">
-          </div>
-          <div class="work-panel">
-            <h3 class="work-title color">BrainRot Alert</h3>
-            <p class="work-text">A Chrome extension that notices when you've been scrolling junk for too long and tells you to stop. Your data never leaves the browser.</p>
-            <p class="work-stack">JavaScript · Chrome Extension APIs</p>
-            <a class="work-link color" href="https://github.com/TaiThanhhhh/BrainRot-Alert" target="_blank" rel="noopener noreferrer"><span>View on GitHub</span><span aria-hidden="true">↗</span></a>
-          </div>
-        </li>
-      </ol>
-
-      <footer class="footer">
-        <div class="footer-text">
-          <img src="./images/copyright.png" alt="copyright-img" class="images" height="14"> Thanh Tai Nguyen
-        </div>
-      </footer>
-    </div>
-
-    <!-- ============ Blog ============ -->
-    <div id="blog">
-
-      <div class="blog-header">Blogs
-        <span class="header-caption"> My Latest <span class="color"> blog posts.</span></span>
-      </div>
-      <div class="blog-content">
-        <div class="blogs">
-          <a href="#">
-            <div class="img">
-              <img src="images/BasketBall.jpg" alt="blog-one">
-              <div class="blog-date">3 Jun, 18</div>
-            </div>
-            <div class="blog-text">
-              <h3>Basketball Night</h3>
-              <p>We had an unforgettable time watching a basketball game with friends, enjoying the thrilling atmosphere, cheering passionately for our favorite team, and sharing laughs and excitement that made the experience truly special.</p>
-            </div>
-          </a>
-        </div>
-        <div class="blogs">
-          <a href="#">
-            <div class="img">
-              <img src="images/Hackathon_pic2.jpg" alt="blog-two">
-              <div class="blog-date">1 Jul, 24</div>
-            </div>
-            <div class="blog-text">
-              <h3>My First Hackathon</h3>
-              <p>My first hackathon was an incredible experience. From brainstorming ideas to coding under pressure, I learned the importance of teamwork and quick thinking. The challenges were tough, but the adrenaline rush and the sense of accomplishment made it unforgettable.</p>
-            </div>
-          </a>
-        </div>
-        <div class="blogs">
-          <a href="#">
-            <div class="img">
-              <img src="images/broklyn99friends.jpg" alt="blog-three">
-              <div class="blog-date">30 Nov, 19</div>
-            </div>
-            <div class="blog-text">
-              <h3>Learn English with Movies</h3>
-              <p>Improve your English in a fun and engaging way by watching popular shows like Friends and Brooklyn 99. Learn new vocabulary, idioms, and conversational expressions while enjoying your favorite episodes. It's an easy and enjoyable way to enhance your language skills.</p>
-            </div>
-          </a>
-        </div>
-        <div class="blogs">
-          <a href="#">
-            <div class="img">
-              <img src="images/pomodoro.jpg" alt="blog-four">
-              <div class="blog-date">6 Jul, 19</div>
-            </div>
-            <div class="blog-text">
-              <h3>Pomodoro Study Method</h3>
-              <p>The Pomodoro Technique is a proven time management method that helps you stay focused and productive. By breaking your study or work sessions into short intervals, you can maintain high energy levels, avoid burnout, and make the most of your time.</p>
-            </div>
-          </a>
-        </div>
-        <div class="blogs">
-          <a href="#">
-            <div class="img">
-              <img src="images/AngularBlog.jpg" alt="blog-five">
-              <div class="blog-date">1 Jun, 23</div>
-            </div>
-            <div class="blog-text">
-              <h3>Frontend Tips: Angular</h3>
-              <p>Angular is a powerful framework for building dynamic and responsive web applications. This post shares practical tips and best practices for creating clean, maintainable code, and building interactive user interfaces that provide an excellent user experience.</p>
-            </div>
-          </a>
-        </div>
-        <div class="blogs">
-          <a href="#">
-            <div class="img">
-              <img src="images/NetCoreBlog.jpg" alt="blog-six">
-              <div class="blog-date">28 Feb, 23</div>
-            </div>
-            <div class="blog-text">
-              <h3>Backend With ASP.NET Core</h3>
-              <p>Learn the essential principles of backend development with ASP.NET Core. From setting up your first project to understanding key concepts like MVC, dependency injection, and routing, this guide will help you build scalable and efficient web applications.</p>
-            </div>
-          </a>
-        </div>
-      </div>
-
-      <footer class="footer">
-        <div class="footer-text">
-          <img src="./images/copyright.png" alt="copyright-img" class="images" height="14"> Thanh Tai Nguyen
-        </div>
-      </footer>
-    </div>
-
-    <!-- ============ Contact ============ -->
-    <div id="contact">
-
-      <div class="contact-header">Contact <span class="color"> Me</span>
-        <div class="contact-header-caption"><span class="color"> Get</span> In Touch.</div>
-      </div>
-      <div class="contact-content">
-        <div class="contact-form">
-          <div class="form-header">Message Me</div>
-          <form id="myForm" novalidate>
-            <div class="input-line">
-              <input id="name" type="text" placeholder="Name" class="input-name" autocomplete="name">
-              <input id="email" type="email" placeholder="Email" class="input-name" autocomplete="email">
-            </div>
-            <input id="subject" type="text" placeholder="subject" class="input-subject">
-            <textarea id="body" class="input-textarea" placeholder="message"></textarea>
-            <button type="button" id="submit" value="send">Submit</button>
-          </form>
-        </div>
-
-        <div class="contact-info">
-          <div class="contact-info-header">Contact Info</div>
-          <div class="contact-info-content">
-            <div class="contect-info-content-line">
-              <img src="./images/icon-name.png" class="icon" alt="name-icon">
-              <div class="contact-info-icon-text">
-                <h6>Name</h6>
-                <p>Thanh Tai Nguyen</p>
+        <div class="blog-content">
+          <div class="blogs">
+            <a href="#">
+              <div class="img">
+                <img src="images/BasketBall.jpg" alt="blog-one" />
+                <div class="blog-date">3 Jun, 18</div>
               </div>
-            </div>
-            <div class="contect-info-content-line">
-              <img src="./images/icon-location.png" class="icon" alt="location-icon">
-              <div class="contact-info-icon-text">
-                <h6>Location</h6>
-                <p>HCMC, Vietnam</p>
+              <div class="blog-text">
+                <h3>Basketball Night</h3>
+                <p>
+                  We had an unforgettable time watching a basketball game with friends, enjoying the thrilling
+                  atmosphere, cheering passionately for our favorite team, and sharing laughs and excitement
+                  that made the experience truly special.
+                </p>
               </div>
-            </div>
-            <div class="contect-info-content-line">
-              <img src="./images/icon-phone.png" class="icon" alt="phone-icon">
-              <div class="contact-info-icon-text">
-                <h6>Call</h6>
-                <p>+84981208297</p>
+            </a>
+          </div>
+          <div class="blogs">
+            <a href="#">
+              <div class="img">
+                <img src="images/Hackathon_pic2.jpg" alt="blog-two" />
+                <div class="blog-date">1 Jul, 24</div>
               </div>
-            </div>
-            <div class="contect-info-content-line">
-              <img src="./images/icon-email.png" class="icon" alt="email-icon">
-              <div class="contact-info-icon-text">
-                <h6>Email</h6>
-                <p>taithanh16052002@gmail.com</p>
+              <div class="blog-text">
+                <h3>My First Hackathon</h3>
+                <p>
+                  My first hackathon was an incredible experience. From brainstorming ideas to coding under
+                  pressure, I learned the importance of teamwork and quick thinking. The challenges were
+                  tough, but the adrenaline rush and the sense of accomplishment made it unforgettable.
+                </p>
+              </div>
+            </a>
+          </div>
+          <div class="blogs">
+            <a href="#">
+              <div class="img">
+                <img src="images/broklyn99friends.jpg" alt="blog-three" />
+                <div class="blog-date">30 Nov, 19</div>
+              </div>
+              <div class="blog-text">
+                <h3>Learn English with Movies</h3>
+                <p>
+                  Improve your English in a fun and engaging way by watching popular shows like Friends and
+                  Brooklyn 99. Learn new vocabulary, idioms, and conversational expressions while enjoying
+                  your favorite episodes. It's an easy and enjoyable way to enhance your language skills.
+                </p>
+              </div>
+            </a>
+          </div>
+          <div class="blogs">
+            <a href="#">
+              <div class="img">
+                <img src="images/pomodoro.jpg" alt="blog-four" />
+                <div class="blog-date">6 Jul, 19</div>
+              </div>
+              <div class="blog-text">
+                <h3>Pomodoro Study Method</h3>
+                <p>
+                  The Pomodoro Technique is a proven time management method that helps you stay focused and
+                  productive. By breaking your study or work sessions into short intervals, you can maintain
+                  high energy levels, avoid burnout, and make the most of your time.
+                </p>
+              </div>
+            </a>
+          </div>
+          <div class="blogs">
+            <a href="#">
+              <div class="img">
+                <img src="images/AngularBlog.jpg" alt="blog-five" />
+                <div class="blog-date">1 Jun, 23</div>
+              </div>
+              <div class="blog-text">
+                <h3>Frontend Tips: Angular</h3>
+                <p>
+                  Angular is a powerful framework for building dynamic and responsive web applications. This
+                  post shares practical tips and best practices for creating clean, maintainable code, and
+                  building interactive user interfaces that provide an excellent user experience.
+                </p>
+              </div>
+            </a>
+          </div>
+          <div class="blogs">
+            <a href="#">
+              <div class="img">
+                <img src="images/NetCoreBlog.jpg" alt="blog-six" />
+                <div class="blog-date">28 Feb, 23</div>
+              </div>
+              <div class="blog-text">
+                <h3>Backend With ASP.NET Core</h3>
+                <p>
+                  Learn the essential principles of backend development with ASP.NET Core. From setting up
+                  your first project to understanding key concepts like MVC, dependency injection, and
+                  routing, this guide will help you build scalable and efficient web applications.
+                </p>
+              </div>
+            </a>
+          </div>
+        </div>
+
+        <footer class="footer">
+          <div class="footer-text">
+            <img src="./images/copyright.png" alt="copyright-img" class="images" height="14" /> Thanh Tai
+            Nguyen
+          </div>
+        </footer>
+      </div>
+
+      <!-- ============ Contact ============ -->
+      <div id="contact">
+        <div class="contact-header">
+          Contact <span class="color"> Me</span>
+          <div class="contact-header-caption"><span class="color"> Get</span> In Touch.</div>
+        </div>
+        <div class="contact-content">
+          <div class="contact-form">
+            <div class="form-header">Message Me</div>
+            <form id="myForm" novalidate>
+              <div class="input-line">
+                <input id="name" type="text" placeholder="Name" class="input-name" autocomplete="name" />
+                <input id="email" type="email" placeholder="Email" class="input-name" autocomplete="email" />
+              </div>
+              <input id="subject" type="text" placeholder="subject" class="input-subject" />
+              <textarea id="body" class="input-textarea" placeholder="message"></textarea>
+              <button type="button" id="submit" value="send">Submit</button>
+            </form>
+          </div>
+
+          <div class="contact-info">
+            <div class="contact-info-header">Contact Info</div>
+            <div class="contact-info-content">
+              <div class="contect-info-content-line">
+                <img src="./images/icon-name.png" class="icon" alt="name-icon" />
+                <div class="contact-info-icon-text">
+                  <h6>Name</h6>
+                  <p>Thanh Tai Nguyen</p>
+                </div>
+              </div>
+              <div class="contect-info-content-line">
+                <img src="./images/icon-location.png" class="icon" alt="location-icon" />
+                <div class="contact-info-icon-text">
+                  <h6>Location</h6>
+                  <p>HCMC, Vietnam</p>
+                </div>
+              </div>
+              <div class="contect-info-content-line">
+                <img src="./images/icon-phone.png" class="icon" alt="phone-icon" />
+                <div class="contact-info-icon-text">
+                  <h6>Call</h6>
+                  <p>+84981208297</p>
+                </div>
+              </div>
+              <div class="contect-info-content-line">
+                <img src="./images/icon-email.png" class="icon" alt="email-icon" />
+                <div class="contact-info-icon-text">
+                  <h6>Email</h6>
+                  <p>taithanh16052002@gmail.com</p>
+                </div>
               </div>
             </div>
           </div>
         </div>
+
+        <footer class="footer">
+          <div class="footer-text">
+            <img src="./images/copyright.png" alt="copyright-img" class="images" height="14" /> Thanh Tai
+            Nguyen
+          </div>
+        </footer>
       </div>
-
-      <footer class="footer">
-        <div class="footer-text">
-          <img src="./images/copyright.png" alt="copyright-img" class="images" height="14"> Thanh Tai Nguyen
-        </div>
-      </footer>
     </div>
-  </div>
 
-  <!-- Third-party libraries -->
-  <script src="js/vendor/particles.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4.4.1/dist/email.min.js"></script>
+    <!-- Third-party libraries -->
+    <script src="js/vendor/particles.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4.4.1/dist/email.min.js"></script>
 
-  <!-- Application -->
-  <script src="js/config.js"></script>
-  <script src="js/modules/motion.js"></script>
-  <script src="js/modules/loader.js"></script>
-  <script src="js/modules/navigation.js"></script>
-  <script src="js/modules/settings.js"></script>
-  <script src="js/modules/color-switcher.js"></script>
-  <script src="js/modules/theme-switcher.js"></script>
-  <script src="js/modules/typewriter.js"></script>
-  <script src="js/modules/cursor.js"></script>
-  <script src="js/modules/swarm-flock.js"></script>
-  <script src="js/modules/swarm-builder.js"></script>
-  <script src="js/modules/swarm.js"></script>
-  <script src="js/modules/ambient-calendar.js"></script>
-  <script src="js/modules/ambient-cycle.js"></script>
-  <script src="js/modules/ambient-sky.js"></script>
-  <script src="js/modules/ambient-environment.js"></script>
-  <script src="js/modules/ambient-events.js"></script>
-  <script src="js/modules/ambient-events-calendar.js"></script>
-  <script src="js/modules/ambient-events-night.js"></script>
-  <script src="js/modules/ambient-events-sky.js"></script>
-  <script src="js/modules/ambient-events-weather.js"></script>
-  <script src="js/modules/ambient-events-day.js"></script>
-  <script src="js/modules/ambient-events-flyby.js"></script>
-  <script src="js/modules/ambient-murmuration.js"></script>
-  <script src="js/modules/ambient-scene.js"></script>
-  <script src="js/modules/screen-atmosphere.js"></script>
-  <script src="js/modules/ambient.js"></script>
-  <script src="js/modules/dev-tester.js"></script>
-  <script src="js/modules/contact-form.js"></script>
-  <script src="js/main.js"></script>
-</body>
+    <!-- Application -->
+    <script src="js/config.js"></script>
+    <script src="js/modules/motion.js"></script>
+    <script src="js/modules/loader.js"></script>
+    <script src="js/modules/navigation.js"></script>
+    <script src="js/modules/settings.js"></script>
+    <script src="js/modules/color-switcher.js"></script>
+    <script src="js/modules/theme-switcher.js"></script>
+    <script src="js/modules/typewriter.js"></script>
+    <script src="js/modules/cursor.js"></script>
+    <script src="js/modules/swarm-flock.js"></script>
+    <script src="js/modules/swarm-builder.js"></script>
+    <script src="js/modules/swarm.js"></script>
+    <script src="js/modules/ambient-calendar.js"></script>
+    <script src="js/modules/ambient-cycle.js"></script>
+    <script src="js/modules/ambient-river.js"></script>
+    <script src="js/modules/ambient-sky.js"></script>
+    <script src="js/modules/ambient-events.js"></script>
+    <script src="js/modules/ambient-events-night.js"></script>
+    <script src="js/modules/ambient-events-sky.js"></script>
+    <script src="js/modules/ambient-events-weather.js"></script>
+    <script src="js/modules/ambient-events-day.js"></script>
+    <script src="js/modules/ambient-events-flyby.js"></script>
+    <script src="js/modules/ambient-events-calendar.js"></script>
+    <script src="js/modules/ambient-murmuration.js"></script>
+    <script src="js/modules/ambient-scene.js"></script>
+    <script src="js/modules/screen-atmosphere.js"></script>
+    <script src="js/modules/ambient.js"></script>
+    <script src="js/modules/dev-tester.js"></script>
+    <script src="js/modules/contact-form.js"></script>
+    <script src="js/main.js"></script>
+  </body>
 </html>
