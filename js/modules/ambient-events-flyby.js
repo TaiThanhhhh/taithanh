@@ -18,6 +18,7 @@
 
   fx.register({
     name: 'contrail',
+    group: 'flyby',
     label: 'Vệt khói máy bay',
     tier: 'detail',
     when: (look) => look.dark < 0.4,
@@ -59,7 +60,19 @@
           }
           if (t >= CROSS) return;
           const p = at(t / CROSS);
-          fx.drawAirplane(ctx, p.x, p.y, scale * 0.45, heading, stage.look.dark > 0.5, t);
+          ctx.translate(p.x, p.y);
+          ctx.rotate(heading);
+          ctx.scale(scale * 1.4, scale * 1.4);
+          ctx.fillStyle = 'rgba(70, 76, 92, 0.9)';
+          ctx.fillRect(-5, -0.7, 10, 1.4); // fuselage
+          ctx.beginPath(); // swept wings
+          ctx.moveTo(1, 0);
+          ctx.lineTo(-2.5, -4.5);
+          ctx.lineTo(-1, 0);
+          ctx.lineTo(-2.5, 4.5);
+          ctx.closePath();
+          ctx.fill();
+          ctx.fillRect(-5, -2, 1.2, 4); // tail
         },
       };
     },
@@ -69,6 +82,7 @@
 
   fx.register({
     name: 'birds',
+    group: 'flyby',
     label: 'Đàn chim bay chữ V',
     tier: 'detail',
     when: (look) => look.dark < 0.6,
@@ -118,6 +132,7 @@
 
   fx.register({
     name: 'landing',
+    group: 'flyby',
     label: 'Máy bay hạ cánh Tân Sơn Nhất',
     tier: 'detail',
     when: (look) => look.dark > 0.45,
@@ -127,7 +142,7 @@
       const DURATION = rand(32000, 42000);
       const fromLeft = Math.random() < 0.5;
       const start = { x: (fromLeft ? -0.05 : 1.05) * W, y: rand(0.06, 0.16) * H };
-      const end = { x: (fromLeft ? rand(0.45, 0.8) : rand(0.2, 0.55)) * W, y: H * 0.97 }; // lands behind the city
+      const end = { x: (fromLeft ? rand(0.45, 0.8) : rand(0.2, 0.55)) * W, y: stage.ground }; // lands behind the city
       const landing = fx.glowSprite([255, 248, 230], 64);
       const red = fx.glowSprite([255, 60, 60], 16);
       const green = fx.glowSprite([80, 255, 140], 16);
@@ -174,6 +189,7 @@
 
   fx.register({
     name: 'helicopter',
+    group: 'flyby',
     label: 'Trực thăng',
     tier: 'detail',
     when: () => true,
@@ -185,6 +201,9 @@
       const y0 = rand(0.2, 0.42) * H;
       const night = stage.look.dark > 0.5;
       const searchlight = night && Math.random() < 0.6;
+      const red = fx.glowSprite([255, 60, 60], 16);
+      const white = fx.glowSprite([255, 255, 255], 16);
+      let beam = null;
       let t = 0;
       return {
         update(_k, elapsed) {
@@ -195,10 +214,60 @@
           const p = t / DURATION;
           const x = (dir > 0 ? lerp(-0.05, 1.05, p) : lerp(1.05, -0.05, p)) * W;
           const y = y0 + Math.sin(t * 0.002) * 3 * scale;
-          fx.drawHelicopter(ctx, x, y, scale * 1.35, dir, night, t, {
-            hasSearchlight: searchlight,
-            lightColor: '#38bdf8',
-          });
+          if (searchlight) {
+            if (!beam) {
+              beam = ctx.createLinearGradient(0, 0, 0, H);
+              beam.addColorStop(0, 'rgba(235, 240, 255, 0.16)');
+              beam.addColorStop(1, 'rgba(235, 240, 255, 0)');
+            }
+            ctx.save();
+            ctx.globalCompositeOperation = 'lighter';
+            ctx.translate(x, y + 4 * scale);
+            ctx.rotate(Math.sin(t * 0.0007) * 0.35);
+            ctx.fillStyle = beam;
+            ctx.beginPath();
+            ctx.moveTo(-1.5, 0);
+            ctx.lineTo(1.5, 0);
+            ctx.lineTo(H * 0.07, H);
+            ctx.lineTo(-H * 0.07, H);
+            ctx.closePath();
+            ctx.fill();
+            ctx.restore();
+          }
+          // Silhouette: cabin, tail boom, skids and a blurred rotor.
+          ctx.save();
+          ctx.translate(x, y);
+          ctx.scale(dir * scale * 1.3, scale * 1.3);
+          ctx.fillStyle = night ? 'rgba(14, 14, 22, 0.9)' : 'rgba(48, 54, 68, 0.9)';
+          ctx.strokeStyle = ctx.fillStyle;
+          ctx.beginPath();
+          ctx.ellipse(0, 0, 9, 5, 0, 0, TAU);
+          ctx.fill();
+          ctx.lineWidth = 1.6;
+          ctx.beginPath();
+          ctx.moveTo(-6, -1);
+          ctx.lineTo(-22, -2);
+          ctx.lineTo(-24, -6);
+          ctx.moveTo(-6, 6.5);
+          ctx.lineTo(7, 6.5);
+          ctx.moveTo(-3, 4.5);
+          ctx.lineTo(-3, 6.5);
+          ctx.moveTo(4, 4.5);
+          ctx.lineTo(4, 6.5);
+          ctx.stroke();
+          ctx.globalAlpha = 0.5;
+          const rotor = 16 * (0.6 + 0.4 * Math.abs(Math.sin(t * 0.09)));
+          ctx.beginPath();
+          ctx.moveTo(-rotor, -6.5);
+          ctx.lineTo(rotor, -6.5);
+          ctx.stroke();
+          ctx.restore();
+          // Anti-collision lights.
+          ctx.globalCompositeOperation = 'lighter';
+          const s = 7 * scale;
+          if (t % 1000 < 120) ctx.drawImage(red, x - s / 2, y - 8 * scale - s / 2, s, s);
+          if (night && t % 1500 > 700 && t % 1500 < 760)
+            ctx.drawImage(white, x - dir * 26 * scale - s, y - s, s * 2, s * 2);
         },
       };
     },
@@ -208,6 +277,7 @@
 
   fx.register({
     name: 'bats',
+    group: 'flyby',
     label: 'Dơi bay lúc chạng vạng',
     tier: 'detail',
     when: (look) => look.dark > 0.4 && look.dark < 0.95,
@@ -271,6 +341,7 @@
 
   fx.register({
     name: 'swallows',
+    group: 'flyby',
     label: 'Chim én lượn',
     tier: 'detail',
     when: (look) => look.dark < 0.6,
@@ -337,6 +408,7 @@
 
   fx.register({
     name: 'paperplane',
+    group: 'flyby',
     label: 'Máy bay giấy',
     tier: 'detail',
     when: (look) => look.dark < 0.75,
@@ -408,7 +480,9 @@
 
   fx.register({
     name: 'banner',
+    group: 'flyby',
     label: 'Máy bay kéo băng rôn',
+    rarity: 'rare',
     when: (look) => look.dark < 0.35,
     create(stage) {
       const { W, H } = stage;
@@ -484,531 +558,6 @@
           ctx.fillRect(-10, -5, 2, 5); // tail fin
           ctx.globalAlpha = 0.5;
           ctx.fillRect(10, -3 * Math.abs(Math.sin(t * 0.1)), 1, 6 * Math.abs(Math.sin(t * 0.1))); // propeller
-        },
-      };
-    },
-  });
-
-  /* ---------- Máy Bay & Cánh Chim Flyby Mở Rộng ---------- */
-
-  // 9. Máy bay cất cánh vút lên trời cao (Takeoff)
-  fx.register({
-    name: 'takeoff',
-    label: 'Máy Bay Cất Cánh Tân Sơn Nhất Lên Tầng Mây',
-    tier: 'detail',
-    weight: 1.4,
-    when: (_look) => true,
-    create(stage) {
-      const { W, H } = stage;
-      const DURATION = 26000;
-      let t = 0;
-      return {
-        update(k, elapsed) {
-          t = elapsed;
-          return t < DURATION;
-        },
-        back(ctx) {
-          const u = t / DURATION;
-          const x = W * 0.15 + u * (W * 0.8);
-          const y = H * 0.75 - u * (H * 0.6);
-          const isNight = stage.look.dark > 0.5;
-          fx.drawAirplane(ctx, x, y, 0.95, -0.32, isNight, t);
-        },
-      };
-    },
-  });
-
-  // 10. Máy bay thân rộng Airbus A350 lướt êm (Widebody)
-  fx.register({
-    name: 'widebody',
-    label: 'Máy Bay Thân Rộng Airbus A350 Lướt Qua Bầu Trời',
-    tier: 'detail',
-    weight: 1.5,
-    when: (_look) => true,
-    create(stage) {
-      const { W, H } = stage;
-      const DURATION = 36000;
-      let t = 0;
-      return {
-        update(k, elapsed) {
-          t = elapsed;
-          return t < DURATION;
-        },
-        back(ctx) {
-          const u = t / DURATION;
-          const x = -100 + u * (W + 200);
-          const y = H * 0.22;
-          const isNight = stage.look.dark > 0.5;
-          fx.drawAirplane(ctx, x, y, 1.4, 0, isNight, t);
-        },
-      };
-    },
-  });
-
-  // 11. Chuyến bay đêm đèn nhấp nháy đỏ xanh (Night Flight)
-  fx.register({
-    name: 'night_flight',
-    label: 'Chuyến Bay Đêm Đèn Nhấp Nháy Định Vị Xuyên Màn Đêm',
-    tier: 'detail',
-    weight: 1.6,
-    when: (look) => look.dark > 0.6,
-    create(stage) {
-      const { W, H } = stage;
-      const DURATION = 32000;
-      let t = 0;
-      return {
-        update(k, elapsed) {
-          t = elapsed;
-          return t < DURATION;
-        },
-        back(ctx) {
-          const u = t / DURATION;
-          const x = W + 100 - u * (W + 200);
-          const y = H * 0.25;
-          fx.drawAirplane(ctx, x, y, 1.15, Math.PI, true, t);
-        },
-      };
-    },
-  });
-
-  // 12. Vệt khói nhuộm vàng cam rực rỡ lúc hoàng hôn (Contrail Sunset)
-  fx.register({
-    name: 'contrail_sunset',
-    label: 'Vệt Khói Phản Lực Nhuộm Vàng Cam Lúc Hoàng Hôn',
-    tier: 'detail',
-    weight: 1.5,
-    when: (look) => look.dark > 0.15 && look.dark < 0.5,
-    create(stage) {
-      const { W, H } = stage;
-      const DURATION = 38000;
-      let t = 0;
-      return {
-        update(k, elapsed) {
-          t = elapsed;
-          return t < DURATION;
-        },
-        back(ctx) {
-          const a = envelope(t, DURATION, 2500, 3000);
-          if (a <= 0) return;
-          const u = Math.min(t / 22000, 1);
-          ctx.save();
-          ctx.globalAlpha = a * 0.7;
-          ctx.strokeStyle = '#f97316'; // glowing sunset orange
-          ctx.lineWidth = 3.5;
-          ctx.beginPath();
-          ctx.moveTo(W * 0.1, H * 0.2);
-          ctx.lineTo(W * 0.1 + u * (W * 0.8), H * 0.2 + u * 40);
-          ctx.stroke();
-          ctx.restore();
-        },
-      };
-    },
-  });
-
-  // 13. Hai vệt khói giao nhau chữ X (Contrail Cross)
-  fx.register({
-    name: 'contrail_cross',
-    label: 'Hai Vệt Khói Máy Bay Giao Nhau Hình Chữ X',
-    tier: 'detail',
-    weight: 1.2,
-    when: (_look) => true,
-    create(stage) {
-      const { W, H } = stage;
-      const DURATION = 36000;
-      let t = 0;
-      return {
-        update(k, elapsed) {
-          t = elapsed;
-          return t < DURATION;
-        },
-        back(ctx) {
-          const a = envelope(t, DURATION, 3000, 3000);
-          if (a <= 0) return;
-          ctx.save();
-          ctx.globalAlpha = a * 0.5;
-          ctx.strokeStyle = '#ffffff';
-          ctx.lineWidth = 2.5;
-          ctx.beginPath();
-          ctx.moveTo(W * 0.1, H * 0.1);
-          ctx.lineTo(W * 0.9, H * 0.4);
-          ctx.moveTo(W * 0.1, H * 0.4);
-          ctx.lineTo(W * 0.9, H * 0.1);
-          ctx.stroke();
-          ctx.restore();
-        },
-      };
-    },
-  });
-
-  // 14. Trực thăng rọi đèn pha tuần tra đêm (Helicopter Searchlight)
-  fx.register({
-    name: 'helicopter_searchlight',
-    label: 'Trực Thăng Rọi Đèn Pha Tuần Tra Đêm Trên Sông Sài Gòn',
-    tier: 'major',
-    weight: 1.6,
-    when: (look) => look.dark > 0.6,
-    create(stage) {
-      const { W, H } = stage;
-      const DURATION = 32000;
-      let t = 0;
-      return {
-        update(k, elapsed) {
-          t = elapsed;
-          return t < DURATION;
-        },
-        back(ctx) {
-          const a = envelope(t, DURATION, 2000, 2000);
-          if (a <= 0) return;
-          const u = t / DURATION;
-          const hx = W * 0.2 + u * (W * 0.6);
-          const hy = H * 0.32 + Math.sin(t * 0.003) * 12;
-          ctx.save();
-          ctx.globalAlpha = a;
-          fx.drawHelicopter(ctx, hx, hy, 1.25, 1, true, t, { searchlight: true });
-          ctx.restore();
-        },
-      };
-    },
-  });
-
-  // 15. Máy bay kéo băng rôn 'FULLSTACK ENGINEER'
-  fx.register({
-    name: 'banner_custom',
-    label: "Máy Bay Kéo Băng Rôn: 'THANH TAI - FULLSTACK ENGINEER'",
-    tier: 'major',
-    weight: 1.8,
-    when: (_look) => true,
-    create(stage) {
-      const { W, H } = stage;
-      const DURATION = 36000;
-      let t = 0;
-      return {
-        update(k, elapsed) {
-          t = elapsed;
-          return t < DURATION;
-        },
-        back(ctx) {
-          const u = t / DURATION;
-          const px = -150 + u * (W + 300);
-          const py = H * 0.22 + Math.sin(t * 0.002) * 8;
-          ctx.save();
-          // Plane pulling the banner
-          fx.drawAirplane(ctx, px, py, 0.75, 0, false, t);
-          // Tow cable
-          ctx.strokeStyle = '#94a3b8';
-          ctx.lineWidth = 1.2;
-          ctx.beginPath();
-          ctx.moveTo(px - 20, py);
-          ctx.lineTo(px - 50, py + 4);
-          ctx.stroke();
-          // Billowing banner
-          fx.drawWavingFlag(ctx, px - 180, py - 10, 130, 26, t, 0.004);
-          // High-contrast text
-          ctx.fillStyle = '#ffffff';
-          ctx.font = 'bold 9px system-ui, sans-serif';
-          ctx.textAlign = 'center';
-          ctx.shadowColor = 'rgba(0,0,0,0.6)';
-          ctx.shadowBlur = 3;
-          ctx.fillText('THANH TAI • FULLSTACK', px - 115, py + 7);
-          ctx.shadowBlur = 0;
-          ctx.restore();
-        },
-      };
-    },
-  });
-
-  // 16. Máy bay giấy nhào lộn vòng cung Loop-the-loop
-  fx.register({
-    name: 'paperplane_loop',
-    label: 'Máy Bay Giấy Nhào Lộn Vòng Cung Điệu Nghệ (Loop-the-Loop)',
-    tier: 'detail',
-    weight: 1.4,
-    when: (_look) => true,
-    create(stage) {
-      const { W, H } = stage;
-      const DURATION = 22000;
-      let t = 0;
-      return {
-        update(k, elapsed) {
-          t = elapsed;
-          return t < DURATION;
-        },
-        back(ctx) {
-          const u = t / DURATION;
-          let px = W * 0.1 + u * (W * 0.8);
-          let py = H * 0.45;
-          let angle = 0.08;
-          if (u > 0.4 && u < 0.6) {
-            const loopAngle = ((u - 0.4) / 0.2) * TAU;
-            px += Math.sin(loopAngle) * 50;
-            py += (Math.cos(loopAngle) - 1) * 50;
-            angle = loopAngle;
-          }
-          fx.drawPaperPlane3D(ctx, px, py, 1.1, angle, '#f8fafc');
-        },
-      };
-    },
-  });
-
-  // 17. Bộ ba máy bay giấy đua nhau bay (Paperplane Trio)
-  fx.register({
-    name: 'paperplane_trio',
-    label: 'Bộ Ba Máy Bay Giấy Tuổi Thơ Đua Nhau Bay Lượn',
-    tier: 'detail',
-    weight: 1.5,
-    when: (_look) => true,
-    create(stage) {
-      const { W, H } = stage;
-      const DURATION = 24000;
-      let t = 0;
-      return {
-        update(k, elapsed) {
-          t = elapsed;
-          return t < DURATION;
-        },
-        back(ctx) {
-          const u = t / DURATION;
-          const baseX = -50 + u * (W + 100);
-          const colors = ['#f8fafc', '#fed7aa', '#bae6fd'];
-          for (let i = 0; i < 3; i++) {
-            const x = baseX - i * 32;
-            const y = H * 0.42 + i * 20 + Math.sin(t * 0.003 + i * 1.4) * 14;
-            fx.drawPaperPlane3D(ctx, x, y, 0.9, 0.06 + Math.cos(t * 0.003 + i) * 0.08, colors[i]);
-          }
-        },
-      };
-    },
-  });
-
-  // 18. Đàn chim chao liệng đón gió (Birds Glide)
-  fx.register({
-    name: 'birds_glide',
-    label: 'Đàn Chim Chao Liệng Cánh Đón Luồng Gió Chiều',
-    tier: 'detail',
-    weight: 1.6,
-    when: (look) => look.dark < 0.65,
-    create(stage) {
-      const { W, H } = stage;
-      const DURATION = 28000;
-      let t = 0;
-      return {
-        update(k, elapsed) {
-          t = elapsed;
-          return t < DURATION;
-        },
-        back(ctx) {
-          const u = t / DURATION;
-          const cx = W * 0.2 + u * (W * 0.6);
-          const cy = H * 0.35 + Math.sin(t * 0.002) * 20;
-          ctx.save();
-          ctx.strokeStyle = '#334155';
-          ctx.lineWidth = 1.4;
-          for (let i = 0; i < 9; i++) {
-            const bx = cx + Math.sin(i * 1.2) * 35;
-            const by = cy + Math.cos(i * 1.4) * 22;
-            ctx.beginPath();
-            ctx.moveTo(bx - 6, by + 2);
-            ctx.quadraticCurveTo(bx - 3, by - 2, bx, by);
-            ctx.quadraticCurveTo(bx + 3, by - 2, bx + 6, by + 2);
-            ctx.stroke();
-          }
-          ctx.restore();
-        },
-      };
-    },
-  });
-
-  // 19. Đàn chim tản mác vì tiếng động giật mình (Birds Scatter)
-  fx.register({
-    name: 'birds_scatter',
-    label: 'Đàn Chim Giật Mình Tản Mác Khi Có Tiếng Động',
-    tier: 'detail',
-    weight: 1.5,
-    when: (look) => look.dark < 0.65,
-    create(stage) {
-      const { W, H } = stage;
-      const DURATION = 16000;
-      let t = 0;
-      const cx = W * 0.5;
-      const cy = H * 0.45;
-      Portfolio.ambientEnvironment?.notifyDisturbance(cx, cy, 250, 1.2);
-      return {
-        update(k, elapsed) {
-          t = elapsed;
-          return t < DURATION;
-        },
-        back(ctx) {
-          const a = envelope(t, DURATION, 200, 1500);
-          if (a <= 0) return;
-          ctx.save();
-          ctx.globalAlpha = a;
-          ctx.strokeStyle = '#1e293b';
-          ctx.lineWidth = 1.6;
-          for (let i = 0; i < 16; i++) {
-            const angle = (i * TAU) / 16;
-            const dist = Math.min(t * 0.08, 180);
-            const bx = cx + Math.cos(angle) * dist;
-            const by = cy + Math.sin(angle) * dist;
-            ctx.beginPath();
-            ctx.moveTo(bx - 5, by + 2);
-            ctx.quadraticCurveTo(bx - 2, by - 2, bx, by);
-            ctx.quadraticCurveTo(bx + 2, by - 2, bx + 5, by + 2);
-            ctx.stroke();
-          }
-          ctx.restore();
-        },
-      };
-    },
-  });
-
-  // 20. Chim én sà sát mặt sông bắt mồi (Swallows Dive)
-  fx.register({
-    name: 'swallows_dive',
-    label: 'Chim Én Sà Sát Mặt Nước Bắt Mồi Chiều Muộn',
-    tier: 'detail',
-    weight: 1.6,
-    when: (look) => look.dark > 0.2 && look.dark < 0.6,
-    create(stage) {
-      const { W, H } = stage;
-      const DURATION = 22000;
-      let t = 0;
-      return {
-        update(k, elapsed) {
-          t = elapsed;
-          return t < DURATION;
-        },
-        front(ctx) {
-          const u = (t / DURATION) * 3;
-          const ex = ((t * 0.08) % (W + 60)) - 30;
-          const ey = H * 0.86 + Math.sin(u * TAU) * 16;
-          ctx.save();
-          ctx.strokeStyle = '#0f172a';
-          ctx.lineWidth = 1.8;
-          ctx.beginPath();
-          ctx.moveTo(ex - 8, ey + 3);
-          ctx.quadraticCurveTo(ex - 4, ey - 3, ex, ey);
-          ctx.quadraticCurveTo(ex + 4, ey - 3, ex + 8, ey + 3);
-          ctx.stroke();
-          ctx.restore();
-        },
-      };
-    },
-  });
-
-  // 21. Đàn dơi đông đúc bay tỏa ra từ vòm cây (Bats Swarm)
-  fx.register({
-    name: 'bats_swarm',
-    label: 'Đàn Dơi Đông Đúc Bay Tỏa Khắp Bầu Trời Chạng Vạng',
-    tier: 'detail',
-    weight: 1.7,
-    when: (look) => look.dark > 0.45 && look.dark < 0.75,
-    create(stage) {
-      const { W, H } = stage;
-      const DURATION = 26000;
-      let t = 0;
-      const bats = Array.from({ length: 28 }, () => ({
-        x: rand(0, W),
-        y: rand(H * 0.3, H * 0.7),
-        vx: rand(-2, -0.5),
-        vy: rand(-0.8, 0.8),
-      }));
-      return {
-        update(k, elapsed) {
-          t = elapsed;
-          bats.forEach((b) => {
-            b.x += b.vx * k;
-            b.y += (b.vy + Math.sin(t * 0.01 + b.x) * 0.5) * k;
-            if (b.x < -20) b.x = W + 20;
-          });
-          return t < DURATION;
-        },
-        back(ctx) {
-          const a = envelope(t, DURATION, 1500, 2000);
-          if (a <= 0) return;
-          ctx.save();
-          ctx.globalAlpha = a * 0.85;
-          ctx.fillStyle = '#0f172a';
-          bats.forEach((b) => {
-            ctx.beginPath();
-            ctx.arc(b.x, b.y, 2.2, 0, TAU);
-            ctx.fill();
-          });
-          ctx.restore();
-        },
-      };
-    },
-  });
-
-  // 22. Đàn chim sẻ ríu rít sà xuống (Sparrow Perch)
-  fx.register({
-    name: 'sparrow_perch',
-    label: 'Đàn Chim Sẻ Ríu Rít Sà Xuống Mái Phố',
-    tier: 'detail',
-    weight: 1.4,
-    when: (look) => look.dark < 0.5,
-    create(stage) {
-      const { W, H } = stage;
-      const DURATION = 20000;
-      let t = 0;
-      return {
-        update(k, elapsed) {
-          t = elapsed;
-          return t < DURATION;
-        },
-        front(ctx) {
-          const a = envelope(t, DURATION, 1000, 1500);
-          if (a <= 0) return;
-          ctx.save();
-          ctx.globalAlpha = a * 0.9;
-          ctx.fillStyle = '#78350f';
-          const rx = W * 0.45;
-          const ry = H * 0.82;
-          for (let i = 0; i < 6; i++) {
-            ctx.beginPath();
-            ctx.arc(rx + i * 16 + Math.sin(t * 0.005 + i) * 3, ry, 3, 0, TAU);
-            ctx.fill();
-          }
-          ctx.restore();
-        },
-      };
-    },
-  });
-
-  // 23. Đại bàng biển lượn vòng tròn trên sông (Sea Eagle)
-  fx.register({
-    name: 'sea_eagle',
-    label: 'Đại Bàng Biển Dang Rộng Cánh Xoay Vòng Trên Sông',
-    tier: 'detail',
-    weight: 1.4,
-    when: (look) => look.dark < 0.6,
-    create(stage) {
-      const { W, H } = stage;
-      const DURATION = 30000;
-      let t = 0;
-      return {
-        update(k, elapsed) {
-          t = elapsed;
-          return t < DURATION;
-        },
-        back(ctx) {
-          const a = envelope(t, DURATION, 2000, 2000);
-          if (a <= 0) return;
-          const cx = W * 0.55;
-          const cy = H * 0.28;
-          const r = 60;
-          const angle = t * 0.001;
-          const x = cx + Math.cos(angle) * r;
-          const y = cy + Math.sin(angle) * (r * 0.5);
-          ctx.save();
-          ctx.globalAlpha = a;
-          ctx.strokeStyle = '#1e293b';
-          ctx.lineWidth = 2.4;
-          ctx.beginPath();
-          ctx.moveTo(x - 12, y + 4);
-          ctx.quadraticCurveTo(x - 6, y - 4, x, y);
-          ctx.quadraticCurveTo(x + 6, y - 4, x + 12, y + 4);
-          ctx.stroke();
-          ctx.restore();
         },
       };
     },

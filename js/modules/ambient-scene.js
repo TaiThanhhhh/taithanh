@@ -1,15 +1,18 @@
 /**
  * @file Ambient scene: the cursor swarm over Saigon, through a whole day.
  *
- * Layers, back to front: sky with the city's glow, stars, moon and sun, clouds,
- * surprise events (ambient-events*.js), the cursor murmuration
- * (ambient-murmuration.js), the skyline with its window lights (ambient-sky.js),
- * events in front of the city (rain, fog, Landmark 81's LED show), and a quiet
+ * Layers, back to front: sky with the city's glow, stars, moon and sun, clouds, the
+ * light thrown on them by bursts and lightning, surprise events (ambient-events*.js),
+ * the cursor murmuration (ambient-murmuration.js), the skyline with its window lights
+ * (ambient-sky.js), the Saigon river and its reflections (ambient-river.js), events in
+ * front of the city (rain, fog, Landmark 81's LED show), bloom, and a quiet
  * typographic clock. Under it, a caption names the surprise going on (like the
  * location captions of a TV screensaver).
  *
  * The day (ambient-cycle.js) runs on its own clock, compressed into
- * `config.ambient.cycleMinutes`; its look is applied about once a second.
+ * `config.ambient.cycleMinutes`; its look is applied about once a second. The date
+ * is real (ambient-calendar.js): tonight's moon, the season, the occasion, and the
+ * city's live shows (when Saigon fires its fireworks, the scene turns to night for them).
  *
  * Transitions: entering, the pointer bursts into the swarm; leaving, the swarm
  * rushes back into the pointer (driven by ambient.js).
@@ -23,6 +26,9 @@
   const LOOK_REFRESH_MS = 1000;
   /** The clock drifts a few pixels over minutes so no glyph stays on the same pixels (OLED). */
   const DRIFT_PERIOD_MS = 37 * 60000;
+  /** Earth Hour: how far the city's lights go down, and how long the switch-off takes. */
+  const EARTH_HOUR_LIT = 0.12;
+  const EARTH_HOUR_RAMP_MS = 20000;
 
   const pad = (n) => String(n).padStart(2, '0');
 
@@ -35,6 +41,7 @@
     constructor(root, config, options = {}) {
       this.root = root;
       this.config = config;
+      this.calendar = Portfolio.ambientCalendar;
 
       this.cycle = new Portfolio.AmbientCycle(config, options);
       this.sky = new Portfolio.AmbientSky(root);
@@ -44,9 +51,9 @@
       this.flock = new Portfolio.Murmuration(this.birdsCanvas, config.cursors, config.frameBudgetMs);
       const { labels, colors } = Portfolio.config.swarm;
       this.flock.setLeaders(labels, colors);
-      this.events = new Portfolio.AmbientEvents(this.sky.fxBack, this.sky.fxFront, config, options);
-      this.events.onBegin = (def, tier) => {
-        if (tier === 'major' && config.captions && def.label) this.showCaption(def);
+      this.events = new Portfolio.AmbientEvents(this.sky, config, options);
+      this.events.onBegin = (def, tier, caption) => {
+        if (tier === 'major' && config.captions && (caption || def.label)) this.showCaption(def, caption);
       };
 
       this.vignette = document.createElement('div');
@@ -54,15 +61,21 @@
       this.hud = document.createElement('div');
       this.hud.className = 'ambient__hud';
       this.hud.innerHTML =
-        '<div class="ambient__time"></div><div class="ambient__date"></div><div class="ambient__caption"></div>';
+        '<div class="ambient__time"></div><div class="ambient__date"></div>' +
+        '<div class="ambient__caption"><span class="ambient__caption-place"></span>' +
+        '<span class="ambient__caption-title"></span></div>';
       root.append(this.vignette, this.hud);
       this.timeEl = this.hud.querySelector('.ambient__time');
       this.dateEl = this.hud.querySelector('.ambient__date');
       this.captionEl = this.hud.querySelector('.ambient__caption');
+      this.placeEl = this.hud.querySelector('.ambient__caption-place');
+      this.titleEl = this.hud.querySelector('.ambient__caption-title');
       this.captionUntil = 0;
       this.lastHud = -Infinity;
       this.look = null;
       this.lastLook = -Infinity;
+      this.cal = null;
+      this.dim = { level: 1, from: 1, to: 1, start: 0 };
     }
 
     resize() {
@@ -77,11 +90,15 @@
 
     /** @param {{x: number, y: number}} origin Where the pointer was: the swarm bursts out of it. */
     reset(now, origin) {
+      this.cal = this.calendar ? this.calendar.getState() : null;
+      if (this.cal) {
+        this.sky.setMoon(this.cal.moon);
+        this.cycle.setMoon(this.cal.moon);
+      }
       this.cycle.start(now);
-      this.sky.newMoon();
       this.refreshLook(now, true);
       this.flock.reset(now, origin);
-      this.events.reset(now, this.look);
+      this.events.reset(now, this.look, this.cal);
       this.hideCaption();
       this.updateHud(now);
     }
@@ -106,17 +123,22 @@
       return this.events.trigger(name, performance.now());
     }
 
-    /** Names the event going on, under the clock; rare ones say so. */
-    showCaption(def) {
-      this.captionEl.textContent = def.label;
+    /**
+     * Names the event going on, under the clock: a small line for where / when it is,
+     * then its name; rare ones say so.
+     */
+    showCaption(def, caption) {
+      const text = caption || { title: def.label, place: def.place };
+      this.placeEl.textContent = text.place || '';
+      this.titleEl.textContent = text.title;
       if (def.rarity === 'rare') {
         const tag = document.createElement('span');
         tag.className = 'ambient__rare';
         tag.textContent = 'hiếm gặp';
-        this.captionEl.append(tag);
+        this.titleEl.append(tag);
       }
       this.captionEl.classList.add('is-shown');
-      this.captionUntil = performance.now() + CAPTION_MS;
+      this.captionUntil = performance.now() + (text.ms || CAPTION_MS);
     }
 
     hideCaption() {
@@ -124,21 +146,48 @@
       this.captionUntil = 0;
     }
 
+    /**
+     * The city's own schedule: during a live show the day holds at night; during Earth
+     * Hour the windows and the towers go dark for an hour.
+     */
+    followCity(now) {
+      if (!this.calendar) return;
+      this.cal = this.calendar.getState();
+      const live = this.cal.live;
+      if (live && !this.cycle.holding) this.cycle.holdNight(now, this.look);
+      else if (!live && this.cycle.holding) this.cycle.release(now);
+
+      const target = live && live.kind === 'earthhour' ? EARTH_HOUR_LIT : 1;
+      if (target !== this.dim.to)
+        this.dim = { level: this.dim.level, from: this.dim.level, to: target, start: now };
+      const u = Math.min(1, (now - this.dim.start) / EARTH_HOUR_RAMP_MS);
+      this.dim.level = this.dim.from + (this.dim.to - this.dim.from) * u;
+    }
+
     refreshLook(now, force = false) {
-      this.look = this.cycle.look(now);
-      this.sky.apply(this.look, force);
-      this.flock.setInk(this.look.birds, this.look.birdGlow);
+      this.followCity(now);
+      const look = this.cycle.look(now);
+      if (this.dim.level < 1) {
+        // Less light thrown up into the haze: the city's glow fades and more stars show.
+        look.lit *= this.dim.level;
+        look.glow = [...look.glow.slice(0, 3), look.glow[3] * (0.35 + 0.65 * this.dim.level)];
+        look.stars = Math.min(1, look.stars * (1.6 - 0.6 * this.dim.level));
+      }
+      look.earthHour = 1 - this.dim.level; // Landmark 81's own lights go off too
+      this.look = look;
+      this.sky.apply(look, force);
+      this.flock.setInk(look.birds, look.birdGlow);
       this.lastLook = now;
     }
 
     updateHud(now) {
-      const date = new Date();
+      // The visitor's clock; the simulated Saigon one when the test lab has moved the date.
+      const date = this.calendar && this.calendar.override.offset ? this.calendar.now() : new Date();
       this.timeEl.textContent = `${pad(date.getHours())}:${pad(date.getMinutes())}`;
-      this.dateEl.textContent = date.toLocaleDateString('en-GB', {
-        weekday: 'long',
-        day: 'numeric',
-        month: 'long',
-      });
+      const day = date.toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long' });
+      // The lunar date matters here (Rằm, mùng 1, Tết): shown next to the solar one.
+      const lunar = this.cal && this.cal.lunar;
+      this.dateEl.textContent = lunar ? `${day} · ${lunar.day}/${lunar.month} âm lịch` : day;
       // Imperceptible drift (a few px per minute) so the clock never burns into an OLED.
       const a = ((Date.now() % DRIFT_PERIOD_MS) / DRIFT_PERIOD_MS) * Math.PI * 2;
       this.hud.style.transform = `translate3d(${(Math.sin(a) * 2.2).toFixed(2)}vw, ${(Math.sin(a * 2) * -1.4).toFixed(2)}vh, 0)`;
@@ -150,12 +199,13 @@
       if (now - this.lastHud > HUD_REFRESH_MS) this.updateHud(now);
       if (this.captionUntil && now > this.captionUntil) this.hideCaption();
       this.sky.tick(now);
-      this.events.step(now, k, this.look);
+      this.events.step(now, k, this.look, this.cal);
       this.flock.step(now, k);
     }
 
     render(now) {
-      this.events.render();
+      this.events.render(now);
+      this.sky.river.frame(now, this.events.mirrors());
       this.flock.render(now);
     }
   }

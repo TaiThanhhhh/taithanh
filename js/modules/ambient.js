@@ -240,7 +240,7 @@
       state.locked = params.has('locked') || params.has('pin') || params.has('test') || params.has('debug');
       // To try things out: ?ambient&speed=40 (a day in a minute), &at=night, &event=fireworks.
       state.options = {
-        speed: Math.max(Number(params.get('speed')) || 1, 0.01),
+        speed: params.has('speed') ? Math.max(Number(params.get('speed')) || 1, 0.01) : undefined,
         at: Portfolio.AmbientCycle.phaseOf(params.get('at')),
         event: params.get('event'),
       };

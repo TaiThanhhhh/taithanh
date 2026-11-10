@@ -112,7 +112,9 @@
 
   fx.register({
     name: 'balloons',
+    group: 'day',
     label: 'Khinh khí cầu',
+    rarity: 'rare',
     when: (look) => look.dark < 0.3,
     create(stage) {
       const DURATION = 95000;
@@ -144,8 +146,9 @@
 
   fx.register({
     name: 'balloonglow',
+    group: 'day',
     label: 'Khinh khí cầu thắp lửa',
-    rarity: 'uncommon',
+    rarity: 'rare',
     when: (look) => look.dark > 0.6,
     create(stage) {
       const DURATION = 80000;
@@ -192,7 +195,13 @@
 
   fx.register({
     name: 'kites',
+    group: 'day',
     label: 'Thả diều trên sân thượng',
+    // Most in the windy dry season, on weekend afternoons (16–18h at Thủ Thiêm and Ba Son).
+    boost: (cal, look) =>
+      (cal.windy ? 1.8 : 0.8) *
+      (cal.isWeekend ? 1.6 : 1) *
+      (['afternoon', 'golden'].includes(look.name) ? 1.5 : 0.7),
     when: (look) => look.dark < 0.3,
     create(stage) {
       const { W, H } = stage;
@@ -306,7 +315,8 @@
 
   fx.register({
     name: 'party',
-    label: 'Chùm bóng bay',
+    group: 'day',
+    label: 'Thả bóng bay',
     weight: 0.6,
     when: (look) => look.dark < 0.35,
     create(stage) {
@@ -363,6 +373,7 @@
 
   fx.register({
     name: 'bubbles',
+    group: 'day',
     label: 'Bong bóng xà phòng',
     when: (look) => look.dark < 0.4,
     create(stage) {
@@ -454,8 +465,15 @@
 
   fx.register({
     name: 'seeds',
-    label: 'Mùa hoa dầu bay',
-    when: (look) => look.dark < 0.35,
+    group: 'day',
+    label: 'Mùa dầu bay',
+    // Dầu seeds spin down in April, sao seeds in May (Tao Đàn, Lê Duẩn, Trương Định...).
+    caption: (cal) =>
+      cal.seeds === 'sao'
+        ? { title: 'Mùa sao bay', place: 'Tháng 5 · Sài Gòn' }
+        : { title: 'Mùa dầu bay', place: 'Tháng 4 · Công viên Tao Đàn' },
+    weight: 1.6,
+    when: (look, _stage, cal) => !!cal.seeds && look.dark < 0.35,
     create(stage) {
       const sprites = ['196, 98, 84', '176, 112, 70', '214, 140, 104'].map(seedSprite);
       return fx.fallers(stage, {
@@ -511,8 +529,10 @@
 
   fx.register({
     name: 'blossoms',
+    group: 'day',
     label: 'Hoa mai bay trong gió',
-    rarity: 'uncommon',
+    place: 'Tết ở Sài Gòn',
+    occasion: 'tet',
     when: (look) => look.dark < 0.4,
     create(stage) {
       return fx.fallers(stage, {
@@ -525,642 +545,6 @@
         mode: 'tumble',
         sprite: (i) => (i % 3 === 0 ? maiFlower : maiPetal),
       });
-    },
-  });
-
-  /* ---------- Các Sự Kiện Bầu Trời Ban Ngày & Đời Sống Mở Rộng ---------- */
-
-  // 8. Đội khinh khí cầu 3 chiếc bay theo đội hình (Balloon Fleet)
-  fx.register({
-    name: 'balloon_fleet',
-    label: 'Đội Khinh Khí Cầu 3 Chiếc Bay Thủ Thiêm',
-    weight: 1.6,
-    when: (look) => look.dark < 0.45,
-    create(stage) {
-      const { W, H } = stage;
-      const DURATION = 34000;
-      let t = 0;
-      return {
-        update(k, elapsed) {
-          t = elapsed;
-          return t < DURATION;
-        },
-        back(ctx) {
-          const a = envelope(t, DURATION, 2500, 2500);
-          if (a <= 0) return;
-          ctx.save();
-          ctx.globalAlpha = a * 0.9;
-          const u = t / DURATION;
-          const bx = -80 + u * (W + 160);
-          const colors = ['#ef4444', '#f59e0b', '#3b82f6'];
-          for (let i = 0; i < 3; i++) {
-            const x = bx - i * 65;
-            const y = H * 0.32 + i * 25 + Math.sin(t * 0.002 + i) * 10;
-            ctx.fillStyle = colors[i];
-            ctx.beginPath();
-            ctx.ellipse(x, y, 16, 22, 0, 0, TAU);
-            ctx.fill();
-            // Basket
-            ctx.fillStyle = '#78350f';
-            ctx.fillRect(x - 3, y + 25, 6, 5);
-          }
-          ctx.restore();
-        },
-      };
-    },
-  });
-
-  // 9. Cánh diều sáo truyền thống lượn sóng (Kite Flute)
-  fx.register({
-    name: 'kite_flute',
-    label: 'Diều Sáo Truyền Thống Ngân Vang Chiều Sài Gòn',
-    weight: 1.6,
-    when: (look) => look.dark < 0.65,
-    create(stage) {
-      const { W, H } = stage;
-      const DURATION = 32000;
-      let t = 0;
-      return {
-        update(k, elapsed) {
-          t = elapsed;
-          return t < DURATION;
-        },
-        back(ctx) {
-          const a = envelope(t, DURATION, 2000, 2000);
-          if (a <= 0) return;
-          ctx.save();
-          ctx.globalAlpha = a * 0.85;
-          const kx = W * 0.38 + Math.sin(t * 0.0018) * 35;
-          const ky = H * 0.38 + Math.cos(t * 0.0025) * 20;
-          // Crescent moon kite body
-          ctx.fillStyle = '#dc2626';
-          ctx.beginPath();
-          ctx.arc(kx, ky, 24, 0, Math.PI);
-          ctx.fill();
-          // Bamboo flute bars
-          ctx.strokeStyle = '#facc15';
-          ctx.lineWidth = 2.5;
-          ctx.beginPath();
-          ctx.moveTo(kx - 26, ky);
-          ctx.lineTo(kx + 26, ky);
-          ctx.stroke();
-          ctx.restore();
-        },
-      };
-    },
-  });
-
-  // 10. Diều phát sáng LED lấp lánh ban đêm (LED Kites)
-  fx.register({
-    name: 'kite_led',
-    label: 'Cánh Diều LED Rực Rỡ Đêm Công Viên Thủ Thiêm',
-    weight: 1.7,
-    when: (look) => look.dark > 0.6,
-    create(stage) {
-      const { W, H } = stage;
-      const DURATION = 32000;
-      let t = 0;
-      return {
-        update(k, elapsed) {
-          t = elapsed;
-          return t < DURATION;
-        },
-        back(ctx) {
-          const a = envelope(t, DURATION, 2000, 2000);
-          if (a <= 0) return;
-          ctx.save();
-          ctx.globalAlpha = a;
-          const kx = W * 0.65 + Math.sin(t * 0.002) * 25;
-          const ky = H * 0.35 + Math.cos(t * 0.0028) * 22;
-          // Glowing LED dots along kite frame
-          for (let i = 0; i < 8; i++) {
-            const angle = (i * TAU) / 8;
-            const x = kx + Math.cos(angle) * 20;
-            const y = ky + Math.sin(angle) * 14;
-            ctx.fillStyle = i % 2 === 0 ? '#38bdf8' : '#ec4899';
-            ctx.beginPath();
-            ctx.arc(x, y, 2.5, 0, TAU);
-            ctx.fill();
-          }
-          ctx.restore();
-        },
-      };
-    },
-  });
-
-  // 11. Chùm bóng bay hình trái tim đỏ (Heart Balloons)
-  fx.register({
-    name: 'heart_balloons',
-    label: 'Chùm Bóng Bay Trái Tim Đỏ Bay Lên Trời',
-    weight: 1.5,
-    when: (_look) => true,
-    create(stage) {
-      const { W, H } = stage;
-      const DURATION = 28000;
-      let t = 0;
-      const offsets = [
-        { dx: 0, dy: 0, size: 14, color: '#ef4444' },
-        { dx: -12, dy: 8, size: 12, color: '#f43f5e' },
-        { dx: 14, dy: 6, size: 13, color: '#dc2626' },
-        { dx: -6, dy: 16, size: 11, color: '#fb7185' },
-        { dx: 8, dy: 18, size: 11, color: '#e11d48' },
-        { dx: -18, dy: 24, size: 10, color: '#f43f5e' },
-        { dx: 16, dy: 25, size: 10, color: '#ef4444' },
-      ];
-      return {
-        update(k, elapsed) {
-          t = elapsed;
-          return t < DURATION;
-        },
-        back(ctx) {
-          const a = envelope(t, DURATION, 2000, 2000);
-          if (a <= 0) return;
-          const u = t / DURATION;
-          const bx = W * 0.45 + Math.sin(u * 7) * 45;
-          const by = H * 1.05 - u * (H * 0.95);
-          ctx.save();
-          ctx.globalAlpha = a * 0.9;
-
-          // Gathering knot / ribbons
-          const knotX = bx;
-          const knotY = by + 35;
-          ctx.strokeStyle = 'rgba(255, 255, 255, 0.45)';
-          ctx.lineWidth = 0.9;
-
-          offsets.forEach((b) => {
-            const hx = bx + b.dx + Math.sin(t * 0.002 + b.dx) * 4;
-            const hy = by + b.dy + Math.cos(t * 0.003 + b.dy) * 3;
-            const s = b.size;
-
-            // Tether string from balloon base to central knot
-            ctx.beginPath();
-            ctx.moveTo(hx, hy + s * 0.8);
-            ctx.quadraticCurveTo((hx + knotX) / 2 + 2, (hy + knotY) / 2, knotX, knotY);
-            ctx.stroke();
-
-            // Sculpted Heart Shape
-            ctx.save();
-            ctx.translate(hx, hy);
-            ctx.fillStyle = b.color;
-            ctx.beginPath();
-            const topH = s * 0.35;
-            ctx.moveTo(0, topH);
-            ctx.bezierCurveTo(0, -s * 0.2, -s * 0.6, -s * 0.2, -s * 0.6, topH);
-            ctx.bezierCurveTo(-s * 0.6, s * 0.65, 0, s * 0.75, 0, s);
-            ctx.bezierCurveTo(0, s * 0.75, s * 0.6, s * 0.65, s * 0.6, topH);
-            ctx.bezierCurveTo(s * 0.6, -s * 0.2, 0, -s * 0.2, 0, topH);
-            ctx.closePath();
-            ctx.fill();
-
-            // Specular reflection highlight
-            ctx.fillStyle = 'rgba(255, 255, 255, 0.35)';
-            ctx.beginPath();
-            ctx.ellipse(-s * 0.22, topH * 0.5, s * 0.12, s * 0.07, -0.4, 0, TAU);
-            ctx.fill();
-            ctx.restore();
-          });
-
-          // Ribbons trailing from knot
-          ctx.strokeStyle = '#fda4af';
-          ctx.lineWidth = 1.2;
-          ctx.beginPath();
-          ctx.moveTo(knotX, knotY);
-          ctx.quadraticCurveTo(knotX - 8, knotY + 20, knotX + 4, knotY + 38);
-          ctx.stroke();
-
-          ctx.restore();
-        },
-      };
-    },
-  });
-
-  // 12. Bong bóng khổng lồ biến dạng trong gió (Giant Bubble)
-  fx.register({
-    name: 'giant_bubble',
-    label: 'Bong Bóng Khổng Lồ Biến Dạng Trong Gió',
-    weight: 1.4,
-    when: (_look) => true,
-    create(stage) {
-      const { W, H } = stage;
-      const DURATION = 26000;
-      let t = 0;
-      return {
-        update(k, elapsed) {
-          t = elapsed;
-          return t < DURATION;
-        },
-        front(ctx) {
-          const a = envelope(t, DURATION, 1500, 2000);
-          if (a <= 0) return;
-          const u = t / DURATION;
-          const bx = W * 0.12 + u * (W * 0.76);
-          const by = H * 0.52 + Math.sin(t * 0.0025) * 35;
-          ctx.save();
-          ctx.globalAlpha = a * 0.75;
-
-          const rX = 36 + Math.sin(t * 0.007) * 7;
-          const rY = 30 + Math.cos(t * 0.005) * 6;
-          const rot = Math.sin(t * 0.002) * 0.3;
-
-          ctx.translate(bx, by);
-          ctx.rotate(rot);
-
-          // Iridescent soap film gradient
-          const bubbleGrad = ctx.createRadialGradient(-rX * 0.25, -rY * 0.25, rX * 0.1, 0, 0, rX * 1.05);
-          bubbleGrad.addColorStop(0, 'rgba(255, 255, 255, 0.05)');
-          bubbleGrad.addColorStop(0.65, 'rgba(186, 230, 253, 0.1)');
-          bubbleGrad.addColorStop(0.85, 'rgba(244, 114, 182, 0.22)');
-          bubbleGrad.addColorStop(0.95, 'rgba(56, 189, 248, 0.35)');
-          bubbleGrad.addColorStop(1, 'rgba(255, 255, 255, 0.6)');
-          ctx.fillStyle = bubbleGrad;
-
-          ctx.beginPath();
-          ctx.ellipse(0, 0, rX, rY, 0, 0, TAU);
-          ctx.fill();
-
-          // Thin outer rainbow rim
-          ctx.strokeStyle = 'rgba(224, 242, 254, 0.55)';
-          ctx.lineWidth = 1.6;
-          ctx.beginPath();
-          ctx.ellipse(0, 0, rX, rY, 0, 0, TAU);
-          ctx.stroke();
-
-          // Curved specular glare reflection
-          ctx.strokeStyle = 'rgba(255, 255, 255, 0.7)';
-          ctx.lineWidth = 2.4;
-          ctx.beginPath();
-          ctx.arc(-rX * 0.1, -rY * 0.1, rX * 0.65, Math.PI * 1.15, Math.PI * 1.45);
-          ctx.stroke();
-
-          // Secondary lower glare dot
-          ctx.fillStyle = 'rgba(255, 255, 255, 0.5)';
-          ctx.beginPath();
-          ctx.arc(rX * 0.45, rY * 0.45, 2.5, 0, TAU);
-          ctx.fill();
-
-          ctx.restore();
-        },
-      };
-    },
-  });
-
-  // 13. Cơn lốc nhỏ cuốn hoa dầu xoay tròn (Seed Whirlwind)
-  fx.register({
-    name: 'seed_whirlwind',
-    label: 'Cơn Lốc Cuốn Hoa Dầu Xoay Tròn (Seed Whirlwind)',
-    weight: 1.5,
-    when: (look) => look.dark < 0.5,
-    create(stage) {
-      const { W, H } = stage;
-      const DURATION = 28000;
-      let t = 0;
-      return {
-        update(k, elapsed) {
-          t = elapsed;
-          return t < DURATION;
-        },
-        front(ctx) {
-          const a = envelope(t, DURATION, 1500, 2000);
-          if (a <= 0) return;
-          ctx.save();
-          ctx.globalAlpha = a * 0.85;
-          const cx = W * 0.58;
-          const cy = H * 0.62;
-
-          for (let i = 0; i < 22; i++) {
-            const spin = (i * TAU) / 22 + t * 0.0055;
-            const r = 24 + i * 3.8;
-            const x = cx + Math.cos(spin) * r;
-            const y = cy + Math.sin(spin) * (r * 0.38) - i * 3.2;
-            const wingSpin = t * 0.015 + i * 1.7;
-
-            // Saigon Dipterocarpus winged seed (Trái Chò Nâu / Hoa Dầu hai cánh xoay tròn)
-            ctx.save();
-            ctx.translate(x, y);
-            ctx.rotate(wingSpin);
-
-            // Two elongated propeller wings
-            ctx.fillStyle = '#b45309';
-            ctx.beginPath();
-            ctx.ellipse(0, -7, 2, 6, 0.1, 0, TAU);
-            ctx.fill();
-            ctx.beginPath();
-            ctx.ellipse(0, 7, 2, 6, -0.1, 0, TAU);
-            ctx.fill();
-
-            // Central round seed nut
-            ctx.fillStyle = '#78350f';
-            ctx.beginPath();
-            ctx.arc(0, 0, 2.4, 0, TAU);
-            ctx.fill();
-
-            ctx.restore();
-          }
-          ctx.restore();
-        },
-      };
-    },
-  });
-
-  // 14. Cánh hoa đào hồng phai bay lượn (Peach Blossoms)
-  fx.register({
-    name: 'peach_blossoms',
-    label: 'Cánh Hoa Đào Hồng Phai Bay Lượn Ngày Tết',
-    weight: 1.4,
-    when: (look) => look.dark < 0.5,
-    create(stage) {
-      const { W, H } = stage;
-      const DURATION = 32000;
-      let t = 0;
-      return {
-        update(k, elapsed) {
-          t = elapsed;
-          return t < DURATION;
-        },
-        front(ctx) {
-          const a = envelope(t, DURATION, 2000, 2000);
-          if (a <= 0) return;
-          ctx.save();
-          ctx.globalAlpha = a * 0.75;
-          ctx.fillStyle = '#fbcfe8'; // pale pink
-          for (let i = 0; i < 28; i++) {
-            const x = (W * 0.05 + i * 45 + Math.sin(t * 0.002 + i) * 20) % W;
-            const y = (t * 0.03 + i * 25) % H;
-            ctx.beginPath();
-            ctx.ellipse(x, y, 4, 6, i * 0.5, 0, TAU);
-            ctx.fill();
-          }
-          ctx.restore();
-        },
-      };
-    },
-  });
-
-  // 15. Cánh hoa giấy rụng bay la đà (Bougainvillea)
-  fx.register({
-    name: 'bougainvillea',
-    label: 'Cánh Hoa Giấy Rụng Bay La Đà Mái Hiên Sài Gòn',
-    weight: 1.6,
-    when: (look) => look.dark < 0.6,
-    create(stage) {
-      const { W, H } = stage;
-      const DURATION = 30000;
-      let t = 0;
-      return {
-        update(k, elapsed) {
-          t = elapsed;
-          return t < DURATION;
-        },
-        front(ctx) {
-          const a = envelope(t, DURATION, 2000, 2000);
-          if (a <= 0) return;
-          ctx.save();
-          ctx.globalAlpha = a * 0.8;
-          ctx.fillStyle = '#f43f5e'; // magenta pink
-          for (let i = 0; i < 22; i++) {
-            const x = (i * 65 + Math.sin(t * 0.003 + i) * 30) % W;
-            const y = (t * 0.035 + i * 35) % H;
-            ctx.beginPath();
-            ctx.ellipse(x, y, 5, 7, 0.4, 0, TAU);
-            ctx.fill();
-          }
-          ctx.restore();
-        },
-      };
-    },
-  });
-
-  // 16. Lá vàng rơi xào xạc đường Trương Định (Autumn Leaves)
-  fx.register({
-    name: 'autumn_leaves',
-    label: 'Lá Vàng Rơi Xào Xạc Đường Trương Định Sài Gòn',
-    weight: 1.5,
-    when: (_look) => true,
-    create(stage) {
-      const { W, H } = stage;
-      const DURATION = 30000;
-      let t = 0;
-      return {
-        update(k, elapsed) {
-          t = elapsed;
-          return t < DURATION;
-        },
-        front(ctx) {
-          const a = envelope(t, DURATION, 2000, 2000);
-          if (a <= 0) return;
-          ctx.save();
-          ctx.globalAlpha = a * 0.75;
-          ctx.fillStyle = '#eab308'; // golden yellow leaf
-          for (let i = 0; i < 20; i++) {
-            const x = (i * 70 + Math.sin(t * 0.002 + i) * 35) % W;
-            const y = (t * 0.04 + i * 30) % H;
-            ctx.beginPath();
-            ctx.ellipse(x, y, 6, 9, Math.sin(t * 0.004 + i), 0, TAU);
-            ctx.fill();
-          }
-          ctx.restore();
-        },
-      };
-    },
-  });
-
-  // 17. Tàu buýt sông Sài Gòn lướt sóng (Saigon Waterbus)
-  fx.register({
-    name: 'water_taxi',
-    label: 'Tàu Buýt Sông Sài Gòn (Saigon Waterbus) Rẽ Sóng',
-    weight: 1.8,
-    when: (_look) => true,
-    create(stage) {
-      const { W, H } = stage;
-      const DURATION = 32000;
-      let t = 0;
-      return {
-        update(k, elapsed) {
-          t = elapsed;
-          return t < DURATION;
-        },
-        front(ctx) {
-          const a = envelope(t, DURATION, 2000, 2000);
-          if (a <= 0) return;
-          const u = t / DURATION;
-          const bx = -70 + u * (W + 140);
-          const by = H * 0.88 + Math.sin(t * 0.003) * 2;
-          ctx.save();
-          ctx.globalAlpha = a * 0.95;
-          const isNight = stage.look.dark > 0.5;
-          fx.drawWaterbus(ctx, bx, by, 1.35, 1, isNight, t);
-          ctx.restore();
-        },
-      };
-    },
-  });
-
-  // 18. Đàn đom đóm lập lòe bờ sông Thanh Đa (Fireflies)
-  fx.register({
-    name: 'fireflies',
-    label: 'Đàn Đom Đóm Lập Lòe Bờ Sông Thanh Đa Sài Gòn',
-    weight: 1.7,
-    when: (look) => look.dark > 0.6,
-    create(stage) {
-      const { W, H } = stage;
-      const DURATION = 35000;
-      let t = 0;
-      const flies = Array.from({ length: 30 }, () => ({
-        x: rand(0, W),
-        y: rand(H * 0.6, H * 0.95),
-        speed: rand(0.002, 0.005),
-        phase: rand(0, TAU),
-      }));
-      return {
-        update(k, elapsed) {
-          t = elapsed;
-          return t < DURATION;
-        },
-        front(ctx) {
-          const a = envelope(t, DURATION, 2000, 2000);
-          if (a <= 0) return;
-          ctx.save();
-          flies.forEach((f) => {
-            const glow = (Math.sin(t * f.speed + f.phase) + 1) * 0.5;
-            if (glow > 0.3) {
-              ctx.globalAlpha = a * glow;
-              ctx.fillStyle = '#bef264'; // yellow-green firefly
-              ctx.beginPath();
-              ctx.arc(f.x + Math.sin(t * 0.001 + f.phase) * 15, f.y, 2.5, 0, TAU);
-              ctx.fill();
-            }
-          });
-          ctx.restore();
-        },
-      };
-    },
-  });
-
-  // 19. Đàn bồ câu tung cánh nhà thờ Đức Bà (Pigeons Park)
-  fx.register({
-    name: 'pigeons_park',
-    label: 'Đàn Bồ Câu Tung Cánh Công Viên Nhà Thờ Đức Bà',
-    weight: 1.6,
-    when: (look) => look.dark < 0.5,
-    create(stage) {
-      const { W, H } = stage;
-      const DURATION = 26000;
-      let t = 0;
-      return {
-        update(k, elapsed) {
-          t = elapsed;
-          return t < DURATION;
-        },
-        back(ctx) {
-          const a = envelope(t, DURATION, 1500, 2000);
-          if (a <= 0) return;
-          ctx.save();
-          ctx.globalAlpha = a * 0.9;
-          const u = t / DURATION;
-          const cx = W * 0.35 + u * (W * 0.42);
-          const cy = H * 0.62 - u * (H * 0.32);
-
-          for (let i = 0; i < 14; i++) {
-            const px = cx + Math.sin(i * 1.5 + t * 0.001) * 32;
-            const py = cy + Math.cos(i * 1.2 + t * 0.001) * 22;
-            const flap = Math.sin(t * 0.018 + i * 1.1);
-
-            ctx.save();
-            ctx.translate(px, py);
-
-            // Flapping V-wings
-            ctx.strokeStyle = '#e2e8f0';
-            ctx.lineWidth = 1.3;
-            ctx.beginPath();
-            ctx.moveTo(-5.5, flap * 3.5);
-            ctx.quadraticCurveTo(-2.5, -flap * 2, 0, 0);
-            ctx.quadraticCurveTo(2.5, -flap * 2, 5.5, flap * 3.5);
-            ctx.stroke();
-
-            // Pigeon body silhouette
-            ctx.fillStyle = '#94a3b8';
-            ctx.beginPath();
-            ctx.ellipse(0, 0, 3, 1.6, 0.25, 0, TAU);
-            ctx.fill();
-
-            ctx.restore();
-          }
-          ctx.restore();
-        },
-      };
-    },
-  });
-
-  // 20. Phố lồng đèn Lương Nhữ Học bừng sáng (Street Lanterns)
-  fx.register({
-    name: 'street_lanterns',
-    label: 'Phố Lồng Đèn Lương Nhữ Học Bừng Sáng Chợ Lớn',
-    weight: 1.7,
-    when: (look) => look.dark > 0.55,
-    create(stage) {
-      const { W, H } = stage;
-      const DURATION = 34000;
-      let t = 0;
-      return {
-        update(k, elapsed) {
-          t = elapsed;
-          return t < DURATION;
-        },
-        front(ctx) {
-          const a = envelope(t, DURATION, 2000, 2000);
-          if (a <= 0) return;
-          ctx.save();
-          ctx.globalAlpha = a * 0.9;
-          const ly = H * 0.82;
-          for (let i = 0; i < 35; i++) {
-            const x = (i * W) / 35;
-            ctx.fillStyle = i % 3 === 0 ? '#ef4444' : '#f59e0b';
-            ctx.beginPath();
-            ctx.arc(x, ly + Math.sin(i) * 5, 3.5, 0, TAU);
-            ctx.fill();
-          }
-          ctx.restore();
-        },
-      };
-    },
-  });
-
-  // 21. Chuông gió đung đưa ban công (Wind Chimes)
-  fx.register({
-    name: 'wind_chimes',
-    label: 'Tiếng Chuông Gió Đung Đưa Ban Công Buổi Sáng',
-    weight: 1.4,
-    when: (_look) => true,
-    create(stage) {
-      const { W, H } = stage;
-      const DURATION = 24000;
-      let t = 0;
-      return {
-        update(k, elapsed) {
-          t = elapsed;
-          return t < DURATION;
-        },
-        front(ctx) {
-          const a = envelope(t, DURATION, 1500, 1500);
-          if (a <= 0) return;
-          ctx.save();
-          ctx.globalAlpha = a * 0.75;
-          const cx = W * 0.88;
-          const cy = H * 0.2;
-          ctx.strokeStyle = '#94a3b8';
-          ctx.lineWidth = 1.5;
-          const swing = Math.sin(t * 0.005) * 8;
-          ctx.beginPath();
-          ctx.moveTo(cx, cy);
-          ctx.lineTo(cx + swing, cy + 30);
-          ctx.stroke();
-          ctx.fillStyle = '#facc15';
-          ctx.beginPath();
-          ctx.arc(cx + swing, cy + 32, 4, 0, TAU);
-          ctx.fill();
-          ctx.restore();
-        },
-      };
     },
   });
 })((window.Portfolio = window.Portfolio || {}));

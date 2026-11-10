@@ -215,9 +215,58 @@
 .ambient__skyline,
 .ambient__lights {
   left: 0;
-  bottom: 0;
+  bottom: 12%; /* the city stands on the far bank; keep in sync with RIVER in ambient-river.js */
   width: 100%;
   height: 62%;
+}
+
+/*
+ * The Saigon river (ambient-river.js): olive-brown water whose colours follow the day,
+ * a faint sheen of sky near the far bank, and a canvas of reflections (window lights,
+ * shows in the sky, sun or moon glitter) that fades towards the viewer.
+ */
+.ambient__river,
+.ambient__river-fx {
+  left: 0;
+  bottom: 0;
+  width: 100%;
+  height: 12%;
+  pointer-events: none;
+}
+
+.ambient__river {
+  background: linear-gradient(to bottom, var(--river-far, #0c0d14) 0%, var(--river-near, #040508) 100%);
+  /* The embankment: a thin dark line where the city meets the water. */
+  box-shadow: inset 0 2px 0 rgba(0, 0, 0, 0.35);
+}
+
+/* Reflections fade into the plain colour of the water towards the viewer (less mirror, more river). */
+.ambient__river-fx {
+  -webkit-mask-image: linear-gradient(to bottom, #000 0%, rgba(0, 0, 0, 0.85) 40%, rgba(0, 0, 0, 0.4) 100%);
+  mask-image: linear-gradient(to bottom, #000 0%, rgba(0, 0, 0, 0.85) 40%, rgba(0, 0, 0, 0.4) 100%);
+}
+
+/*
+ * Light thrown on the sky and clouds by a firework burst or a lightning strike: a tiny
+ * canvas (64x36) upscaled to the screen, screen-blended behind the skyline, so the city
+ * stays a black silhouette against the lit sky.
+ */
+.ambient__flash {
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  mix-blend-mode: screen;
+  pointer-events: none;
+}
+
+/* Bloom: the brightest shows glow like through a lens (quarter-resolution copy, blurred). */
+.ambient__bloom {
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  mix-blend-mode: screen;
+  opacity: 0.85;
+  pointer-events: none;
 }
 
 /* A plane on approach to Tan Son Nhat: a blinking light crossing slowly. */
@@ -306,28 +355,54 @@
   opacity: 0.7;
 }
 
-/* The surprise going on, named quietly under the date. */
+/*
+ * The surprise going on, named quietly under the date, like the location captions of
+ * a TV screensaver: a small line saying where / when, then the name. In: rises and
+ * un-blurs, decelerating; out: fades faster than it came, accelerating.
+ */
 .ambient__caption {
-  margin-top: 14px;
+  margin-top: 16px;
   font-family: poppins;
-  font-size: 12px;
-  letter-spacing: 0.18em;
-  text-transform: uppercase;
   opacity: 0;
-  transform: translateY(6px);
+  filter: blur(4px);
+  transform: translateY(8px);
   transition:
-    opacity 1.2s ease,
-    transform 1.2s ease;
-}
-
-.ambient__caption::before {
-  content: '\2726';
-  margin-right: 0.8em;
+    opacity 0.7s cubic-bezier(0.4, 0, 1, 1),
+    filter 0.7s cubic-bezier(0.4, 0, 1, 1),
+    transform 0.7s cubic-bezier(0.4, 0, 1, 1);
 }
 
 .ambient__caption.is-shown {
-  opacity: 0.62;
+  opacity: 1;
+  filter: none;
   transform: none;
+  transition-duration: 1.4s;
+  transition-timing-function: cubic-bezier(0.2, 0, 0, 1);
+}
+
+.ambient__caption-place {
+  display: block;
+  margin-bottom: 4px;
+  font-size: 10px;
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  opacity: 0.5;
+}
+
+.ambient__caption-place:empty {
+  display: none;
+}
+
+.ambient__caption-title {
+  font-size: 13px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  opacity: 0.75;
+}
+
+.ambient__caption-title::before {
+  content: '\2726';
+  margin-right: 0.8em;
 }
 
 .ambient__rare {

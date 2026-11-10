@@ -64,7 +64,14 @@
 
   fx.register({
     name: 'meteors',
+    group: 'sky',
     label: 'Mưa sao băng',
+    // The real showers (Leonids, Geminids, Perseids...) around their peak nights.
+    boost: (cal) => (cal.has('meteorshower') ? 8 : 0.35),
+    caption: (cal) => {
+      const shower = cal.occasions.find((o) => o.id === 'meteorshower');
+      return shower ? { title: shower.name, place: 'Đêm cực đại' } : null;
+    },
     when: (look) => look.dark > 0.85,
     create(stage) {
       const DURATION = 26000;
@@ -89,8 +96,10 @@
 
   fx.register({
     name: 'shootingstar',
+    group: 'sky',
     label: 'Sao băng',
     tier: 'detail',
+    boost: (cal) => (cal.has('meteorshower') ? 2.5 : 1),
     when: (look) => look.dark > 0.7,
     create(stage) {
       const head = fx.glowSprite([235, 242, 255], 24);
@@ -113,6 +122,7 @@
 
   fx.register({
     name: 'satellite',
+    group: 'sky',
     label: 'Vệ tinh bay qua',
     tier: 'detail',
     when: (look) => look.dark > 0.75,
@@ -202,6 +212,7 @@
 
   fx.register({
     name: 'comet',
+    group: 'sky',
     label: 'Sao chổi',
     rarity: 'rare',
     when: (look) => look.dark > 0.8,
@@ -235,6 +246,7 @@
 
   fx.register({
     name: 'eclipse',
+    group: 'sky',
     label: 'Nguyệt thực toàn phần',
     rarity: 'rare',
     // Only at full moon, as in the sky.
@@ -301,6 +313,7 @@
 
   fx.register({
     name: 'moonhalo',
+    group: 'sky',
     label: 'Quầng trăng',
     rarity: 'uncommon',
     when: (look) => !!look.moon && look.moon.alpha > 0.6 && look.moon.y < 0.72,
@@ -324,6 +337,7 @@
 
   fx.register({
     name: 'sundogs',
+    group: 'sky',
     label: 'Quầng mặt trời và mặt trời giả',
     rarity: 'rare',
     when: (look) => !!look.sun && look.sun.altitude > 0.25 && look.sun.altitude < 0.8 && look.dark < 0.2,
@@ -383,6 +397,7 @@
 
   fx.register({
     name: 'sunrays',
+    group: 'sky',
     label: 'Tia nắng xuyên mây',
     weight: 1.1,
     when: (look) => !!look.sun && look.sun.altitude > 0.08 && look.sun.altitude < 0.5,
@@ -425,466 +440,6 @@
             ctx.closePath();
             ctx.fill();
           });
-        },
-      };
-    },
-  });
-
-  /* ---------- Các Hiện Tượng Thiên Văn & Bầu Trời Mở Rộng ---------- */
-
-  // 9. Cầu lửa thiên thạch rực sáng phát nổ trên không (Bolide)
-  fx.register({
-    name: 'bolide_fireball',
-    label: 'Cầu Lửa Thiên Thạch Bùng Nổ Trên Không (Bolide)',
-    weight: 0.9,
-    when: (look) => look.dark > 0.6,
-    create(stage) {
-      const { W, H } = stage;
-      const DURATION = 8000;
-      let t = 0;
-      return {
-        update(k, elapsed) {
-          t = elapsed;
-          if (t > 2500 && t < 2800) {
-            Portfolio.ambientEnvironment?.illumination.flash(0.9, [220, 240, 255], 0.85);
-            Portfolio.ambientEnvironment?.notifyDisturbance(W * 0.6, H * 0.25, 300, 1.4);
-          }
-          return t < DURATION;
-        },
-        back(ctx) {
-          const a = envelope(t, DURATION, 300, 1500);
-          if (a <= 0) return;
-          const u = Math.min(t / 3000, 1);
-          const x = W * 0.2 + u * (W * 0.45);
-          const y = H * 0.05 + u * (H * 0.25);
-          ctx.save();
-          ctx.globalAlpha = a;
-          ctx.strokeStyle = '#67e8f9';
-          ctx.lineWidth = 3.5;
-          ctx.beginPath();
-          ctx.moveTo(x - 60, y - 30);
-          ctx.lineTo(x, y);
-          ctx.stroke();
-          // Head ball
-          ctx.fillStyle = '#ffffff';
-          ctx.beginPath();
-          ctx.arc(x, y, t > 2500 && t < 3200 ? 12 : 4, 0, TAU);
-          ctx.fill();
-          ctx.restore();
-        },
-      };
-    },
-  });
-
-  // 10. Trạm vũ trụ quốc tế ISS bay qua bầu trời
-  fx.register({
-    name: 'iss_pass',
-    label: 'Trạm Vũ Trụ Quốc Tế ISS Bay Qua Bầu Trời Sài Gòn',
-    weight: 1.2,
-    when: (look) => look.dark > 0.5,
-    create(stage) {
-      const { W, H } = stage;
-      const DURATION = 28000;
-      let t = 0;
-      return {
-        update(k, elapsed) {
-          t = elapsed;
-          return t < DURATION;
-        },
-        back(ctx) {
-          const a = envelope(t, DURATION, 2000, 2000);
-          if (a <= 0) return;
-          const u = t / DURATION;
-          const x = -20 + u * (W + 40);
-          const y = H * 0.15 + Math.sin(u * 2) * (H * 0.1);
-          ctx.save();
-          ctx.globalAlpha = a * 0.95;
-          ctx.fillStyle = '#ffffff';
-          ctx.beginPath();
-          ctx.arc(x, y, 2.8, 0, TAU);
-          ctx.fill();
-          // Faint trail
-          ctx.strokeStyle = 'rgba(255, 255, 255, 0.3)';
-          ctx.lineWidth = 1;
-          ctx.beginPath();
-          ctx.moveTo(x - 25, y);
-          ctx.lineTo(x, y);
-          ctx.stroke();
-          ctx.restore();
-        },
-      };
-    },
-  });
-
-  // 11. Chuỗi vệ tinh Starlink bay thẳng hàng
-  fx.register({
-    name: 'starlink_train',
-    label: 'Chuỗi Vệ Tinh Starlink Nối Đuôi Bay Thẳng Hàng',
-    weight: 1.0,
-    when: (look) => look.dark > 0.65,
-    create(stage) {
-      const { W, H } = stage;
-      const DURATION = 30000;
-      let t = 0;
-      return {
-        update(k, elapsed) {
-          t = elapsed;
-          return t < DURATION;
-        },
-        back(ctx) {
-          const a = envelope(t, DURATION, 2000, 2000);
-          if (a <= 0) return;
-          ctx.save();
-          ctx.globalAlpha = a * 0.85;
-          ctx.fillStyle = '#e2e8f0';
-          const u = t / DURATION;
-          const baseX = -100 + u * (W + 200);
-          const baseY = H * 0.18 + u * 40;
-          for (let i = 0; i < 14; i++) {
-            const sx = baseX - i * 16;
-            const sy = baseY - i * 3;
-            if (sx > 0 && sx < W) {
-              ctx.beginPath();
-              ctx.arc(sx, sy, 1.6, 0, TAU);
-              ctx.fill();
-            }
-          }
-          ctx.restore();
-        },
-      };
-    },
-  });
-
-  // 12. Sao chổi đuôi kép ion xanh và bụi trắng
-  fx.register({
-    name: 'comet_twin',
-    label: 'Sao Chổi Đuôi Kép: Khí Ion Xanh & Bụi Vàng',
-    weight: 1.0,
-    when: (look) => look.dark > 0.7,
-    create(stage) {
-      const { W, H } = stage;
-      const DURATION = 34000;
-      let t = 0;
-      return {
-        update(k, elapsed) {
-          t = elapsed;
-          return t < DURATION;
-        },
-        back(ctx) {
-          const a = envelope(t, DURATION, 3000, 3000);
-          if (a <= 0) return;
-          const cx = W * 0.72;
-          const cy = H * 0.22;
-          ctx.save();
-          ctx.globalAlpha = a * 0.75;
-          // White-yellow dust tail (curved)
-          ctx.strokeStyle = 'rgba(254, 240, 138, 0.4)';
-          ctx.lineWidth = 8;
-          ctx.beginPath();
-          ctx.moveTo(cx, cy);
-          ctx.quadraticCurveTo(cx + 80, cy - 60, cx + 160, cy - 90);
-          ctx.stroke();
-          // Blue ion tail (straight)
-          ctx.strokeStyle = 'rgba(56, 189, 248, 0.5)';
-          ctx.lineWidth = 4;
-          ctx.beginPath();
-          ctx.moveTo(cx, cy);
-          ctx.lineTo(cx + 150, cy - 110);
-          ctx.stroke();
-          // Head coma
-          ctx.fillStyle = '#ffffff';
-          ctx.beginPath();
-          ctx.arc(cx, cy, 4, 0, TAU);
-          ctx.fill();
-          ctx.restore();
-        },
-      };
-    },
-  });
-
-  // 13. Nhật thực hình khuyên (Vòng tròn lửa)
-  fx.register({
-    name: 'solar_eclipse',
-    label: 'Nhật Thực Hình Khuyên: Vòng Tròn Lửa (Ring of Fire)',
-    weight: 0.8,
-    when: (look) => look.dark < 0.4,
-    create(stage) {
-      const { W, H } = stage;
-      const DURATION = 32000;
-      let t = 0;
-      return {
-        update(k, elapsed) {
-          t = elapsed;
-          return t < DURATION;
-        },
-        back(ctx) {
-          const a = envelope(t, DURATION, 3000, 3000);
-          if (a <= 0) return;
-          const cx = W * 0.35;
-          const cy = H * 0.25;
-          ctx.save();
-          ctx.globalAlpha = a * 0.9;
-          // Fiery ring
-          ctx.strokeStyle = '#f59e0b';
-          ctx.lineWidth = 3.5;
-          ctx.beginPath();
-          ctx.arc(cx, cy, 26, 0, TAU);
-          ctx.stroke();
-          // Dark moon disk blocking center
-          ctx.fillStyle = '#0f172a';
-          ctx.beginPath();
-          ctx.arc(cx + 1, cy + 1, 24, 0, TAU);
-          ctx.fill();
-          ctx.restore();
-        },
-      };
-    },
-  });
-
-  // 14. Tia nắng ngược chân trời đối diện (Anticrepuscular Rays)
-  fx.register({
-    name: 'anticrepuscular',
-    label: 'Tia Nắng Ngược Đối Nhật (Anticrepuscular Rays)',
-    weight: 1.3,
-    when: (look) => look.dark > 0.1 && look.dark < 0.5,
-    create(stage) {
-      const { W, H } = stage;
-      const DURATION = 30000;
-      let t = 0;
-      return {
-        update(k, elapsed) {
-          t = elapsed;
-          return t < DURATION;
-        },
-        back(ctx) {
-          const a = envelope(t, DURATION, 2500, 2500);
-          if (a <= 0) return;
-          ctx.save();
-          ctx.globalAlpha = a * 0.25;
-          ctx.fillStyle = '#fed7aa';
-          const targetX = W * 0.85;
-          const targetY = H * 0.75;
-          for (let i = 0; i < 6; i++) {
-            const startX = (i * W) / 6;
-            ctx.beginPath();
-            ctx.moveTo(startX, 0);
-            ctx.lineTo(startX + 40, 0);
-            ctx.lineTo(targetX, targetY);
-            ctx.closePath();
-            ctx.fill();
-          }
-          ctx.restore();
-        },
-      };
-    },
-  });
-
-  // 15. Vành đai sao Kim hồng tím hoàng hôn (Belt of Venus)
-  fx.register({
-    name: 'belt_of_venus',
-    label: 'Vành Đai Sao Kim Hồng Tím Hoàng Hôn (Belt of Venus)',
-    weight: 1.5,
-    when: (look) => look.dark > 0.25 && look.dark < 0.6,
-    create(stage) {
-      const { W, H } = stage;
-      const DURATION = 36000;
-      let t = 0;
-      return {
-        update(k, elapsed) {
-          t = elapsed;
-          return t < DURATION;
-        },
-        back(ctx) {
-          const a = envelope(t, DURATION, 3000, 3000);
-          if (a <= 0) return;
-          ctx.save();
-          ctx.globalAlpha = a * 0.35;
-          const grad = ctx.createLinearGradient(0, H * 0.55, 0, H * 0.78);
-          grad.addColorStop(0, 'rgba(244, 114, 182, 0)');
-          grad.addColorStop(0.5, 'rgba(244, 114, 182, 0.45)');
-          grad.addColorStop(1, 'rgba(129, 140, 248, 0.4)');
-          ctx.fillStyle = grad;
-          ctx.fillRect(0, H * 0.55, W, H * 0.25);
-          ctx.restore();
-        },
-      };
-    },
-  });
-
-  // 16. Tia chớp xanh lục khoảnh khắc mặt trời lặn (Green flash)
-  fx.register({
-    name: 'green_flash',
-    label: 'Tia Chớp Xanh Lục Hoàng Hôn Sài Gòn (Green Flash)',
-    weight: 1.0,
-    when: (look) => look.dark > 0.2 && look.dark < 0.45,
-    create(stage) {
-      const { W, H } = stage;
-      const DURATION = 10000;
-      let t = 0;
-      return {
-        update(k, elapsed) {
-          t = elapsed;
-          return t < DURATION;
-        },
-        back(ctx) {
-          const a = envelope(t, DURATION, 1000, 1500);
-          if (a <= 0) return;
-          const sx = W * 0.75;
-          const sy = H * 0.78;
-          ctx.save();
-          ctx.globalAlpha = a * 0.85;
-          ctx.fillStyle = '#22c55e'; // emerald green
-          ctx.beginPath();
-          ctx.arc(sx, sy, 8, 0, TAU);
-          ctx.fill();
-          ctx.restore();
-        },
-      };
-    },
-  });
-
-  // 17. Dải Ngân Hà hiện rõ trong đêm tối tĩnh mịch (Milky Way)
-  fx.register({
-    name: 'milkyway_rise',
-    label: 'Dải Ngân Hà Tuyệt Mỹ Đêm Sài Gòn (Milky Way)',
-    weight: 1.2,
-    when: (look) => look.dark > 0.75,
-    create(stage) {
-      const { W, H } = stage;
-      const DURATION = 38000;
-      let t = 0;
-      return {
-        update(k, elapsed) {
-          t = elapsed;
-          return t < DURATION;
-        },
-        back(ctx) {
-          const a = envelope(t, DURATION, 3000, 3000);
-          if (a <= 0) return;
-          ctx.save();
-          ctx.globalAlpha = a * 0.22;
-          ctx.fillStyle = '#e2e8f0';
-          // Tilted diagonal stellar band
-          for (let i = 0; i < 80; i++) {
-            const u = i / 80;
-            const x = W * 0.15 + u * (W * 0.7) + rand(-30, 30);
-            const y = H * 0.05 + u * (H * 0.6) + rand(-25, 25);
-            ctx.beginPath();
-            ctx.arc(x, y, rand(1, 3.5), 0, TAU);
-            ctx.fill();
-          }
-          ctx.restore();
-        },
-      };
-    },
-  });
-
-  // 18. Ánh sáng hoàng đạo hình tháp trước bình minh (Zodiacal Light)
-  fx.register({
-    name: 'zodiacal_light',
-    label: 'Ánh Sáng Hoàng Đạo Hình Tháp Rạng Đông (Zodiacal Light)',
-    weight: 1.1,
-    when: (look) => look.dark > 0.5 && look.dark < 0.8,
-    create(stage) {
-      const { W, H } = stage;
-      const DURATION = 35000;
-      let t = 0;
-      return {
-        update(k, elapsed) {
-          t = elapsed;
-          return t < DURATION;
-        },
-        back(ctx) {
-          const a = envelope(t, DURATION, 3000, 3000);
-          if (a <= 0) return;
-          ctx.save();
-          ctx.globalAlpha = a * 0.2;
-          ctx.fillStyle = '#fef08a';
-          ctx.beginPath();
-          ctx.moveTo(W * 0.2, H * 0.8);
-          ctx.lineTo(W * 0.5, H * 0.8);
-          ctx.lineTo(W * 0.35, H * 0.15);
-          ctx.closePath();
-          ctx.fill();
-          ctx.restore();
-        },
-      };
-    },
-  });
-
-  // 19. Siêu trăng tròn khổng lồ mọc trên sông Sài Gòn (Supermoon)
-  fx.register({
-    name: 'supermoon',
-    label: 'Siêu Trăng Tròn Khổng Lồ Mọc Trên Sông Sài Gòn',
-    weight: 1.8,
-    when: (look) => look.dark > 0.6,
-    create(stage) {
-      const { W, H } = stage;
-      const DURATION = 36000;
-      let t = 0;
-      return {
-        update(k, elapsed) {
-          t = elapsed;
-          return t < DURATION;
-        },
-        back(ctx) {
-          const a = envelope(t, DURATION, 2500, 2500);
-          if (a <= 0) return;
-          const mx = W * 0.68;
-          const my = H * 0.42;
-          ctx.save();
-          ctx.globalAlpha = a * 0.95;
-          // Giant moon disc
-          ctx.fillStyle = '#fef9c3';
-          ctx.beginPath();
-          ctx.arc(mx, my, 46, 0, TAU);
-          ctx.fill();
-          // Halo glow
-          ctx.strokeStyle = 'rgba(254, 249, 195, 0.3)';
-          ctx.lineWidth = 14;
-          ctx.beginPath();
-          ctx.arc(mx, my, 52, 0, TAU);
-          ctx.stroke();
-          ctx.restore();
-        },
-      };
-    },
-  });
-
-  // 20. Hiện tượng cực quang hiếm gặp bão từ (Aurora)
-  fx.register({
-    name: 'aurora_equator',
-    label: 'Hiện Tượng Cực Quang Bão Từ Huyền Ảo (Aurora Borealis)',
-    weight: 0.9,
-    when: (look) => look.dark > 0.7,
-    create(stage) {
-      const { W, H } = stage;
-      const DURATION = 36000;
-      let t = 0;
-      return {
-        update(k, elapsed) {
-          t = elapsed;
-          return t < DURATION;
-        },
-        back(ctx) {
-          const a = envelope(t, DURATION, 3000, 3000);
-          if (a <= 0) return;
-          ctx.save();
-          ctx.globalAlpha = a * 0.32;
-          for (let layer = 0; layer < 3; layer++) {
-            ctx.fillStyle = layer === 0 ? '#10b981' : '#a855f7';
-            ctx.beginPath();
-            ctx.moveTo(0, H * 0.15 + layer * 25);
-            for (let x = 0; x < W; x += 30) {
-              const y = H * 0.15 + layer * 25 + Math.sin(x * 0.005 + t * 0.002 + layer) * 35;
-              ctx.lineTo(x, y);
-            }
-            ctx.lineTo(W, 0);
-            ctx.lineTo(0, 0);
-            ctx.closePath();
-            ctx.fill();
-          }
-          ctx.restore();
         },
       };
     },

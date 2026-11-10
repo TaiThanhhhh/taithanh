@@ -115,11 +115,17 @@
         c.style.animationDelay = `${[-140, -320, -60, -520][i]}s`;
         return c;
       });
+      // Light thrown on the sky and the clouds by a burst or a lightning strike (screen blend,
+      // behind the skyline: the city stays a black silhouette against it). A tiny canvas, upscaled.
+      this.flash = el('ambient__flash', 'canvas');
       this.fxBack = el('ambient__fx', 'canvas'); // surprise events behind the skyline (ambient-events.js)
       this.birdsSlot = el('ambient__birds-slot'); // the murmuration canvas goes here (behind the skyline)
       this.skyline = el('ambient__skyline', 'canvas');
       this.lights = el('ambient__lights', 'canvas');
       this.fxFront = el('ambient__fx', 'canvas'); // ...and in front of it (rain, Landmark 81's LED show)
+      this.river = new Portfolio.AmbientRiver(root, this.fxFront); // the Saigon river, between the two
+      // Bloom: bright shows glow like through a lens (quarter resolution, blurred, screen blend).
+      this.bloom = el('ambient__bloom', 'canvas');
       this.plane = el('ambient__plane');
 
       this.geometry = buildSkyline(81);
@@ -127,7 +133,7 @@
       this.look = null;
       this.painted = { clouds: '', skyline: '' };
       this.shown = new Set(); // sun / moon currently above the horizon
-      this.moonLight = 1;
+      this.moonPhase = { illumination: 1, waxing: true, full: true };
       this.lastLights = 0;
     }
 
@@ -149,6 +155,10 @@
         height: `${sun}px`,
         margin: `${-sun / 2}px 0 0 ${-sun / 2}px`,
       });
+      this.ground = this.height * (1 - Portfolio.AmbientRiver.share);
+      this.river.resize(this.width, this.height);
+      this.flash.width = 64;
+      this.flash.height = 36;
       this.paintStars();
       this.cloudMasks = this.clouds.map((c, i) => this.paintCloudMask(c, i));
       this.paintMoon();
@@ -156,9 +166,14 @@
       if (this.look) this.apply(this.look, true);
     }
 
-    /** A new moon for each visit: usually a crescent or gibbous, sometimes full. */
-    newMoon() {
-      this.moonLight = Math.random() < 0.3 ? 1 : 0.3 + Math.random() * 0.65;
+    /**
+     * Tonight's moon, from the lunar calendar: its phase, and which side is lit.
+     * @param {{illumination: number, waxing: boolean, full: boolean}} moon
+     */
+    setMoon(moon) {
+      if (!moon) return;
+      this.moonPhase = moon;
+      this.river.moonLight = moon.illumination;
       if (this.width) this.paintMoon();
     }
 
@@ -198,6 +213,7 @@
         this.painted.skyline = skyline;
         this.paintSkyline();
       }
+      this.river.apply(look);
       if (force) this.paintLights(0);
     }
 
@@ -220,21 +236,28 @@
     stage() {
       const W = this.width;
       const H = this.height;
+      const ground = this.ground;
       const l = this.geometry.landmark81;
+      const b = this.geometry.bitexco;
       return {
         W,
         H,
         dpr: this.dpr,
+        /** The far bank of the river: the city stands on it, the water is below. */
+        ground,
+        river: { top: ground, h: H - ground },
         /** Below every roof: things launched from here rise from behind the city. */
-        rooftop: H * 0.95,
-        landmark: { x: l.x * W, w: l.w * W, h: l.h * H },
-        traceLandmark: (ctx) => traceLandmark(ctx, l.x * W, l.w * W, l.h * H, H),
+        rooftop: ground - H * 0.02,
+        landmark: { x: l.x * W, w: l.w * W, h: l.h * H, top: ground - l.h * H },
+        bitexco: { x: b.x * W, w: b.w * W, h: b.h * H, top: ground - b.h * H },
+        traceLandmark: (ctx) => traceLandmark(ctx, l.x * W, l.w * W, l.h * H, ground),
         colors: Portfolio.config.swarm.colors,
         look: this.look,
         /** The buildings alone (no haze), to keep an effect on them; it covers the screen from `skylineTop` down. */
         silhouette: this.silhouette,
-        skylineTop: H * 0.38,
-        moonDisc: () => ({ r: this.moonRadius, full: this.moonLight >= 1 }),
+        skylineTop: ground - H * 0.62,
+        skylineH: H * 0.62,
+        moonDisc: () => ({ r: this.moonRadius, full: this.moonPhase.full }),
         /** CSS filter on the moon (the eclipse dims it); '' resets it. */
         setMoonFilter: (filter) => {
           this.moon.style.filter = filter;
@@ -274,7 +297,7 @@
       canvas.style.margin = `${-m}px 0 0 ${-m}px`;
       const ctx = canvas.getContext('2d');
       const halo = ctx.createRadialGradient(m, m, r * 0.8, m, m, m);
-      halo.addColorStop(0, `rgba(210, 222, 255, ${0.05 + 0.16 * this.moonLight})`);
+      halo.addColorStop(0, `rgba(210, 222, 255, ${0.05 + 0.16 * this.moonPhase.illumination})`);
       halo.addColorStop(1, 'rgba(210, 222, 255, 0)');
       ctx.fillStyle = halo;
       ctx.fillRect(0, 0, size, size);
@@ -295,15 +318,29 @@
       circle(m - r * 0.3, m - r * 0.2, r * 0.35);
       circle(m + r * 0.25, m + r * 0.3, r * 0.28);
       circle(m + r * 0.1, m - r * 0.42, r * 0.18);
-      if (this.moonLight < 1) {
-        const offset = 2 * r * this.moonLight;
+      const k = this.moonPhase.illumination;
+      if (k < 0.985) {
+        // The terminator is half an ellipse: the lit part is half the disc on the sun's side,
+        // plus (gibbous) or minus (crescent) that half-ellipse. Near the equator the lit side
+        // faces down towards the set (or rising) sun: an evening crescent lies like a boat.
+        const shade = document.createElement('canvas');
+        shade.width = size;
+        shade.height = size;
+        const s2 = shade.getContext('2d');
+        s2.translate(m, m);
+        s2.rotate(this.moonPhase.waxing ? 0.95 : Math.PI - 0.95);
+        const rx = r * Math.abs(1 - 2 * k);
+        s2.fillStyle = '#000';
+        s2.beginPath();
+        s2.arc(0, 0, r * 1.02, Math.PI / 2, -Math.PI / 2); // the dark half (away from the sun)
+        s2.ellipse(0, 0, rx, r * 1.02, 0, -Math.PI / 2, Math.PI / 2, k > 0.5);
+        s2.fill();
         d.globalCompositeOperation = 'destination-out';
-        d.filter = 'blur(1px)';
-        d.fillStyle = '#000';
-        circle(m - offset * 0.8, m - offset * 0.6, r * 1.02);
+        d.filter = 'blur(0.8px)';
+        d.drawImage(shade, 0, 0);
         d.filter = 'none';
         d.globalCompositeOperation = 'destination-over'; // earthshine on the dark side
-        d.fillStyle = 'rgba(200, 210, 235, 0.08)';
+        d.fillStyle = `rgba(200, 210, 235, ${0.05 + 0.06 * (1 - k)})`;
         circle(m, m, r);
       }
       ctx.drawImage(disc, 0, 0);
@@ -521,6 +558,9 @@
       if (now - this.lastLights > LIGHTS_REFRESH_MS) {
         this.lastLights = now;
         this.paintLights(Math.floor(now / LIGHTS_REFRESH_MS));
+        this.river.paintStill(this.skyline, this.lights);
+      } else if (this.river.dirty) {
+        this.river.paintStill(this.skyline, this.lights);
       }
     }
   }
