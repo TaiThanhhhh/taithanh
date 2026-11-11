@@ -26,9 +26,8 @@
   const LOOK_REFRESH_MS = 1000;
   /** The clock drifts a few pixels over minutes so no glyph stays on the same pixels (OLED). */
   const DRIFT_PERIOD_MS = 37 * 60000;
-  /** Earth Hour: how far the city's lights go down, and how long the switch-off takes. */
-  const EARTH_HOUR_LIT = 0.12;
-  const EARTH_HOUR_RAMP_MS = 20000;
+  /** The city's lights are repainted as soon as the blackout wave has moved this much. */
+  const BLACKOUT_STEP = 0.012;
 
   const pad = (n) => String(n).padStart(2, '0');
 
@@ -75,7 +74,6 @@
       this.look = null;
       this.lastLook = -Infinity;
       this.cal = null;
-      this.dim = { level: 1, from: 1, to: 1, start: 0 };
     }
 
     resize() {
@@ -146,34 +144,32 @@
       this.captionUntil = 0;
     }
 
-    /**
-     * The city's own schedule: during a live show the day holds at night; during Earth
-     * Hour the windows and the towers go dark for an hour.
-     */
+    /** The city's own schedule: during a live show the day holds at night. */
     followCity(now) {
       if (!this.calendar) return;
       this.cal = this.calendar.getState();
       const live = this.cal.live;
       if (live && !this.cycle.holding) this.cycle.holdNight(now, this.look);
       else if (!live && this.cycle.holding) this.cycle.release(now);
+    }
 
-      const target = live && live.kind === 'earthhour' ? EARTH_HOUR_LIT : 1;
-      if (target !== this.dim.to)
-        this.dim = { level: this.dim.level, from: this.dim.level, to: target, start: now };
-      const u = Math.min(1, (now - this.dim.start) / EARTH_HOUR_RAMP_MS);
-      this.dim.level = this.dim.from + (this.dim.to - this.dim.from) * u;
+    /** How much of the city has switched its lights off (Earth Hour), as the events say. */
+    get blackout() {
+      const city = this.events.stage && this.events.stage.city;
+      return city ? city.blackout : 0;
     }
 
     refreshLook(now, force = false) {
       this.followCity(now);
       const look = this.cycle.look(now);
-      if (this.dim.level < 1) {
+      const b = this.blackout;
+      look.blackout = b; // the windows go dark building by building (ambient-sky.js)
+      if (b > 0) {
         // Less light thrown up into the haze: the city's glow fades and more stars show.
-        look.lit *= this.dim.level;
-        look.glow = [...look.glow.slice(0, 3), look.glow[3] * (0.35 + 0.65 * this.dim.level)];
-        look.stars = Math.min(1, look.stars * (1.6 - 0.6 * this.dim.level));
+        look.glow = [...look.glow.slice(0, 3), look.glow[3] * (1 - 0.7 * b)];
+        look.haze = [...look.haze.slice(0, 3), look.haze[3] * (1 - 0.45 * b)];
+        look.stars = Math.min(1, look.stars * (1 + 0.6 * b));
       }
-      look.earthHour = 1 - this.dim.level; // Landmark 81's own lights go off too
       this.look = look;
       this.sky.apply(look, force);
       this.flock.setInk(look.birds, look.birdGlow);
@@ -184,7 +180,7 @@
       // The visitor's clock; the simulated Saigon one when the test lab has moved the date.
       const date = this.calendar && this.calendar.override.offset ? this.calendar.now() : new Date();
       this.timeEl.textContent = `${pad(date.getHours())}:${pad(date.getMinutes())}`;
-      const day = date.toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long' });
+      const day = date.toLocaleDateString('vi-VN', { weekday: 'long', day: 'numeric', month: 'long' });
       // The lunar date matters here (Rằm, mùng 1, Tết): shown next to the solar one.
       const lunar = this.cal && this.cal.lunar;
       this.dateEl.textContent = lunar ? `${day} · ${lunar.day}/${lunar.month} âm lịch` : day;
@@ -200,6 +196,10 @@
       if (this.captionUntil && now > this.captionUntil) this.hideCaption();
       this.sky.tick(now);
       this.events.step(now, k, this.look, this.cal);
+      // The blackout wave moves faster than the once-a-second look: follow it closely.
+      const b = this.blackout;
+      if (Math.abs(b - (this.look.blackout || 0)) > BLACKOUT_STEP || (b === 0 && this.look.blackout > 0))
+        this.refreshLook(now);
       this.flock.step(now, k);
     }
 

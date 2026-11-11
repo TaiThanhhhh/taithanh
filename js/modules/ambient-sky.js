@@ -16,7 +16,7 @@
 (function (Portfolio) {
   'use strict';
 
-  const { css } = Portfolio.AmbientCycle;
+  const { css, mix } = Portfolio.AmbientCycle;
   const LIGHTS_REFRESH_MS = 2500;
 
   /** Deterministic RNG so the skyline and stars are the same on every visit. */
@@ -48,12 +48,36 @@
       });
       return list;
     };
-    return {
+    const geometry = {
       far: layer(140, 0.06, 0.17, 0.012, 0.032),
       near: layer(90, 0.08, 0.24, 0.018, 0.05),
       landmark81: { x: 0.735, w: 0.034, h: 0.5 },
-      bitexco: { x: 0.33, w: 0.024, h: 0.32 },
+      bitexco: { x: 0.345, w: 0.024, h: 0.32 }, // the sun rises by it
     };
+    // The two towers stand clear: the blocks at their feet are low and rise again further
+    // away, so each tower's whole outline reads against the sky instead of melting into a
+    // building of the same colour behind it.
+    [geometry.bitexco, geometry.landmark81].forEach((tower) => {
+      const inner = tower.w * 0.9;
+      const valley = tower.w * 2.6;
+      [
+        [geometry.near, 0.9, 0.26],
+        [geometry.far, 1, 0.4],
+      ].forEach(([list, k, low]) => {
+        list.forEach((b) => {
+          // Distance from the tower's axis to the nearest wall of the block (0: the block spans it).
+          const dist = b.x + b.w < tower.x ? tower.x - (b.x + b.w) : b.x > tower.x ? b.x - tower.x : 0;
+          if (dist > inner + valley) return;
+          const u = Math.max(0, (dist - inner) / valley); // 0 at the foot .. 1 at the edge of the valley
+          const cap = (tower.h * (low + (0.62 - low) * u * u)) / k;
+          if (b.h > cap) {
+            b.h = cap;
+            if (u < 0.5) b.antenna = false;
+          }
+        });
+      });
+    });
+    return geometry;
   }
 
   /**
@@ -92,6 +116,68 @@
     ctx.closePath();
   }
 
+  /** Bitexco's outline: a lotus bud tapering to its crown (relative to its width / height). */
+  const BITEXCO_EDGE = [
+    [0.5, 0],
+    [0.62, 0.5],
+    [0.45, 0.85],
+    [0.12, 1],
+  ];
+
+  /** Half-width of Bitexco (share of its base width) at height v (0 base .. 1 top). */
+  function bitexcoHalf(v) {
+    const [p0, p1, p2, p3] = BITEXCO_EDGE;
+    let prev = [p0[0], 0];
+    for (let i = 1; i <= 24; i++) {
+      const t = i / 24;
+      const u = 1 - t;
+      const x = u * u * u * p0[0] + 3 * u * u * t * p1[0] + 3 * u * t * t * p2[0] + t * t * t * p3[0];
+      const y = u * u * u * p0[1] + 3 * u * u * t * p1[1] + 3 * u * t * t * p2[1] + t * t * t * p3[1];
+      if (y >= v) return prev[0] + ((x - prev[0]) * (v - prev[1])) / (y - prev[1] || 1);
+      prev = [x, y];
+    }
+    return p3[0];
+  }
+
+  /**
+   * Traces Bitexco: the bud and the helipad cantilevered from its 52nd floor.
+   * Shared with the events (its light shows clip to it).
+   */
+  function traceBitexco(ctx, tx, tw, th, base) {
+    const [, p1, p2, p3] = BITEXCO_EDGE;
+    ctx.beginPath();
+    ctx.moveTo(tx - tw * 0.5, base);
+    ctx.bezierCurveTo(
+      tx - tw * p1[0],
+      base - th * p1[1],
+      tx - tw * p2[0],
+      base - th * p2[1],
+      tx - tw * p3[0],
+      base - th,
+    );
+    ctx.lineTo(tx + tw * p3[0], base - th);
+    ctx.bezierCurveTo(
+      tx + tw * p2[0],
+      base - th * p2[1],
+      tx + tw * p1[0],
+      base - th * p1[1],
+      tx + tw * 0.5,
+      base,
+    );
+    ctx.closePath();
+    // The helipad: a new sub-path starting exactly where the ellipse starts (no stray edge).
+    const rot = -0.08;
+    ctx.moveTo(tx + tw * 0.55 + tw * 0.55 * Math.cos(rot), base - th * 0.72 + tw * 0.55 * Math.sin(rot));
+    ctx.ellipse(tx + tw * 0.55, base - th * 0.72, tw * 0.55, tw * 0.09, rot, 0, Math.PI * 2);
+    ctx.rect(tx + tw * 0.2, base - th * 0.72, tw * 0.5, tw * 0.12);
+  }
+
+  /** Where a building sits in the blackout wave (0 left .. 1 right, a little jitter). */
+  const waveOrder = (x, i) => {
+    const s = Math.sin(i * 91.17) * 43758.5453;
+    return Math.min(1, Math.max(0, (x + 0.03) / 1.06)) * 0.82 + (s - Math.floor(s)) * 0.17;
+  };
+
   class AmbientSky {
     constructor(root) {
       this.root = root;
@@ -119,10 +205,12 @@
       // behind the skyline: the city stays a black silhouette against it). A tiny canvas, upscaled.
       this.flash = el('ambient__flash', 'canvas');
       this.fxBack = el('ambient__fx', 'canvas'); // surprise events behind the skyline (ambient-events.js)
+      this.fxBackTrails = el('ambient__fx', 'canvas'); // ...those leaving trails (fireworks), apart
       this.birdsSlot = el('ambient__birds-slot'); // the murmuration canvas goes here (behind the skyline)
       this.skyline = el('ambient__skyline', 'canvas');
       this.lights = el('ambient__lights', 'canvas');
       this.fxFront = el('ambient__fx', 'canvas'); // ...and in front of it (rain, Landmark 81's LED show)
+      this.fxFrontTrails = el('ambient__fx', 'canvas');
       this.river = new Portfolio.AmbientRiver(root, this.fxFront); // the Saigon river, between the two
       // Bloom: bright shows glow like through a lens (quarter resolution, blurred, screen blend).
       this.bloom = el('ambient__bloom', 'canvas');
@@ -131,7 +219,8 @@
       this.geometry = buildSkyline(81);
       this.cloudMasks = [];
       this.look = null;
-      this.painted = { clouds: '', skyline: '' };
+      this.painted = { clouds: '', skyline: '', blackout: 0 };
+      this.lightSeed = 0;
       this.shown = new Set(); // sun / moon currently above the horizon
       this.moonPhase = { illumination: 1, waxing: true, full: true };
       this.lastLights = 0;
@@ -214,7 +303,12 @@
         this.paintSkyline();
       }
       this.river.apply(look);
-      if (force) this.paintLights(0);
+      // Earth Hour: the windows follow the blackout wave as it crosses the city.
+      const blackout = look.blackout || 0;
+      if (force || Math.abs(blackout - this.painted.blackout) > 0.004) {
+        this.painted.blackout = blackout;
+        this.paintLights(this.lightSeed);
+      }
     }
 
     /** Moves the sun or the moon; a 1 s CSS transition smooths the steps between looks. */
@@ -249,8 +343,18 @@
         /** Below every roof: things launched from here rise from behind the city. */
         rooftop: ground - H * 0.02,
         landmark: { x: l.x * W, w: l.w * W, h: l.h * H, top: ground - l.h * H },
-        bitexco: { x: b.x * W, w: b.w * W, h: b.h * H, top: ground - b.h * H },
+        bitexco: {
+          x: b.x * W,
+          w: b.w * W,
+          h: b.h * H,
+          top: ground - b.h * H,
+          /** The helipad: centre of its deck and its half-width. */
+          pad: { x: (b.x + b.w * 0.55) * W, y: ground - b.h * H * 0.72, r: b.w * 0.55 * W },
+          /** Half-width at height v (0 base .. 1 top), in px. */
+          half: (v) => bitexcoHalf(v) * b.w * W,
+        },
         traceLandmark: (ctx) => traceLandmark(ctx, l.x * W, l.w * W, l.h * H, ground),
+        traceBitexco: (ctx) => traceBitexco(ctx, b.x * W, b.w * W, b.h * H, ground),
         colors: Portfolio.config.swarm.colors,
         look: this.look,
         /** The buildings alone (no haze), to keep an effect on them; it covers the screen from `skylineTop` down. */
@@ -430,6 +534,9 @@
       const l = this.geometry.landmark81;
       traceLandmark(ctx, l.x * W, l.w * W, l.h * H, base);
       ctx.fill();
+      const b = this.geometry.bitexco;
+      traceBitexco(ctx, b.x * W, b.w * W, b.h * H, base);
+      ctx.fill();
     }
 
     paintSkyline() {
@@ -461,41 +568,34 @@
       ctx.fillRect(0, base - H * 0.22, W, H * 0.22);
       drawLayer(this.geometry.near, near, 0.9);
 
-      ctx.fillStyle = near;
+      // The two towers, glass rather than concrete: a sheen of the sky down one side and a thin
+      // rim of light on their outline, so they read in front of the blocks around them.
+      const sheen = mix(look.near, look.sky[3], 0.32);
+      const rim = mix(look.near, look.haze.slice(0, 3), 0.55);
+      const glassTower = (trace, cx, w) => {
+        ctx.fillStyle = near;
+        trace();
+        ctx.fill();
+        ctx.save();
+        ctx.clip();
+        const g = ctx.createLinearGradient(cx - w * 0.62, 0, cx + w * 0.62, 0);
+        g.addColorStop(0, css([...sheen, 0.55]));
+        g.addColorStop(0.35, css([...sheen, 0.12]));
+        g.addColorStop(0.7, css([...sheen, 0]));
+        g.addColorStop(1, css([...sheen, 0.18]));
+        ctx.fillStyle = g;
+        ctx.fillRect(cx - w, 0, w * 2, base);
+        ctx.restore();
+        ctx.strokeStyle = css([...rim, 0.35 + 0.25 * (1 - look.dark)]);
+        ctx.lineWidth = 1;
+        trace();
+        ctx.stroke();
+      };
       const l = this.geometry.landmark81;
-      traceLandmark(ctx, l.x * W, l.w * W, l.h * H, base);
-      ctx.fill();
-
+      glassTower(() => traceLandmark(ctx, l.x * W, l.w * W, l.h * H, base), l.x * W, l.w * W);
       // Bitexco: a tapering lotus bud with its helipad.
       const t = this.geometry.bitexco;
-      const tx = t.x * W;
-      const tw = t.w * W;
-      const th = t.h * H;
-      ctx.beginPath();
-      ctx.moveTo(tx - tw * 0.5, base);
-      ctx.bezierCurveTo(
-        tx - tw * 0.62,
-        base - th * 0.5,
-        tx - tw * 0.45,
-        base - th * 0.85,
-        tx - tw * 0.12,
-        base - th,
-      );
-      ctx.lineTo(tx + tw * 0.12, base - th);
-      ctx.bezierCurveTo(
-        tx + tw * 0.45,
-        base - th * 0.85,
-        tx + tw * 0.62,
-        base - th * 0.5,
-        tx + tw * 0.5,
-        base,
-      );
-      ctx.closePath();
-      ctx.fill();
-      ctx.beginPath();
-      ctx.ellipse(tx + tw * 0.55, base - th * 0.72, tw * 0.55, tw * 0.09, -0.08, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.fillRect(tx + tw * 0.2, base - th * 0.72, tw * 0.5, tw * 0.12);
+      glassTower(() => traceBitexco(ctx, t.x * W, t.w * W, t.h * H, base), t.x * W, t.w * W);
     }
 
     /**
@@ -505,6 +605,7 @@
     paintLights(seed) {
       const look = this.look;
       if (!look) return;
+      this.lightSeed = seed;
       const ctx = this.lights.getContext('2d');
       const W = this.width;
       const H = this.height;
@@ -515,29 +616,54 @@
       const flicker = rng(seed + 1);
       const flickerRate = 0.03 * Math.min(1, look.lit / 0.1); // by day almost nothing flickers
       const glass = look.glass[3] > 0.01;
+      // Earth Hour: buildings switch off one after another in a wave across the city; the
+      // ones the wave is just reaching stutter; stairwells and exit signs stay lit.
+      const blackout = look.blackout || 0;
       const l = this.geometry.landmark81;
+      const bx = this.geometry.bitexco;
       const buildings = [
         ...this.geometry.near.map((b) => ({ ...b, h: b.h * 0.9 })),
         { x: l.x - l.w * 0.4, w: l.w * 0.8, h: l.h * 0.84 },
       ];
+      const offOf = (x, i) => {
+        const o = waveOrder(x, i);
+        return {
+          off: o < blackout,
+          edge: blackout > 0 && blackout < 1 && o >= blackout && o < blackout + 0.04,
+        };
+      };
       const tones = [new Path2D(), new Path2D(), new Path2D(), new Path2D()]; // warm, white, cool, glass
-      buildings.forEach((b) => {
+      const windowAt = (x, y, sw, state) => {
+        // The same draws for every window whatever the hour, so each window keeps its
+        // own values: as `lit` rises at dusk the lights come on one by one, always in
+        // the same order, and go off in reverse late at night.
+        let on = stable() < look.lit;
+        const tone = stable();
+        const f = flicker();
+        if (state.off)
+          on = on && tone > 0.94; // a few stay on
+        else if (state.edge) on = on && f > 0.45;
+        else if (f < flickerRate) on = !on;
+        if (on) tones[tone < 0.7 ? 0 : tone < 0.9 ? 1 : 2].rect(x, y, sw, 1.6);
+        else if (glass) tones[3].rect(x, y, sw, 1.6);
+      };
+      buildings.forEach((b, i) => {
         const bw = b.w * W;
         const bh = b.h * H;
         const x0 = b.x * W;
+        const state = offOf(b.x + b.w / 2, i);
         for (let y = base - bh + 6; y < base - 4; y += 6) {
-          for (let x = x0 + 3; x < x0 + bw - 3; x += 5) {
-            // The same draws for every window whatever the hour, so each window keeps its
-            // own values: as `lit` rises at dusk the lights come on one by one, always in
-            // the same order, and go off in reverse late at night.
-            const on = stable() < look.lit;
-            const tone = stable();
-            if (on !== flicker() < flickerRate)
-              tones[tone < 0.7 ? 0 : tone < 0.9 ? 1 : 2].rect(x, y, 1.6, 1.6);
-            else if (glass) tones[3].rect(x, y, 1.6, 1.6);
-          }
+          for (let x = x0 + 3; x < x0 + bw - 3; x += 5) windowAt(x, y, 1.6, state);
         }
       });
+      // Bitexco's floors: long strips of glass following its curved outline.
+      const bState = offOf(bx.x, buildings.length);
+      const bxc = bx.x * W;
+      const bxh = bx.h * H;
+      for (let y = base - bxh * 0.9; y < base - 4; y += 5) {
+        const half = bitexcoHalf((base - y) / bxh) * bx.w * W - 3;
+        for (let x = bxc - half; x < bxc + half - 1; x += 4) windowAt(x, y, 2.6, bState);
+      }
       const lamp = look.lamp;
       [
         `rgba(255, 214, 150, ${0.78 * lamp})`,
@@ -548,9 +674,71 @@
         ctx.fillStyle = color;
         ctx.fill(tones[i]);
       });
-      // Aviation warning light on Landmark 81's spire.
+      this.paintTowerLights(ctx, base, offOf(l.x, buildings.length - 1).off, bState.off);
+      // Aviation warning lights stay on whatever happens (Earth Hour too).
       ctx.fillStyle = `rgba(255, 64, 64, ${0.55 + 0.4 * look.dark})`;
       ctx.fillRect(l.x * W - 1.2, base - l.h * H - 1, 2.4, 2.4);
+      ctx.fillRect(bxc - 1, base - bxh - 1.5, 2, 2);
+    }
+
+    /**
+     * The towers' own lights at night: Landmark 81's crown washed in cool white, Bitexco's
+     * edges lit up and the ring of lights round its helipad. Off during Earth Hour.
+     */
+    paintTowerLights(ctx, base, landmarkOff, bitexcoOff) {
+      const look = this.look;
+      const a = look.lamp * Math.min(1, Math.max(0, (look.dark - 0.4) / 0.35));
+      if (a <= 0.02) return;
+      const W = this.width;
+      const H = this.height;
+      ctx.save();
+      if (!landmarkOff) {
+        const l = this.geometry.landmark81;
+        const lx = l.x * W;
+        const lw = l.w * W;
+        const lh = l.h * H;
+        // Crown: vertical fins washed from below, fading upwards.
+        const g = ctx.createLinearGradient(0, base - lh * 0.84, 0, base - lh * 0.97);
+        g.addColorStop(0, `rgba(205, 228, 255, ${0.55 * a})`);
+        g.addColorStop(1, `rgba(205, 228, 255, ${0.08 * a})`);
+        ctx.fillStyle = g;
+        for (let i = -3; i <= 3; i++) ctx.fillRect(lx + i * lw * 0.045 - 0.5, base - lh * 0.97, 1, lh * 0.13);
+        // The setbacks of each tube, outlined.
+        ctx.fillStyle = `rgba(205, 228, 255, ${0.35 * a})`;
+        [
+          [0.5, 0.86],
+          [0.7, 0.7],
+          [0.84, 0.52],
+        ].forEach(([at, width]) => ctx.fillRect(lx - (lw * width) / 2, base - lh * at - 1, lw * width, 1));
+      }
+      if (!bitexcoOff) {
+        const b = this.geometry.bitexco;
+        const tx = b.x * W;
+        const tw = b.w * W;
+        const th = b.h * H;
+        // The edges of the bud, washed in warm white.
+        ctx.fillStyle = `rgba(255, 236, 200, ${0.4 * a})`;
+        for (let v = 0.06; v < 0.99; v += 0.012) {
+          const half = bitexcoHalf(v) * tw;
+          ctx.fillRect(tx - half, base - th * v, 1, 1.4);
+          ctx.fillRect(tx + half - 1, base - th * v, 1, 1.4);
+        }
+        // The ring of lights round the helipad.
+        ctx.fillStyle = `rgba(160, 255, 210, ${0.7 * a})`;
+        for (let i = 0; i < 14; i++) {
+          const ang = (i / 14) * Math.PI * 2;
+          ctx.fillRect(
+            tx + tw * 0.55 + Math.cos(ang) * tw * 0.53 - 0.6,
+            base - th * 0.72 + Math.sin(ang) * tw * 0.07,
+            1.2,
+            1.2,
+          );
+        }
+        // The crown.
+        ctx.fillStyle = `rgba(255, 236, 200, ${0.55 * a})`;
+        ctx.fillRect(tx - tw * 0.12, base - th - 0.5, tw * 0.24, 1.2);
+      }
+      ctx.restore();
     }
 
     /** Called every frame; cheap. Re-rolls the window lights every few seconds. */

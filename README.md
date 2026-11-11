@@ -56,8 +56,10 @@ Hoặc mở trực tiếp `index.html` bằng trình duyệt.
 │   │   ├── ambient-events.js  # Ambient mode: điều phối sự kiện (dịp, mùa, show trực tiếp), ánh sáng hắt, bloom, tiện ích vẽ
 │   │   ├── ambient-events-calendar.js # Dịp lễ: giao thừa, 30/4, 2/9, Phật đản, Trung thu, Noel, Giờ Trái Đất...
 │   │   ├── ambient-events-night.js   # Pháo hoa (cao + sà lan), drone show 3D, LED Landmark 81, laser, đèn pha, tàu trên sông
-│   │   ├── ambient-events-sky.js     # Sao băng, vệ tinh, sao chổi, nguyệt thực, quầng trăng, mặt trời giả, tia nắng
-│   │   ├── ambient-events-weather.js # Chớp, giông đêm, mưa rào + cầu vồng, mưa xa, sương sớm, bóng mây
+│   │   ├── ambient-events-sky.js     # Sao băng (cầu lửa vỡ mảnh), trạm vũ trụ/Starlink có HUD, sao chổi lớn, nguyệt thực...
+│   │   ├── ambient-events-weather.js # Chớp (đánh trúng chóp tòa nhà), giông, mưa rào + cầu vồng, sương, mây che nắng
+│   │   ├── ambient-events-towers.js  # Bitexco: show LED, song tấu với Landmark 81, trực thăng đáp sân đỗ, đếm ngược 2 tòa
+│   │   ├── ambient-events-river.js   # Dưới sông: lục bình, sà lan, buýt sông, tàu cao tốc, cá quẫy, Lễ hội Sông nước
 │   │   ├── ambient-events-day.js     # Khinh khí cầu (cả ban đêm), diều, bóng bay, bong bóng, hoa dầu, hoa mai
 │   │   ├── ambient-events-flyby.js   # Vệt khói, chim chữ V, máy bay hạ cánh, trực thăng, dơi, én, máy bay giấy, băng rôn
 │   │   ├── ambient-murmuration.js # Ambient mode: đàn con trỏ 3D (boids topo, sóng kích động, chuyển cảnh)
@@ -120,28 +122,53 @@ bấm phím hoặc click là trở lại (cú click/phím đánh thức không t
   - _Mùa_: mùa mưa (tháng 5–11) có mưa rào kèm sấm buổi chiều, giông đêm, chớp xa; mùa khô (12–4) trời quang, gió (thả
     diều nhiều hơn, nhất là chiều cuối tuần), sương mù buổi sáng quanh Tết (12–2). Tháng 4 mùa dầu bay, tháng 5 mùa sao bay.
   - _Mưa sao băng_ quanh đêm cực đại thật (Quadrantids, Lyrids, Eta Aquariids, Perseids, Orionids, Leonids, Geminids).
-- **Dịp lễ chỉ xuất hiện đúng ngày** (`ambient-events-calendar.js`):
-  - _Giao thừa Tết & Tết Dương lịch_: phút cuối Landmark 81 đếm ngược 10…1, đúng 0:00 pháo hoa trên sông (chạy trực tiếp
-    0:00–0:15). Những đêm Tết: Landmark 81 đỏ vàng hiện tên năm Can Chi (tính từ âm lịch), drone hình hoa mai, đèn lồng
-    dọc bờ sông; ban ngày hoa mai bay.
+- **Dịp lễ** (`ambient-events-calendar.js`): đúng ngày thì xuất hiện nhiều (x3) và các show chạy trực tiếp đúng giờ; ngày
+  thường vẫn có thể xuất hiện ngẫu nhiên (`occasionsAnyDay: true`, đặt `false` để chỉ chạy đúng ngày). Tương tự sự kiện theo
+  mùa (giông đêm, sương mù, dầu bay).
+  - _Giao thừa Tết & Tết Dương lịch_: **chuỗi liền mạch**: đếm ngược trên cả hai tòa (Landmark 81 hiện số 10…1, mỗi giây
+    "bật" lên kèm vòng sáng; Bitexco nạp đầy như thanh tiến trình, đèn pha khép dần về thẳng đứng) → đúng 0:00 cả hai tòa
+    lóe trắng, pháo hoa mở màn bằng một loạt bắn cùng lúc → hết pháo hoa thì hai tòa chúc mừng năm mới (tên năm Can Chi).
+    Chạy trực tiếp 23:59–0:15 đúng đêm; ngày khác thỉnh thoảng xuất hiện ngẫu nhiên. Những đêm Tết: drone hình hoa mai, đèn
+    lồng dọc bờ sông; ban ngày hoa mai bay.
   - _30/4 và 2/9_: pháo hoa 21:00–21:15 (trực tiếp), Landmark 81 hiện cờ đỏ sao vàng, drone xếp lá cờ bay phấp phới, ngôi
     sao, số năm kỷ niệm.
   - _Phật đản_: hoa đăng trôi ra từ cửa kênh Nhiêu Lộc – Thị Nghè (chùa Pháp Hoa thả hoa đăng mỗi mùa Phật đản).
   - _Trung thu_: đoàn rước đèn ông sao dọc bờ sông dưới trăng rằm.
   - _Noel_: Landmark 81 xanh – vàng, đèn nháy dọc bờ sông.
-  - _Giờ Trái Đất_ (thứ Bảy cuối tháng 3, 20:30–21:30): thành phố tắt đèn, quầng sáng đô thị giảm, sao hiện rõ hơn; không có
-    trình diễn ánh sáng trong giờ đó.
+  - _Giờ Trái Đất_ (thứ Bảy cuối tháng 3, 20:30–21:30): thành phố tắt đèn **từng tòa một theo làn sóng** từ trái sang phải
+    (cửa sổ, đèn đỉnh Landmark 81, vòng đèn sân đỗ Bitexco, đèn bờ kè; đèn đỏ hàng không vẫn sáng), dải Ngân Hà hiện ra, nến
+    thắp dọc bờ sông và nến nổi xếp chữ "60+" trên mặt sông; hết giờ đèn bật lại theo làn sóng ngược. Không có trình diễn ánh
+    sáng trong giờ đó.
   - _Programmer's Day_ (ngày thứ 256) và sinh nhật chủ site (`config.calendar.birthday`).
   - **Show trực tiếp**: khi thành phố bắn pháo hoa, cảnh tua nhanh sang đêm (time-lapse ~14 giây), giữ đêm suốt show rồi
     ngày chạy tiếp.
 - **Sự kiện thường ngày, hai tầng**, chọn theo giờ, mùa, ngày, độ hiếm, không lặp lại các sự kiện vừa xem:
   - _Sự kiện chính_ (mỗi 1–2,5 phút, `eventGapMinutes`), có chú thích hai dòng dưới đồng hồ (địa điểm, tên): pháo hoa trên
     sông (pháo tầm cao từ sau thành phố + pháo tầm thấp và giàn pháo quạt từ sà lan trên sông; cúc, liễu, kamuro, cọ, vòng,
-    saturn, tim, crossette, lấp lánh), drone show (hoa sen 3D xoay, cầu Ba Son, con trỏ của site, chữ), LED Landmark 81,
-    laser, đèn pha, mưa sao băng, sao chổi, nguyệt thực (chỉ đêm trăng tròn), quầng trăng, giông đêm, mưa rào rồi cầu vồng,
-    mưa xa, sương mù, bóng mây, tia nắng, diều, bóng bay, dầu bay...
-  - _Chi tiết nhỏ_ (mỗi 20–45 giây): sao băng, ISS / Starlink, máy bay hạ cánh Tân Sơn Nhất, trực thăng, tàu nhà hàng trên
-    sông, dơi lúc chạng vạng, chim én, vệt khói máy bay, đàn chim chữ V, máy bay giấy.
+    saturn, tim, crossette, lấp lánh, pistil, dahlia, brocade), drone show (hoa sen 3D xoay, cầu Ba Son, cà phê phin, xe
+    máy, đường chân trời, con trỏ của site, chữ; drone để lại vệt sáng khi chuyển hình), LED Landmark 81, laser, đèn pha,
+    mưa sao băng, sao chổi lớn, nguyệt thực (chỉ đêm trăng tròn), quầng trăng, giông đêm, mưa rào rồi cầu vồng, mưa xa,
+    sương mù, mây che nắng, tia nắng, diều, bóng bay, dầu bay...
+  - _Bitexco_ (`ambient-events-towers.js`): show LED riêng cắt theo dáng búp sen (hoa sen ánh sáng nở từ chân tòa, sọc xoắn
+    kép, equalizer nhảy theo nhạc, sóng sonar từ sân đỗ trực thăng; vòng đèn sân đỗ chạy đuổi), _song tấu với Landmark 81_
+    (hai tòa thay phiên, một đốm sáng bay vòng cung từ đỉnh tòa này sang tòa kia rồi cả hai cùng diễn), _trực thăng đáp sân
+    đỗ tầng 52_ (bay vào, chúc mũi rồi ngóc lên để dừng, lơ lửng, hạ xuống, cánh quạt chậm dần rồi quay nhanh lại, cất cánh;
+    ban đêm có đèn rọi và sân đỗ bật sáng), kính Bitexco/Landmark bắt nắng chiều. Bitexco cũng tham gia các dịp (cờ, Tết,
+    Noel, Programmer's Day). Sét có thể đánh trúng cột thu lôi trên chóp Landmark 81 / Bitexco (cả tòa sáng lên một nhịp).
+  - _Dưới sông_ (`ambient-events-river.js`): lục bình trôi (có chùm hoa tím ban ngày), sà lan chở cát được tàu lai đẩy (đèn
+    hành trình ban đêm), buýt đường sông, tàu cao tốc đi Vũng Tàu (cánh ngầm, bọt tung), cá quẫy; Lễ hội Sông nước: diễu hành
+    thuyền hoa (đèn kết hình sen, ông sao, cá chép, lồng đèn, tim, hoa mai...), thác pháo hoa trên sà lan, flyboard + mô tô
+    nước ban ngày. Mỗi thứ tự vẽ vệt sóng (kiểu Kelvin) và bóng phản chiếu đứt khúc.
+  - _Chi tiết nhỏ_ (mỗi 20–45 giây): sao băng, trạm vũ trụ ISS / Thiên Cung (HUD khóa mục tiêu: 4 góc khung co lại, nhãn gõ
+    dần, số liệu chạy; trạm đỏ dần rồi tắt khi vào bóng Trái Đất), đoàn Starlink "chuỗi ngọc" (lóe sáng lần lượt), vệ tinh
+    lóe sáng, máy bay hạ cánh Tân Sơn Nhất, trực thăng, tàu nhà hàng, các thứ dưới sông, dơi, chim én, vệt khói máy bay, đàn
+    chim chữ V, máy bay giấy.
+  - _Sao chổi lớn_: hạt bụi thoát ra từ đầu sao chổi bị đẩy ra xa mặt trời nên đuôi bụi tự cong và xòe; đuôi ion xanh gồm
+    nhiều sợi gợn sóng theo gió mặt trời, có cục khí chạy dọc đuôi, đôi khi đuôi bị đứt rồi mọc lại; đầu sao chổi "thở",
+    thỉnh thoảng bùng nổ tạo vỏ bụi lan ra.
+  - _Mây che nắng_: vài đám mây tích trôi ngang; bóng mây lướt qua các tòa nhà và mặt sông (phần còn lại ấm nắng); khi mây
+    che mặt trời, cả thành phố tối đi, mép mây có viền bạc và tia nắng xòe ra sau mây; nắng quay lại thì kính Landmark 81 /
+    Bitexco lóe sáng.
 - **Ánh sáng & hậu kỳ**:
   - _Ánh sáng hắt lên trời_: mỗi quả pháo nổ, mỗi tia sét thắp sáng mây và lớp khói bụi quanh nó (một canvas 64×36 phóng
     lên toàn màn hình, blend `screen`, nằm sau đường chân trời nên thành phố vẫn là bóng đen trên nền trời sáng).
@@ -156,8 +183,9 @@ bấm phím hoặc click là trở lại (cú click/phím đánh thức không t
 - **Chuyển cảnh**: vào: trang Home lùi ra sau (mờ + thu nhỏ nhẹ), con trỏ tuôn ra thành cả đàn; thoát: cả đàn ùa về con trỏ.
 - **Nhẹ máy**: bầu trời, mây, sao, đường chân trời vẽ một lần rồi để CSS (GPU) di chuyển; màu theo giờ áp dụng mỗi giây.
   Canvas sự kiện và bloom chỉ có bộ nhớ khi đang dùng (0×0 lúc nghỉ); sông chạy 30 fps ở nửa độ phân giải. Tự giảm số con
-  trỏ nếu vượt `frameBudgetMs`, xuống 30 fps khi cửa sổ không được focus, dừng hẳn khi tab bị ẩn. Đo trên Chrome: pháo hoa
-  lớn + sông + bloom vẫn giữ nhịp khung hình đều.
+  trỏ nếu vượt `frameBudgetMs`, dừng hẳn khi tab bị ẩn. Đo trên Chrome: pháo hoa
+  lớn + sông + bloom vẫn giữ nhịp khung hình đều. Mặc định chạy 60 fps cả khi cửa sổ không được focus (dùng làm nền màn hình
+  phụ); đặt `ecoWhenUnfocused: true` để xuống 30 fps và bớt con trỏ khi đang ở cửa sổ khác.
 - Tắt khi người dùng bật "giảm chuyển động". Tham số trong `config.ambient` và `config.calendar`.
 
 ### Khí quyển màn hình tĩnh (Screen Atmosphere)
@@ -170,7 +198,7 @@ sương sớm, cánh mai dịp Tết), nhãn dịp lễ đang diễn ra (lấy t
 
 Mở bằng `Ctrl + Shift + D` / `F2`, nút **🧪 Test Lab** trong panel cài đặt, hoặc `?test` (nút nổi chỉ hiện khi có `?test`).
 
-- **Sự kiện**: danh sách lấy thẳng từ registry, lọc theo nhóm (Lễ & dịp, Đêm, Thiên văn, Thời tiết, Ban ngày, Bay ngang)
+- **Sự kiện**: danh sách lấy thẳng từ registry, lọc theo nhóm (Lễ & dịp, Đêm, Thiên văn, Thời tiết, Ban ngày, Sông, Tòa nhà, Bay ngang)
   và tìm kiếm; click là phát ngay (Ambient mở và khóa, rê chuột không thoát).
 - **Ngày & giờ**: chọn một ngày/giờ (có sẵn: giao thừa Tết Đinh Mùi 23:59, giao thừa dương lịch, 2/9 21:00, 30/4, Trung
   thu, Phật đản, Giờ Trái Đất, mùa dầu bay, sương mù mùa khô, Leonids...). Đồng hồ giả lập chạy tiếp từ thời điểm đó,

@@ -140,7 +140,8 @@
 
       // Lamps along the far bank (Tôn Đức Thắng), unevenly spaced: each a broken column of
       // dashes, brightest at the bank, fading and thinning towards the viewer.
-      const lamp = look.lamp * Math.min(1, look.lit * 4);
+      // Earth Hour switches off the promenade's decorative lamps too.
+      const lamp = look.lamp * Math.min(1, look.lit * 4) * (1 - 0.85 * (look.blackout || 0));
       if (lamp > 0.02) {
         ctx.globalCompositeOperation = 'lighter';
         ctx.fillStyle = 'rgb(255, 196, 128)';

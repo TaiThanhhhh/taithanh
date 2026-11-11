@@ -22,6 +22,8 @@
     sky: 'Thiên văn',
     weather: 'Thời tiết',
     day: 'Ban ngày',
+    river: 'Sông',
+    towers: 'Tòa nhà',
     flyby: 'Bay ngang',
   };
 
@@ -380,7 +382,7 @@
       console.log(
         [
           'Portfolio.test.trigger("fireworks")      phát một sự kiện ngay',
-          'Portfolio.test.list("occasion")          liệt kê sự kiện (all, occasion, night, sky, weather, day, flyby)',
+          'Portfolio.test.list("occasion")          liệt kê sự kiện (all, occasion, night, sky, weather, day, flyby, river, towers)',
           'Portfolio.test.setDate("2027-02-05")     mô phỏng một ngày (Saigon)',
           'Portfolio.test.setHour(23.985)           ...và một giờ (23:59 → đếm ngược giao thừa)',
           'Portfolio.test.setOccasion("midautumn")  bật một dịp hôm nay',

@@ -115,6 +115,29 @@
       strobe: true,
       color: '#f2f5ff',
     },
+    /** Pistil: a sphere of coloured stars around a smaller core of another colour. */
+    pistil: {
+      count: [100, 130],
+      speed: [3.2, 4.4],
+      life: [80, 110],
+      drag: 0.972,
+      fall: 0.4,
+      size: 2.4,
+      pistil: true,
+    },
+    /** Dahlia: fewer, bigger stars, slower to fade. */
+    dahlia: { count: [36, 52], speed: [3.4, 4.4], life: [95, 125], drag: 0.974, fall: 0.38, size: 4 },
+    /** Brocade: thick gold stars shedding a heavy glitter as they droop. */
+    brocade: {
+      count: [80, 100],
+      speed: [2.8, 3.6],
+      life: [190, 240],
+      drag: 0.967,
+      fall: 0.55,
+      size: 2.4,
+      sparkle: 0.55,
+      color: '#ffcf6e',
+    },
     /** A comet fired from a barge: one bright star with a sparkling tail, no burst. */
     comet: { count: [1, 1], speed: [0, 0], life: [70, 95], drag: 0.985, fall: 0.6, size: 2.8, sparkle: 1 },
   };
@@ -141,6 +164,7 @@
    * @param {string[]} o.kinds Shell kinds to pick from.
    * @param {string[]} [o.palette] Colours (default: the site's palettes and classic ones).
    * @param {number} [o.barge] Share of launches fired low from barges on the river.
+   * @param {number} [o.opening] Shells fired all at once to open the show (midnight).
    */
   function fireworksShow(stage, o) {
     const { W, H } = stage;
@@ -150,11 +174,14 @@
     const centre = rand(0.3, 0.62) * W; // the show stands over one stretch of the river
     const water = stage.river ? stage.river.top + stage.river.h * 0.25 : stage.rooftop;
     const launches = [];
+    // An opening salvo: the stroke of midnight, a whole row of shells at once.
+    for (let i = 0; i < (o.opening || 0); i++) launches.push(i * rand(25, 60));
     for (let at = 400; at < o.until; at += rand(o.gap[0], o.gap[1])) {
       launches.push(at);
       if (Math.random() < o.pair) launches.push(at + rand(120, 380));
     }
     for (let i = 0; i < o.finale; i++) launches.push(o.until + 1200 + i * rand(110, 240)); // finale
+    launches.sort((a, b) => a - b);
     const rockets = [];
     const sparks = [];
     const embers = []; // sparks falling off stars and rockets: short-lived glitter
@@ -272,8 +299,14 @@
       // Two-tone shells: the stars change colour halfway through.
       const color2 = !shell.color && Math.random() < 0.35 ? pick(colors) : null;
       const tilt = rand(0, TAU);
+      const core = shell.pistil ? pick(colors.filter((c) => c !== color)) || '#ffffff' : null;
       for (let i = 0; i < count; i++) {
-        const [vx, vy] = velocity(shell, i, count, speed, tilt);
+        let [vx, vy] = velocity(shell, i, count, speed, tilt);
+        const inCore = core && i % 3 === 0; // a third of the stars form the core, slower
+        if (inCore) {
+          vx *= 0.42;
+          vy *= 0.42;
+        }
         sparks.push({
           x: rocket.x,
           y: rocket.y,
@@ -281,8 +314,8 @@
           vy,
           life: 1,
           decay: 1 / rand(shell.life[0], shell.life[1]),
-          color,
-          color2,
+          color: inCore ? core : color,
+          color2: inCore ? null : color2,
           shell,
           size: shell.size * Math.max(1, scale) * (rocket.small < 1 ? 0.8 : 1),
           split: !!shell.split,
@@ -310,7 +343,9 @@
         }
         const a = p.life ** 1.2;
         ctx.globalAlpha = p.shell.strobe && Math.random() < 0.45 ? a * 0.12 : a;
-        ctx.fillRect(p.x - p.size / 2, p.y - p.size / 2, p.size, p.size);
+        // Stars shrink as they burn out.
+        const size = p.size * (0.55 + 0.45 * Math.min(1, p.life * 1.6));
+        ctx.fillRect(p.x - size / 2, p.y - size / 2, size, size);
       });
       color = '';
       embers.forEach((e) => {
@@ -416,12 +451,15 @@
     'peony',
     'chrysanthemum',
     'chrysanthemum',
+    'pistil',
     'ring',
     'willow',
     'palm',
     'crossette',
     'glitter',
     'saturn',
+    'dahlia',
+    'brocade',
   ];
 
   fx.register({
@@ -561,6 +599,93 @@
       ctx.moveTo(w * 0.02, deck);
       ctx.lineTo(w * 0.98, deck);
       ctx.stroke();
+    },
+    /** Cà phê phin: the drip filter on its glass, steam curling up. */
+    phin(ctx, w, h) {
+      const cx = w / 2;
+      ctx.lineWidth = 5;
+      ctx.lineJoin = 'round';
+      ctx.beginPath(); // the glass
+      ctx.moveTo(cx - 34, h * 0.56);
+      ctx.lineTo(cx - 28, h * 0.95);
+      ctx.lineTo(cx + 28, h * 0.95);
+      ctx.lineTo(cx + 34, h * 0.56);
+      ctx.stroke();
+      ctx.fillRect(cx - 27, h * 0.78, 54, h * 0.15); // the coffee and condensed milk
+      ctx.fillRect(cx - 46, h * 0.5, 92, 5); // the filter's rim
+      ctx.beginPath(); // the filter's cup and its lid
+      ctx.moveTo(cx - 30, h * 0.5);
+      ctx.lineTo(cx - 26, h * 0.3);
+      ctx.lineTo(cx + 26, h * 0.3);
+      ctx.lineTo(cx + 30, h * 0.5);
+      ctx.stroke();
+      ctx.fillRect(cx - 30, h * 0.26, 60, 5);
+      ctx.fillRect(cx - 5, h * 0.2, 10, 6);
+      ctx.lineWidth = 3.5; // steam
+      [-14, 2, 18].forEach((dx) => {
+        ctx.beginPath();
+        ctx.moveTo(cx + dx, h * 0.17);
+        ctx.bezierCurveTo(cx + dx - 10, h * 0.11, cx + dx + 10, h * 0.07, cx + dx, h * 0.01);
+        ctx.stroke();
+      });
+    },
+    /** A scooter, the city's own vehicle, with its rider. */
+    scooter(ctx, w, h) {
+      const cx = w / 2;
+      const base = h * 0.82;
+      ctx.lineWidth = 6;
+      [-52, 52].forEach((dx) => {
+        ctx.beginPath();
+        ctx.arc(cx + dx, base, 17, 0, TAU);
+        ctx.stroke();
+      });
+      ctx.beginPath(); // body: rear cowl, floorboard, front shield, handlebar
+      ctx.moveTo(cx - 72, base - 16);
+      ctx.quadraticCurveTo(cx - 70, base - 46, cx - 30, base - 44);
+      ctx.lineTo(cx - 8, base - 44);
+      ctx.lineTo(cx - 6, base - 18);
+      ctx.lineTo(cx + 26, base - 18);
+      ctx.lineTo(cx + 38, base - 72);
+      ctx.lineTo(cx + 54, base - 76);
+      ctx.lineTo(cx + 52, base);
+      ctx.stroke();
+      ctx.fillRect(cx - 62, base - 52, 40, 9); // seat
+      ctx.beginPath(); // rider
+      ctx.arc(cx - 26, base - 118, 13, 0, TAU);
+      ctx.fill();
+      ctx.beginPath();
+      ctx.moveTo(cx - 34, base - 100);
+      ctx.lineTo(cx - 44, base - 52);
+      ctx.lineTo(cx - 6, base - 50);
+      ctx.lineTo(cx - 4, base - 22);
+      ctx.moveTo(cx - 30, base - 94);
+      ctx.lineTo(cx + 38, base - 74);
+      ctx.stroke();
+    },
+    /** The skyline itself: Bitexco's bud and Landmark 81's stepped tubes. */
+    skyline(ctx, w, h) {
+      const base = h * 0.96;
+      const bx = w * 0.36;
+      ctx.beginPath();
+      ctx.moveTo(bx - 18, base);
+      ctx.bezierCurveTo(bx - 23, base - 60, bx - 17, base - 100, bx - 4, base - 118);
+      ctx.lineTo(bx + 4, base - 118);
+      ctx.bezierCurveTo(bx + 17, base - 100, bx + 23, base - 60, bx + 18, base);
+      ctx.fill();
+      ctx.fillRect(bx, base - 86, 30, 5);
+      const lx = w * 0.64;
+      [
+        [0, 30],
+        [0.5, 26],
+        [0.7, 21],
+        [0.84, 15],
+        [0.93, 9],
+      ].forEach(([at, half], i, arr) => {
+        const next = arr[i + 1] ? arr[i + 1][0] : 0.97;
+        ctx.fillRect(lx - half, base - 150 * next, half * 2, 150 * (next - at) + 1);
+      });
+      ctx.fillRect(lx - 1.5, base - 152, 3, 10);
+      ctx.fillRect(w * 0.08, base - 3, w * 0.84, 3); // the river bank
     },
     text: (label) => (ctx, w, h) => {
       let size = 96;
@@ -708,6 +833,9 @@
     return pts;
   }
 
+  fx.figurePoints = figurePoints;
+  fx.figures = FIGURES;
+
   /** Can Chi name of a lunar year (2026: Bính Ngọ, 2027: Đinh Mùi). */
   const CAN = ['Giáp', 'Ất', 'Bính', 'Đinh', 'Mậu', 'Kỷ', 'Canh', 'Tân', 'Nhâm', 'Quý'];
   const CHI = ['Tý', 'Sửu', 'Dần', 'Mão', 'Thìn', 'Tỵ', 'Ngọ', 'Mùi', 'Thân', 'Dậu', 'Tuất', 'Hợi'];
@@ -739,6 +867,10 @@
     mai: (p) => (Math.hypot(p.x, p.y) < 0.14 ? [255, 140, 40] : [255, 206, 60]),
     lotus: (p) => (p.u < 0 ? [255, 200, 80] : fx.mix([236, 72, 140], [255, 230, 240], p.u ** 1.4)),
     tet: (p, i) => (i % 5 ? [255, 70, 60] : [255, 214, 90]),
+    /** Coffee: dark brown glass, cream on top, white steam. */
+    coffee: (p) => (p.y < -0.3 ? [235, 240, 255] : p.y > 0.25 ? [196, 120, 60] : [255, 214, 160]),
+    /** The city at night: warm towers, a cyan river line. */
+    city: (p) => (p.y > 0.46 ? [90, 220, 255] : p.u > 0.5 ? [200, 225, 255] : [255, 214, 140]),
   };
 
   /**
@@ -875,6 +1007,8 @@
             toColor = COLORWAYS[form.colors || 'white'](p, i, t, stage.colors);
           }
           const arc = Math.sin(Math.PI * u) * d.lift;
+          d.px = d.x;
+          d.py = d.y;
           d.x = d.from.x + (to.x - d.from.x) * u + arc;
           d.y = d.from.y + (to.y - d.from.y) * u - Math.abs(arc) * 0.5;
           // Colours change in a sweep across the figure, a little after the move starts.
@@ -887,6 +1021,24 @@
         const a = envelope(t, DURATION, 1500, 1800);
         const r = 9 * scale;
         ctx.globalCompositeOperation = 'lighter';
+        // Motion streaks: a drone flying between two figures leaves a short light trail,
+        // like a long exposure (the faster, the longer).
+        ctx.lineCap = 'round';
+        ctx.lineWidth = 1.6 * Math.max(1, scale);
+        drones.forEach((d) => {
+          if (d.px === undefined) return;
+          const dx = d.x - d.px;
+          const dy = d.y - d.py;
+          const v = Math.hypot(dx, dy);
+          if (v < 1.2) return;
+          const len = Math.min(36 * scale, v * 4);
+          ctx.globalAlpha = a * Math.min(0.55, v * 0.08);
+          ctx.strokeStyle = `rgb(${d.color[0] | 0}, ${d.color[1] | 0}, ${d.color[2] | 0})`;
+          ctx.beginPath();
+          ctx.moveTo(d.x, d.y);
+          ctx.lineTo(d.x - (dx / v) * len, d.y - (dy / v) * len);
+          ctx.stroke();
+        });
         drones.forEach((d) => {
           const y = d.y + Math.sin(t * 0.002 + d.phase) * 1.2 * scale; // hovering
           const k = d.depth; // nearer drones read bigger and brighter
@@ -915,10 +1067,33 @@
         pick([
           { figure: 'heart', colors: 'pink' },
           { lotus: true, colors: 'lotus' },
+          { figure: 'skyline', colors: 'city' },
         ]),
-        { figure: 'bridge', colors: 'sweep' },
+        pick([
+          { figure: 'bridge', colors: 'sweep' },
+          { figure: 'phin', colors: 'coffee' },
+          { figure: 'scooter', colors: 'sweep' },
+        ]),
         { figure: 'cursor', colors: 'cursor' },
-        { figure: pick(['XIN CHÀO', 'SÀI GÒN', '</>']), colors: 'sweep' },
+        { figure: pick(['XIN CHÀO', 'SÀI GÒN', '</>', 'CÀ PHÊ SỮA ĐÁ']), colors: 'sweep' },
+      ]),
+  });
+
+  fx.register({
+    name: 'drones_saigon',
+    label: 'Drone show: Sài Gòn thường ngày',
+    place: 'Sông Sài Gòn',
+    group: 'night',
+    spectacle: true,
+    rarity: 'uncommon',
+    when: (look) => look.dark > 0.7,
+    create: (stage) =>
+      droneShow(stage, [
+        { figure: 'scooter', colors: 'sweep' },
+        { figure: 'phin', colors: 'coffee' },
+        { figure: 'skyline', colors: 'city' },
+        { figure: 'bridge', colors: 'sweep' },
+        { figure: 'SÀI GÒN', colors: 'gold' },
       ]),
   });
 
@@ -955,23 +1130,38 @@
     },
     /** Noel: warm white lights twinkling on a deep green tower, a gold star on the crown. */
     noel: (v) => (v > 0.94 ? ['#ffd96a', 1] : Math.random() < 0.12 ? ['#fff4dc', 1] : ['#0e6b3a', 0.55]),
+    /** Waves of colour rolling up the tower, the hue drifting. */
+    wave: (v, local) => {
+      const s = 0.5 + 0.5 * Math.sin(v * 18 - local * 0.005);
+      return [`hsl(${(200 + v * 120 + local * 0.02) % 360}, 85%, ${45 + s * 25}%)`, 0.25 + 0.75 * s ** 2];
+    },
+    /** A heartbeat: two quick pulses running up from the base, then a rest. */
+    heartbeat: (v, local) => {
+      const beat = local % 1600;
+      const front = (k) => Math.exp(-(((v - (beat - k) / 500) / 0.07) ** 2));
+      return ['#ff3b5c', 0.1 + front(0) + 0.7 * front(260)];
+    },
+    /** Dark (the other tower has the stage). */
+    off: () => ['#000', 0],
   };
 
-  /** Writes text across the tower, one line under the other, centred at height v (fits the width). */
-  function towerText(ctx, stage, lines, v, color, alpha) {
-    const L = stage.landmark;
+  /** Writes text across a tower (Landmark 81 by default), one line under the other, centred at height v. */
+  function towerText(ctx, stage, lines, v, color, alpha, tower = stage.landmark, widthAt = 0.92) {
     const longest = Math.max(...lines.map((l) => l.length));
-    const size = Math.min(L.w * 0.8, (L.w * 0.92) / (0.62 * longest));
+    const size = Math.min(tower.w * 0.8, (tower.w * widthAt) / (0.62 * longest));
     ctx.font = `600 ${size}px raleway, poppins, sans-serif`;
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
     ctx.fillStyle = color;
     ctx.globalAlpha = alpha;
     lines.forEach((line, i) => {
-      const y = stage.ground - L.h * v + (i - (lines.length - 1) / 2) * size * 1.05;
-      ctx.fillText(line, L.x, y);
+      const y = stage.ground - tower.h * v + (i - (lines.length - 1) / 2) * size * 1.05;
+      ctx.fillText(line, tower.x, y);
     });
   }
+
+  fx.ledPrograms = PROGRAMS;
+  fx.towerText = towerText;
 
   /**
    * Landmark 81 lights its façade: a run of programs, each with a short blackout
@@ -1046,11 +1236,11 @@
         const cutIn = seg > 0 ? clamp01(local / 300) : 1;
         const cutOut = !o.endsAt && seg < programs.length - 1 ? clamp01((SEGMENT - local) / 300) : 1;
         const a = envelope(t, DURATION, 2500, o.endsAt ? 300 : 2500) * cutIn * cutOut;
-        if (a <= 0) return;
+        const name = programs[seg];
+        if (a <= 0 || name === 'off') return;
         ctx.save();
         stage.traceLandmark(ctx);
         ctx.clip();
-        const name = programs[seg];
         if (whole[name]) whole[name](ctx, local, a);
         else rows(ctx, PROGRAMS[name], local, a);
         ctx.restore();
@@ -1073,7 +1263,10 @@
     spectacle: true,
     when: (look) => look.dark > 0.55,
     create: (stage) =>
-      landmarkShow(stage, fx.shuffle(['rainbow', 'pulse', 'scan', 'sparkle', 'rise']).slice(0, 4)),
+      landmarkShow(
+        stage,
+        fx.shuffle(['rainbow', 'pulse', 'scan', 'sparkle', 'rise', 'wave', 'heartbeat']).slice(0, 4),
+      ),
   });
 
   /* ---------- Laser show from Landmark 81's crown ---------- */

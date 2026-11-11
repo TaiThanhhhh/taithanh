@@ -8,8 +8,9 @@
  *   opaque, the page underneath is hidden so the browser stops painting it.
  * - Exit (any real input): the swarm rushes back into the pointer while the page
  *   comes back into focus. The waking click/key never reaches the page.
- * - Eco: when the window loses focus (you are in a game or another app), the
- *   scene drops to 30 fps and fewer cursors.
+ * - Runs at `maxFps` (60) even when the window is not focused (the scene is a
+ *   background for a second monitor). With `ecoWhenUnfocused: true` it drops to
+ *   30 fps and fewer cursors while you are in a game or another app.
  * - Disabled when the user prefers reduced motion.
  */
 (function (Portfolio) {
@@ -74,9 +75,11 @@
     state.rafId = 0;
   }
 
+  /** Eco (30 fps, fewer cursors) when the window loses focus: only if `ecoWhenUnfocused`. */
   function setEco(eco) {
-    state.eco = eco;
-    state.scene?.setEco(eco);
+    const on = eco && !!state.config.ecoWhenUnfocused;
+    state.eco = on;
+    state.scene?.setEco(on);
   }
 
   /* ---------- Enter / exit ---------- */

@@ -473,7 +473,9 @@
         ? { title: 'Mùa sao bay', place: 'Tháng 5 · Sài Gòn' }
         : { title: 'Mùa dầu bay', place: 'Tháng 4 · Công viên Tao Đàn' },
     weight: 1.6,
-    when: (look, _stage, cal) => !!cal.seeds && look.dark < 0.35,
+    // Their months (April, May); any other day now and then.
+    boost: (cal) => (cal.seeds ? 1 : 0.25),
+    when: (look) => look.dark < 0.35,
     create(stage) {
       const sprites = ['196, 98, 84', '176, 112, 70', '214, 140, 104'].map(seedSprite);
       return fx.fallers(stage, {

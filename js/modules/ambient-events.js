@@ -1,27 +1,37 @@
 /**
  * @file Ambient surprises: things keep happening over the city.
  *
- * Two tiers run side by side:
- * - major events (`eventGapMinutes`): fireworks, a comet, a storm, kites...
- *   One at a time, announced by a caption under the clock.
- * - details (`detailGapSeconds`): small things passing by between them: a
- *   shooting star, a plane on approach, bats at dusk, a paper plane...
+ * Two tiers, each with several events running at once (`maxEvents`):
+ * - major events (a new one every `eventGapMinutes`, overlapping the ones still
+ *   going): fireworks, a comet, a storm, kites, a show on a tower, a boat parade...
+ *   Each announced by a caption under the clock.
+ * - details (`detailGapSeconds`): small things passing by: a shooting star, a plane
+ *   on approach, a barge on the river, bats at dusk...
+ *
+ * What runs together stays logical: each event takes up zones (the sky's show, each
+ * tower's façade, the river, the weather, the sun, the moon...) and two events never
+ * share one; rain rules out what needs a clear sky. So at night fireworks can go up
+ * while Bitexco plays its LED show and a barge passes, but never two fireworks shows,
+ * nor kites in a storm.
  *
  * The director picks what fits the hour (each event says when it fits from the
  * current look: `look.dark`, `look.sun`, `look.moon`...) and the date (the Saigon
  * calendar: occasion, season, tonight's moon), weighs it by rarity (common /
  * uncommon / rare) and by the day (kites on a windy dry-season weekend, storms on a
  * rainy-season afternoon), and skips the last few ones, so a long session keeps
- * changing. Occasion events (Tết, Trung thu, 2/9...) only happen on their days.
- * When the city puts on a show (fireworks at 21:00 on 2/9, at midnight for Giao
- * thừa...), the director plays it live. Events live in the ambient-events-*.js files.
+ * changing. Many events come in versions (`variants`: where the fireworks are fired,
+ * where the lasers come from...), never the same one twice in a row. Occasion events
+ * (Tết, Trung thu, 2/9...) come mostly on their days. When the city puts on a show
+ * (fireworks at 21:00 on 2/9, at midnight for Giao thừa...), the director plays it
+ * live. Events live in the ambient-events-*.js files.
  *
  * An event is `create(stage, extra)` → { update(k, t) → still running?, back(ctx)?,
  * front(ctx)?, trails?, bloom?, mirror?, end()? }: `back` draws behind the skyline
  * (things rise from behind the city), `front` in front of it (rain, fog, the LED show
- * on Landmark 81). `trails` (0..1) fades the previous frame instead of clearing it;
- * `bloom` (0..1) makes it glow; `mirror` makes the river reflect its front layer.
- * `stage.flash(x, y, ...)` lights the sky and the clouds for an instant.
+ * on Landmark 81). `trails` (0..1) fades the previous frame instead of clearing it (on
+ * canvases of their own, so the other events are not smeared); `bloom` (0..1) makes it
+ * glow; `mirror` makes the river reflect its front layer. `extra.variant` is the version
+ * picked. `stage.flash(x, y, ...)` lights the sky and the clouds for an instant.
  *
  * Cost: the event canvases only get a backing store while an event draws on
  * them; in between they are 0x0 and nothing is drawn.
@@ -33,6 +43,10 @@
   /** An event does not come back before this many others (when the hour allows). */
   const RECENT = 8;
   const RARITY = { common: 1, uncommon: 0.5, rare: 0.18 };
+  /** With `occasionsAnyDay`: how likely an occasion event is on another day (its own day: x3). */
+  const OFF_DAY = 0.35;
+  /** ...and a season-bound event (a night storm) in the other season. */
+  const OFF_SEASON = 0.35;
   const TIERS = ['major', 'detail'];
   const registry = [];
 
@@ -309,7 +323,7 @@
      * so the stepped leader can be drawn growing.
      * @returns {{paths: {points: number[][], main: boolean, from: number}[]}}
      */
-    bolt(x, top, bottom, scale) {
+    bolt(x, top, bottom, scale, endAt) {
       const displace = (ax, ay, bx, by, spread, levels) => {
         let pts = [
           [ax, ay],
@@ -329,7 +343,7 @@
         }
         return pts;
       };
-      const endX = x + rand(-0.12, 0.12) * (bottom - top);
+      const endX = endAt ?? x + rand(-0.12, 0.12) * (bottom - top); // endAt: a spire it strikes
       const main = displace(x, top, endX, bottom, 70 * scale, 7);
       const span = bottom - top;
       const paths = [{ points: main, main: true, from: 0 }];
@@ -413,20 +427,97 @@
     },
 
     /**
+     * Runs several events as one (a tower duet, a countdown on two towers): updated and
+     * drawn together, running while any of them is.
+     * @param {...object} events
+     */
+    combine(...events) {
+      const list = events.filter(Boolean);
+      return {
+        trails: Math.max(0, ...list.map((e) => e.trails || 0)) || undefined,
+        bloom: Math.max(0, ...list.map((e) => e.bloom || 0)) || undefined,
+        mirror: list.some((e) => e.mirror),
+        update(k, t) {
+          let running = false;
+          list.forEach((e) => {
+            if (!e.done && !e.update(k, t)) e.done = true;
+            running = running || !e.done;
+          });
+          return running;
+        },
+        back: list.some((e) => e.back)
+          ? (ctx) =>
+              list.forEach((e) => {
+                if (!e.back || e.done) return;
+                ctx.save();
+                e.back(ctx);
+                ctx.restore();
+              })
+          : undefined,
+        front: list.some((e) => e.front)
+          ? (ctx) =>
+              list.forEach((e) => {
+                if (!e.front || e.done) return;
+                ctx.save();
+                e.front(ctx);
+                ctx.restore();
+              })
+          : undefined,
+        end() {
+          list.forEach((e) => e.end && e.end());
+        },
+      };
+    },
+
+    /** Ease out, with a little overshoot (a digit landing, a light popping in). */
+    backOut(x, s = 1.7) {
+      const u = clamp01(x) - 1;
+      return 1 + (s + 1) * u * u * u + s * u * u;
+    },
+
+    /** Ease out, cubic: fast then gentle (most things coming to rest). */
+    easeOut: (x) => 1 - (1 - clamp01(x)) ** 3,
+
+    /** Ease in and out, cubic. */
+    easeInOut(x) {
+      const u = clamp01(x);
+      return u < 0.5 ? 4 * u * u * u : 1 - (-2 * u + 2) ** 3 / 2;
+    },
+
+    /**
+     * Where something on the water is drawn: `d` 0 at the far bank .. 1 at the viewer.
+     * @returns {{y: number, s: number}} Its waterline, and its scale (nearer: bigger).
+     */
+    onWater(stage, d) {
+      const r = stage.river;
+      return { y: r.top + r.h * d, s: (0.45 + d * 0.95) * (stage.H / 1080) };
+    },
+
+    /**
      * Registers an event.
      * @param {object} def
      * @param {string} def.name
      * @param {string} [def.label] Caption under the clock.
      * @param {string} [def.place] Small line above the caption (where it happens).
-     * @param {string} [def.group] Group in the test lab (night, sky, weather, day, flyby, occasion).
+     * @param {string} [def.group] Group in the test lab (night, sky, weather, day, flyby, river, towers, occasion).
      * @param {'major'|'detail'} [def.tier]
      * @param {'common'|'uncommon'|'rare'} [def.rarity]
      * @param {number} [def.weight]
-     * @param {string} [def.occasion] Only on that occasion (ambient-calendar.js), e.g. 'tet'.
-     * @param {'rainy'|'dry'} [def.season] Only in that season.
+     * @param {string} [def.occasion] Mostly on that occasion (ambient-calendar.js), e.g. 'tet'.
+     * @param {'rainy'|'dry'} [def.season] Mostly in that season.
      * @param {boolean} [def.spectacle] Uses the city's lights: not during Earth Hour.
      * @param {boolean} [def.manual] Never picked at random (live shows, the test lab).
      * @param {string[]} [def.live] Kinds of live show it can play ('fireworks', 'countdown').
+     * @param {string[]} [def.zones] What it takes up while it runs ('show', 'landmark', 'bitexco',
+     *   'river', 'weather', 'sun', 'moon', 'astro', 'air'...): two events sharing a zone do not run
+     *   together (default: from its group, see GROUP_ZONES).
+     * @param {boolean} [def.rain] It rains: nothing that needs a clear sky runs meanwhile.
+     * @param {boolean} [def.dry] Needs a clear sky (default: from its zones, see DRY_ZONES).
+     * @param {object[]} [def.variants] Versions of the event ({id, label?, place?, weight?, ...}):
+     *   one is picked each time (never the same twice in a row) and passed as `extra.variant`;
+     *   its label / place replace the event's in the caption.
+     * @param {string|((cal: object) => string)} [def.then] Event that follows straight after
+     *   this one (the countdown → the fireworks), unless the city's live show takes over.
      * @param {(look: object, stage: object, cal: object) => boolean} def.when
      * @param {(cal: object, look: object) => number} [def.boost] Weight multiplier from the date.
      * @param {(cal: object) => ({title: string, place?: string}|null)} [def.caption] Caption from the date.
@@ -457,35 +548,80 @@
     moon: { illumination: 1, full: true },
   };
 
+  /*
+   * What runs together. Each event takes up zones; two events sharing a zone do not run at
+   * the same time (one show in the sky, one program on each tower, one kind of weather...),
+   * except where a zone has room for more (two boats on the river). Rain rules out what
+   * needs a clear sky: no kites, drones, fireworks or stars in a downpour.
+   */
+  const GROUP_ZONES = {
+    major: {
+      night: ['show'],
+      sky: ['astro'],
+      weather: ['weather'],
+      day: ['air'],
+      flyby: ['air'],
+      river: ['river'],
+      towers: ['towers'],
+      occasion: ['occasion'],
+    },
+    detail: { river: ['lane'], sky: ['hud'] },
+  };
+  /** How many events may share a zone at once (default 1). */
+  const CAPACITY = { lane: 2 };
+  /** Zones that need a clear sky. */
+  const DRY_ZONES = new Set(['show', 'astro', 'moon', 'sun', 'hud', 'air']);
+
+  const zonesOf = (def) => def.zones || GROUP_ZONES[tierOf(def)][def.group] || [];
+  const isDry = (def) => def.dry ?? zonesOf(def).some((z) => DRY_ZONES.has(z));
+  /** Whether a and b cannot run together (a zone of room 1 in common, or rain and clear sky). */
+  const clash = (a, b) =>
+    a === b ||
+    zonesOf(a).some((z) => (CAPACITY[z] || 1) === 1 && zonesOf(b).includes(z)) ||
+    (a.rain && isDry(b)) ||
+    (b.rain && isDry(a));
+
   class AmbientEvents {
     /**
-     * @param {object} sky The AmbientSky: its event canvases (`fxBack`, `fxFront`), the
-     *   light layer (`flash`) and the bloom layer (`bloom`).
+     * @param {object} sky The AmbientSky: its event canvases (`fxBack`, `fxFront`, and their
+     *   `...Trails` twins for the events that leave trails), the light layer (`flash`) and the
+     *   bloom layer (`bloom`).
      * @param {object} config `Portfolio.config.ambient`.
      * @param {{event?: string}} [options] `?event=<name>`: that event comes first, on every visit.
      */
     constructor(sky, config, options = {}) {
+      const layer = (canvas, method, trails) => ({ canvas, ctx: canvas.getContext('2d'), method, trails });
+      // Events that leave trails (fireworks) fade their own canvases instead of clearing them:
+      // on separate canvases, so the others running at the same time are not smeared.
       this.layers = {
-        back: { canvas: sky.fxBack, ctx: sky.fxBack.getContext('2d') },
-        front: { canvas: sky.fxFront, ctx: sky.fxFront.getContext('2d') },
+        back: layer(sky.fxBack, 'back', false),
+        backTrails: layer(sky.fxBackTrails, 'back', true),
+        front: layer(sky.fxFront, 'front', false),
+        frontTrails: layer(sky.fxFrontTrails, 'front', true),
       };
       this.light = { canvas: sky.flash, ctx: sky.flash.getContext('2d'), list: [], lit: false, last: 0 };
       this.bloom = { canvas: sky.bloom, ctx: sky.bloom.getContext('2d') };
       this.config = config;
+      /** Occasion and season events may also come on other days (less often). */
+      this.anyDay = config.occasionsAnyDay !== false;
+      /** How many events of each tier may run at once. */
+      this.max = { major: 3, detail: 3, ...(config.maxEvents || {}) };
       this.requested = registry.find((d) => d.name === options.event) || null;
       this.pending = null;
       this.stage = null;
       this.cal = NO_CAL;
-      this.slots = { major: null, detail: null };
+      /** The events running: {def, event, tier, startedAt, variant, live?}. */
+      this.active = [];
       this.nextAt = { major: Infinity, detail: Infinity };
       this.recent = [];
+      this.lastVariant = {};
       this.liveShown = null;
       this.k = 1;
       this.frame = 0;
       /** Called with (def, tier, caption?) when an event begins (the scene shows a caption). */
       this.onBegin = null;
       // A new canvas is 300x150: start without a backing store, sized when an event needs it.
-      [sky.fxBack, sky.fxFront, sky.bloom].forEach((canvas) => {
+      [...Object.values(this.layers).map((l) => l.canvas), sky.bloom].forEach((canvas) => {
         canvas.width = 0;
         canvas.height = 0;
       });
@@ -505,6 +641,7 @@
         occasion: def.occasion || null,
         group: def.group || 'other',
         manual: !!def.manual,
+        variants: def.variants ? def.variants.length : 0,
       }));
     }
 
@@ -523,6 +660,11 @@
       stage.flash = (x, y, intensity = 1, rgb = [255, 255, 255], radius = 0.45, decayMs = 220) => {
         if (this.light.list.length < 24) this.light.list.push({ x, y, i: intensity, rgb, radius, decayMs });
       };
+      /**
+       * The city's lights, as events want them. `blackout` (0..1): share of the city switched
+       * off, in a wave from left to right (Earth Hour); the scene repaints the windows from it.
+       */
+      stage.city = { blackout: 0 };
     }
 
     reset(now, look, cal) {
@@ -558,12 +700,18 @@
         swallow: 'swallows',
         bat: 'bats',
         searchlight: 'searchlights',
+        countdown: 'tet_countdown',
+        heli: 'helipad',
+        duet: 'towers_duet',
+        lucbinh: 'hyacinth',
+        parade: 'boatparade',
+        iss: 'satellite',
       };
       const resolved = aliases[name] || name;
       const def = registry.find((d) => d.name === resolved);
       if (!def || !this.stage) return false;
       const live = def.live && this.cal.live && def.live.includes(this.cal.live.kind) ? this.cal.live : null;
-      this.begin(def, now, live ? { live } : {});
+      this.begin(def, now, live ? { live } : {}, true);
       return true;
     }
 
@@ -573,31 +721,33 @@
       this.cal = cal || NO_CAL;
       this.stage.cal = this.cal;
       this.followLive(now);
+      [...this.active].forEach((slot) => {
+        if (!this.active.includes(slot) || slot.event.update(k, now - slot.startedAt)) return;
+        this.endSlot(slot);
+        // A sequence goes on (the countdown → the fireworks), unless the city's own show takes over.
+        const next = this.cal.live ? null : this.next(slot.def);
+        if (next) this.begin(next, now, {}, true);
+      });
       TIERS.forEach((tier) => {
-        const slot = this.slots[tier];
-        if (slot) {
-          if (!slot.event.update(k, now - slot.startedAt)) {
-            this.end(tier);
-            this.schedule(tier, now);
-          }
+        if (now < this.nextAt[tier]) return;
+        if (this.active.filter((s) => s.tier === tier).length >= this.max[tier]) {
+          this.nextAt[tier] = now + 4000; // full: look again in a moment
           return;
         }
-        if (now < this.nextAt[tier]) return;
-        if (this.cal.live && tier === 'major') return; // the city's show has the sky
         if (this.pending && tierOf(this.pending) === tier) {
           const def = this.pending;
           this.pending = null;
-          this.begin(def, now);
-          return;
-        }
-        // Details keep out of the way of an event that leaves trails (they would smear).
-        if (tier === 'detail' && this.slots.major && this.slots.major.event.trails) {
-          this.nextAt.detail = now + 5000;
+          this.begin(def, now, {}, true);
+          this.schedule(tier, now);
           return;
         }
         const def = this.choose(look, tier);
-        if (def) this.begin(def, now);
-        else this.nextAt[tier] = now + 20000; // nothing fits right now; look again soon
+        if (def) {
+          this.begin(def, now);
+          this.schedule(tier, now);
+        } else {
+          this.nextAt[tier] = now + 6000; // nothing fits right now; look again soon
+        }
       });
     }
 
@@ -609,8 +759,7 @@
       const live = this.cal.live;
       if (!live) return;
       const key = `${live.id}:${live.kind}`;
-      const slot = this.slots.major;
-      if (slot && slot.live === key) return;
+      if (this.active.some((s) => s.live === key)) return;
       // Fireworks wait for the sky to have turned to night (a short time-lapse).
       if (live.kind === 'fireworks' && this.stage.look.dark < 0.7) return;
       const fits = registry.filter((d) => d.live && d.live.includes(live.kind));
@@ -618,34 +767,59 @@
       if (!def) return;
       const first = this.liveShown !== key;
       this.liveShown = key;
-      this.begin(def, now, {
-        live,
-        caption: first
-          ? {
-              title: live.label,
-              place: live.kind === 'countdown' ? 'Landmark 81 · 23:59' : LIVE_PLACES[live.id],
-              ms: 14000,
-            }
-          : null,
-        quiet: !first,
-      });
-      this.slots.major.live = key;
+      const slot = this.begin(
+        def,
+        now,
+        {
+          live,
+          caption: first
+            ? {
+                title: live.label,
+                place: live.kind === 'countdown' ? 'Landmark 81 · 23:59' : LIVE_PLACES[live.id],
+                ms: 14000,
+              }
+            : null,
+          quiet: !first,
+        },
+        true,
+      );
+      slot.live = key;
     }
 
+    /** The event that follows `def` in its sequence, if any. */
+    next(def) {
+      if (!def.then) return null;
+      const name = typeof def.then === 'function' ? def.then(this.cal) : def.then;
+      return registry.find((d) => d.name === name) || null;
+    }
+
+    /** When the next event of a tier starts (counted from this one's start: they overlap). */
     schedule(tier, now) {
       const [a, b] =
         tier === 'major' ? this.config.eventGapMinutes.map((m) => m * 60) : this.config.detailGapSeconds;
       this.nextAt[tier] = now + rand(a, b) * 1000;
     }
 
-    /** Whether an event can happen now: its date, its season, the hour, the city's lights. */
+    /** Whether `def` can join the events running now: no zone taken, no rain on a clear-sky event. */
+    fitsWithRunning(def) {
+      const zones = zonesOf(def);
+      for (const z of zones) {
+        const used = this.active.filter((s) => zonesOf(s.def).includes(z)).length;
+        if (used >= (CAPACITY[z] || 1)) return false;
+      }
+      return !this.active.some((s) => s.def === def || (def.rain && isDry(s.def)) || (s.def.rain && isDry(def)));
+    }
+
+    /** Whether an event can happen now: its date, its season, the hour, the city's lights, what runs. */
     eligible(def, look) {
       const cal = this.cal;
       if (def.manual) return false;
-      if (def.occasion && !cal.has(def.occasion)) return false;
-      if (def.season && cal.season !== def.season) return false;
-      if (def.spectacle && cal.live && cal.live.kind === 'earthhour') return false;
-      return def.when(look, this.stage, cal);
+      if (!this.anyDay && def.occasion && !cal.has(def.occasion)) return false;
+      if (!this.anyDay && def.season && cal.season !== def.season) return false;
+      // The city's lights are off (Earth Hour): no light shows.
+      const dark = (cal.live && cal.live.kind === 'earthhour') || this.stage.city.blackout > 0.02;
+      if (def.spectacle && dark) return false;
+      return this.fitsWithRunning(def) && def.when(look, this.stage, cal);
     }
 
     /** Weighted pick among the events of a tier that fit, skipping recent ones if possible. */
@@ -653,52 +827,84 @@
       const fits = registry.filter((d) => tierOf(d) === tier && this.eligible(d, look));
       const fresh = fits.filter((d) => !this.recent.includes(d.name));
       const pool = fresh.length ? fresh : fits;
+      const cal = this.cal;
       const weight = (d) =>
         (d.weight || 1) *
         RARITY[d.rarity || 'common'] *
-        (d.occasion ? 3 : 1) * // it is the day for it: much more likely
-        (d.boost ? d.boost(this.cal, look) : 1);
+        // It is the day for it: much more likely; another day: now and then.
+        (d.occasion ? (cal.has(d.occasion) ? 3 : OFF_DAY) : 1) *
+        (d.season && cal.season !== d.season ? OFF_SEASON : 1) *
+        (d.boost ? d.boost(cal, look) : 1);
       let r = Math.random() * pool.reduce((sum, d) => sum + weight(d), 0);
       return pool.find((d) => (r -= weight(d)) < 0) || pool[pool.length - 1] || null;
     }
 
-    begin(def, now, extra = {}) {
-      const tier = tierOf(def);
-      this.end(tier);
-      const event = def.create(this.stage, { cal: this.cal, ...extra });
-      if (event.trails) this.end('detail');
-      this.slots[tier] = { def, event, startedAt: now };
-      this.recent = [def.name, ...this.recent.filter((n) => n !== def.name)].slice(0, RECENT);
-      this.syncLayers();
-      const caption = extra.caption || (def.caption ? def.caption(this.cal) : null);
-      if (this.onBegin && !extra.quiet) this.onBegin(def, tier, caption);
+    /** One of the event's versions, weighted, never the one shown last time. */
+    pickVariant(def) {
+      const list = def.variants;
+      if (!list || !list.length) return null;
+      const last = this.lastVariant[def.name];
+      const pool = list.length > 1 ? list.filter((v) => v.id !== last) : list;
+      let r = Math.random() * pool.reduce((sum, v) => sum + (v.weight || 1), 0);
+      const variant = pool.find((v) => (r -= v.weight || 1) < 0) || pool[pool.length - 1];
+      this.lastVariant[def.name] = variant.id;
+      return variant;
     }
 
-    end(tier) {
-      const slot = this.slots[tier];
-      if (!slot) return;
+    /**
+     * Starts an event. `force` (the test lab, a live show, a sequence) makes room for it:
+     * whatever it cannot run with is ended first.
+     * @returns {object} Its slot.
+     */
+    begin(def, now, extra = {}, force = false) {
+      this.active.filter((s) => s.def === def || (force && clash(def, s.def))).forEach((s) => this.endSlot(s));
+      const variant = extra.variant || this.pickVariant(def);
+      const event = def.create(this.stage, { cal: this.cal, ...extra, variant });
+      const slot = { def, event, tier: tierOf(def), startedAt: now, variant };
+      this.active.push(slot);
+      this.recent = [def.name, ...this.recent.filter((n) => n !== def.name)].slice(0, RECENT);
+      this.syncLayers();
+      const caption =
+        extra.caption ||
+        (def.caption ? def.caption(this.cal) : null) ||
+        (variant && (variant.label || variant.place)
+          ? { title: variant.label || def.label, place: variant.place ?? def.place }
+          : null);
+      if (this.onBegin && !extra.quiet) this.onBegin(def, slot.tier, caption);
+      return slot;
+    }
+
+    endSlot(slot) {
+      const i = this.active.indexOf(slot);
+      if (i < 0) return;
+      this.active.splice(i, 1);
       if (slot.event.end) slot.event.end();
-      this.slots[tier] = null;
       this.syncLayers();
     }
 
     /** Ends everything and frees the canvases' memory. */
     stop() {
-      TIERS.forEach((tier) => this.end(tier));
+      [...this.active].forEach((slot) => this.endSlot(slot));
       this.light.list.length = 0;
       this.syncLayers();
     }
 
-    /** The events running now (at most one per tier). */
+    /** The events running now. */
     get running() {
-      return TIERS.map((tier) => this.slots[tier] && this.slots[tier].event).filter(Boolean);
+      return this.active.map((slot) => slot.event);
+    }
+
+    /** The events drawing on a layer: those with its method, trails or not as the layer is. */
+    drawers(layer, events = this.running) {
+      return events.filter((e) => e[layer.method] && !!e.trails === layer.trails);
     }
 
     /** Gives a canvas a backing store only while an event draws on it. */
     syncLayers() {
       const events = this.running;
-      Object.entries(this.layers).forEach(([name, { canvas, ctx }]) => {
-        const needed = events.some((event) => event[name]);
+      Object.values(this.layers).forEach((layer) => {
+        const { canvas, ctx } = layer;
+        const needed = this.drawers(layer, events).length > 0;
         if (needed && !canvas.width) {
           const { W, H, dpr } = this.stage;
           canvas.width = Math.round(W * dpr);
@@ -714,9 +920,11 @@
     /** What the river reflects: the light on the sky, the shows behind the city, and those in front that glow. */
     mirrors() {
       const list = [this.light.canvas];
-      if (this.layers.back.canvas.width) list.push(this.layers.back.canvas);
-      if (this.layers.front.canvas.width && this.running.some((e) => e.mirror))
-        list.push(this.layers.front.canvas);
+      const events = this.running;
+      Object.values(this.layers).forEach((layer) => {
+        if (!layer.canvas.width) return;
+        if (layer.method === 'back' || this.drawers(layer, events).some((e) => e.mirror)) list.push(layer.canvas);
+      });
       return list;
     }
 
@@ -726,14 +934,16 @@
       const events = this.running;
       if (events.length) {
         const { W, H } = this.stage;
-        Object.entries(this.layers).forEach(([name, { canvas, ctx }]) => {
+        Object.values(this.layers).forEach((layer) => {
+          const { canvas, ctx } = layer;
           if (!canvas.width) return;
-          const trails = events.find((e) => e.trails && e[name]);
-          if (trails) {
+          const list = this.drawers(layer, events);
+          if (layer.trails) {
             // Persistence: fade the last frame instead of clearing it, so moving lights leave trails.
             // With 8-bit alpha a gentle fade stalls on faint pixels (4/255 x 0.88 rounds back to 4)
             // and leaves ghost glows; a stronger fade every third frame clears them.
-            let fade = 1 - (1 - trails.trails) ** this.k;
+            const trails = Math.max(0.01, ...list.map((e) => e.trails));
+            let fade = 1 - (1 - trails) ** this.k;
             if (this.frame % 3 === 0) fade = Math.max(fade, 0.26);
             ctx.globalCompositeOperation = 'destination-out';
             ctx.fillStyle = `rgba(0, 0, 0, ${fade})`;
@@ -742,10 +952,9 @@
           } else {
             ctx.clearRect(0, 0, W, H);
           }
-          events.forEach((event) => {
-            if (!event[name]) return;
+          list.forEach((event) => {
             ctx.save();
-            event[name](ctx);
+            event[layer.method](ctx);
             ctx.restore();
           });
         });

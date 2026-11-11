@@ -179,6 +179,17 @@
       /** Per-frame time (ms) the murmuration may use before shedding cursors; low leaves room for games. */
       frameBudgetMs: 4,
       maxFps: 60,
+      /**
+       * false: 60 fps even when the window is not focused (a background on a second monitor).
+       * true: drop to 30 fps and fewer cursors while another window has the focus.
+       */
+      ecoWhenUnfocused: false,
+      /**
+       * true: occasion events (Tết, Trung thu, 2/9, Giờ Trái Đất, the countdown...) and
+       * season ones may also come on any other day, at random (much more often on their day).
+       * false: only on their real day.
+       */
+      occasionsAnyDay: true,
       /** One whole day (golden hour → night → day → golden hour again), in minutes. */
       cycleMinutes: 40,
       /** Going idle again within this many minutes resumes the day where it was. */

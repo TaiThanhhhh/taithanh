@@ -3,17 +3,20 @@
  * Each event only happens on its occasion (ambient-calendar.js knows the real date and
  * the lunar one); the test lab can play any of them.
  *
- * - Giao thừa and New Year: the countdown on Landmark 81 in the last minute, then
- *   fireworks over the river at midnight (live, at the real time); Tết nights: the
- *   tower in red and gold with the year's name, drones drawing a mai flower, lanterns
- *   strung along the bank; by day mai petals on the wind (ambient-events-day.js).
+ * Every one of them can also come on another day, now and then (`occasionsAnyDay`).
+ *
+ * - Giao thừa and New Year: the countdown on Landmark 81 and Bitexco in the last minute,
+ *   then fireworks over the river opening with a salvo at midnight (live, at the real
+ *   time), then both towers wishing a happy new year; Tết nights: the towers in red and
+ *   gold with the year's name, drones drawing a mai flower, lanterns strung along the
+ *   bank; by day mai petals on the wind (ambient-events-day.js).
  * - 30/4 and 2/9: fireworks 21:00–21:15 (live), the tower lit as the flag, drones
  *   drawing the flag waving.
  * - Phật đản: floating lanterns drifting from the mouth of the Nhiêu Lộc canal.
  * - Trung thu: children's star-lantern procession along the river under the full moon.
  * - Noel: the tower in green and gold, fairy lights along the river.
- * - Earth Hour: the city switches its lights off for an hour (ambient-scene.js dims
- *   it); with less glow in the haze, more stars come out.
+ * - Earth Hour: the city switches its lights off building by building (stage.city.blackout,
+ *   the windows follow it in ambient-sky.js); the Milky Way comes out, candles on the bank.
  * - Programmer's Day and the site owner's birthday.
  */
 (function (Portfolio) {
@@ -23,14 +26,17 @@
   const { TAU, rand, pick, envelope, clamp01 } = fx;
 
   const night = (look) => look.dark > 0.6;
-  /** Name of the coming lunar year on Giao thừa night, of the current one after. */
+  /** Name of the lunar year Tết opens: the current one in the first lunar month, the coming one otherwise. */
   const tetYear = (cal) => {
-    const lunarYear = cal && cal.lunar ? cal.lunar.year + (cal.lunar.month === 12 ? 1 : 0) : 2027;
+    const lunarYear = cal && cal.lunar ? cal.lunar.year + (cal.lunar.month === 1 ? 0 : 1) : 2027;
     return fx.canChi(lunarYear);
   };
   const solarYear = (cal) => (cal && cal.date ? cal.date.getFullYear() : new Date().getFullYear());
-  /** The year about to begin on New Year's Eve (the current one on New Year's Day). */
-  const nextYear = (cal) => solarYear(cal) + (cal && cal.date && cal.date.getMonth() === 11 ? 1 : 0);
+  /** The year being welcomed: the current one on New Year's Day, the next one any other day. */
+  const nextYear = (cal) => {
+    const d = cal && cal.date;
+    return solarYear(cal) + (d && d.getMonth() === 0 && d.getDate() === 1 ? 0 : 1);
+  };
 
   /* ---------- Lights strung along the far bank ---------- */
 
@@ -95,6 +101,11 @@
 
   /* ---------- Giao thừa & New Year: countdown, then fireworks at midnight ---------- */
 
+  /*
+   * The sequence of the night: countdown (both towers) → at zero, the fireworks open with a
+   * salvo → then the towers wish a happy new year. Live at the real time; any other night
+   * now and then (occasionsAnyDay), or from the test lab.
+   */
   [
     { id: 'tet', palette: fx.palettes.tet, label: 'Giao thừa: pháo hoa đón Tết' },
     { id: 'newyear', palette: null, label: 'Pháo hoa chào năm mới' },
@@ -102,15 +113,17 @@
     fx.register({
       name: `${o.id}_countdown`,
       label: o.id === 'tet' ? 'Đếm ngược giao thừa' : 'Đếm ngược năm mới',
-      place: 'Landmark 81 · 23:59',
+      place: 'Landmark 81 · Bitexco · 23:59',
       group: 'occasion',
       occasion: o.id,
-      manual: true, // only in the last minute of the year (and from the test lab)
+      rarity: 'rare',
+      spectacle: true,
       live: ['countdown'],
-      when: night,
+      then: `${o.id}_fireworks`,
+      when: (look) => look.dark > 0.8,
       create: (stage, extra = {}) =>
-        fx.landmarkShow(stage, ['countdown'], {
-          endsAt: extra.live ? extra.live.endsAt : Date.now() + 14000,
+        fx.countdownShow(stage, {
+          endsAt: extra.live ? extra.live.endsAt : Date.now() + 13500,
           year: o.id === 'tet' ? tetYear(extra.cal) : String(nextYear(extra.cal)),
         }),
     });
@@ -121,8 +134,9 @@
       place: 'Sông Sài Gòn · 00:00',
       group: 'occasion',
       occasion: o.id,
-      manual: true, // at midnight, live (and from the test lab)
+      manual: true, // after the countdown, or live at midnight (and from the test lab)
       live: ['fireworks'],
+      then: `${o.id}_landmark`,
       when: night,
       create(stage, extra = {}) {
         const remaining = extra.live ? extra.live.endsAt - Date.now() - 6000 : 45000;
@@ -131,6 +145,7 @@
           gap: [300, 800],
           pair: 0.6,
           finale: 30,
+          opening: 9,
           spread: 0.32,
           barge: 0.3,
           palette: o.palette || undefined,
@@ -138,12 +153,14 @@
             'peony',
             'chrysanthemum',
             'chrysanthemum',
+            'pistil',
             'kamuro',
             'willow',
             'palm',
             'ring',
             'glitter',
             'saturn',
+            'brocade',
           ],
         });
       },
@@ -152,14 +169,17 @@
 
   fx.register({
     name: 'tet_landmark',
-    label: 'Landmark 81 mừng xuân',
+    label: 'Landmark 81 & Bitexco mừng xuân',
     place: 'Tết ở Sài Gòn',
     group: 'occasion',
     occasion: 'tet',
     spectacle: true,
     when: (look) => look.dark > 0.55,
     create: (stage, extra = {}) =>
-      fx.landmarkShow(stage, ['tet', 'year', 'sparkle', 'year'], { year: tetYear(extra.cal) }),
+      fx.combine(
+        fx.landmarkShow(stage, ['tet', 'year', 'sparkle', 'year'], { year: tetYear(extra.cal) }),
+        fx.bitexcoShow(stage, ['tet', 'lotus', 'sparkle', 'tet'], { segment: 10000 }),
+      ),
   });
 
   fx.register({
@@ -192,14 +212,19 @@
 
   fx.register({
     name: 'newyear_landmark',
-    label: 'Landmark 81 chào năm mới',
-    place: 'Bình Thạnh',
+    label: 'Landmark 81 & Bitexco chào năm mới',
+    place: 'Bình Thạnh · Quận 1',
     group: 'occasion',
     occasion: 'newyear',
     spectacle: true,
     when: (look) => look.dark > 0.55,
-    create: (stage, extra = {}) =>
-      fx.landmarkShow(stage, ['rainbow', 'year', 'sparkle'], { year: String(solarYear(extra.cal)) }),
+    create: (stage, extra = {}) => {
+      const year = String(nextYear(extra.cal));
+      return fx.combine(
+        fx.landmarkShow(stage, ['year', 'rainbow', 'year', 'sparkle'], { year }),
+        fx.bitexcoShow(stage, ['rainbow', 'year', 'helix', 'sparkle'], { year }),
+      );
+    },
   });
 
   /* ---------- 30/4 and 2/9: the flag, fireworks at 21:00 ---------- */
@@ -214,9 +239,10 @@
       place: 'Sông Sài Gòn · 21:00',
       group: 'occasion',
       occasion: o.id,
-      manual: true, // 21:00–21:15, live (and from the test lab)
+      rarity: 'uncommon', // live at 21:00 on the day; another night now and then
+      spectacle: true,
       live: ['fireworks'],
-      when: night,
+      when: (look) => look.dark > 0.7,
       create(stage, extra = {}) {
         const remaining = extra.live ? extra.live.endsAt - Date.now() - 6000 : 45000;
         return fx.fireworksShow(stage, {
@@ -240,7 +266,11 @@
       occasion: o.id,
       spectacle: true,
       when: (look) => look.dark > 0.5,
-      create: (stage) => fx.landmarkShow(stage, ['flag', 'rise', 'flag'], { segment: 12000 }),
+      create: (stage) =>
+        fx.combine(
+          fx.landmarkShow(stage, ['flag', 'rise', 'flag'], { segment: 12000 }),
+          fx.bitexcoShow(stage, ['flag', 'sonar', 'flag'], { segment: 12000 }),
+        ),
     });
 
     fx.register({
@@ -467,7 +497,11 @@
     occasion: 'christmas',
     spectacle: true,
     when: (look) => look.dark > 0.55,
-    create: (stage) => fx.landmarkShow(stage, ['noel', 'sparkle', 'noel'], { segment: 12000 }),
+    create: (stage) =>
+      fx.combine(
+        fx.landmarkShow(stage, ['noel', 'sparkle', 'noel'], { segment: 12000 }),
+        fx.bitexcoShow(stage, ['sparkle', 'noel', 'sparkle'], { segment: 12000 }),
+      ),
   });
 
   fx.register({
@@ -488,8 +522,69 @@
   /* ---------- Earth Hour ---------- */
 
   /**
-   * The city switches off (the scene dims the windows and the towers): with less glow in
-   * the haze, fainter stars come out. Runs for the hour, live.
+   * The Milky Way, painted once: thousands of faint stars crowded along a band across the
+   * sky, a soft glow warmer towards the galactic centre, and the dark dust lane down its
+   * middle. Only a city with its lights off shows it.
+   */
+  function milkyWay(W, H) {
+    const w = Math.round(W / 2);
+    const h = Math.round(H * 0.45);
+    return fx.sprite(w, h, (ctx) => {
+      const from = [w * 0.02, h * 1.0];
+      const to = [w * 0.98, h * 0.02];
+      const len = Math.hypot(to[0] - from[0], to[1] - from[1]);
+      const nx = -(to[1] - from[1]) / len; // perpendicular to the band
+      const ny = (to[0] - from[0]) / len;
+      const along = (u, off) => [
+        from[0] + (to[0] - from[0]) * u + nx * off,
+        from[1] + (to[1] - from[1]) * u + ny * off,
+      ];
+      const gauss = () => (Math.random() + Math.random() + Math.random() - 1.5) / 1.5;
+      // The glow: soft clouds along the band, warm near the core (a third of the way along).
+      for (let i = 0; i < 70; i++) {
+        const u = Math.random();
+        const core = Math.exp(-(((u - 0.35) / 0.18) ** 2));
+        const [x, y] = along(u, gauss() * h * 0.08);
+        const r = h * (0.08 + Math.random() * 0.1) * (1 + core * 0.6);
+        const g = ctx.createRadialGradient(x, y, 0, x, y, r);
+        const rgb = core > 0.4 ? '255, 228, 200' : '200, 215, 255';
+        g.addColorStop(0, `rgba(${rgb}, ${0.05 + core * 0.05})`);
+        g.addColorStop(1, `rgba(${rgb}, 0)`);
+        ctx.fillStyle = g;
+        ctx.fillRect(x - r, y - r, r * 2, r * 2);
+      }
+      // Star clouds.
+      for (let i = 0; i < 4200; i++) {
+        const u = Math.random();
+        const [x, y] = along(u, gauss() * h * 0.11);
+        const b = Math.random();
+        ctx.fillStyle = `rgba(${b < 0.15 ? '255, 230, 210' : '230, 238, 255'}, ${0.12 + b * 0.45})`;
+        ctx.fillRect(x, y, b > 0.97 ? 1.4 : 0.8, b > 0.97 ? 1.4 : 0.8);
+      }
+      // The Great Rift: dark dust down the middle of the band.
+      ctx.globalCompositeOperation = 'destination-out';
+      for (let i = 0; i < 90; i++) {
+        const u = 0.12 + Math.random() * 0.6;
+        const [x, y] = along(u, (Math.sin(u * 17) * 0.02 + gauss() * 0.01) * h);
+        const r = h * (0.012 + Math.random() * 0.026);
+        const g = ctx.createRadialGradient(x, y, 0, x, y, r);
+        g.addColorStop(0, 'rgba(0, 0, 0, 0.3)');
+        g.addColorStop(1, 'rgba(0, 0, 0, 0)');
+        ctx.fillStyle = g;
+        ctx.fillRect(x - r, y - r, r * 2, r * 2);
+      }
+    });
+  }
+
+  const candle = fx.glowSprite([255, 186, 110], 24);
+
+  /**
+   * Earth Hour: the city switches its lights off building by building in a wave across
+   * the skyline (the windows, Landmark 81's crown, Bitexco's helipad ring, the promenade
+   * lamps; the red aviation lights stay on). With no glow in the haze the Milky Way comes
+   * out; candles are lit along the bank and floating candles spell 60+ on the river. At
+   * the end the lights come back on, the wave running the other way. Live 20:30–21:30 on
+   * its day; any other night now and then.
    */
   fx.register({
     name: 'earthhour',
@@ -497,30 +592,95 @@
     place: 'Sài Gòn · 20:30 – 21:30',
     group: 'occasion',
     occasion: 'earthhour',
-    manual: true,
+    rarity: 'rare',
     live: ['earthhour'],
-    when: night,
+    when: (look) => look.dark > 0.8,
     create(stage, extra = {}) {
-      const { W } = stage;
-      const DURATION = extra.live ? Math.max(5000, extra.live.endsAt - Date.now()) : 60000;
-      const stars = Array.from({ length: 260 }, () => ({
-        x: rand(0, W),
-        y: rand(0, 0.7) ** 1.3 * stage.ground,
-        s: rand(0.6, 1.3),
+      const { W, H } = stage;
+      const scale = H / 1080;
+      const DURATION = extra.live ? Math.max(30000, extra.live.endsAt - Date.now()) : 100000;
+      const OFF_AT = 2500;
+      const OFF_MS = 11000;
+      const ON_MS = 9000;
+      const ON_AT = DURATION - ON_MS - 1500;
+      const blackoutAt = (t) =>
+        t < OFF_AT
+          ? 0
+          : t < OFF_AT + OFF_MS
+            ? fx.easeInOut((t - OFF_AT) / OFF_MS)
+            : t < ON_AT
+              ? 1
+              : 1 - fx.easeInOut((t - ON_AT) / ON_MS);
+      const galaxy = milkyWay(W, H);
+      const lit = OFF_AT + OFF_MS;
+      // People with candles along the promenade.
+      const bank = Array.from({ length: 110 }, (_, i) => ({
+        x: rand(0.02, 0.98) * W,
+        y: stage.ground - rand(1.5, 5) * scale,
+        at: lit + i * rand(30, 90),
         phase: rand(0, TAU),
       }));
+      // Floating candles spelling 60+ on the water, in perspective.
+      const river = stage.river;
+      const cx = W * 0.6;
+      const span = river.h * 2.6;
+      const word = fx.figurePoints(fx.figures.text('60+'), 240).map((p, i) => {
+        const d = 0.08 + (p.y + 0.5) * 0.84;
+        const spot = fx.onWater(stage, d);
+        return {
+          x: cx + p.x * span * (0.75 + 0.5 * d),
+          y: spot.y,
+          s: spot.s,
+          at: lit + 3000 + i * 28,
+          phase: rand(0, TAU),
+        };
+      });
+      let b = 0;
       let t = 0;
+      const flame = (ctx, x, y, s, alpha, phase) => {
+        const f = 0.75 + 0.25 * Math.sin(t * 0.013 + phase) * Math.sin(t * 0.0071 + phase * 3);
+        const r = 5 * s;
+        ctx.globalAlpha = alpha * f;
+        ctx.drawImage(candle, x - r, y - r, r * 2, r * 2);
+        ctx.fillStyle = 'rgb(255, 236, 200)';
+        ctx.fillRect(x - 0.6 * s, y - 0.8 * s, 1.2 * s, 1.6 * s);
+      };
       return {
+        mirror: true,
         update(_k, elapsed) {
           t = elapsed;
+          b = blackoutAt(t);
+          stage.city.blackout = b;
           return t < DURATION;
         },
+        end() {
+          stage.city.blackout = 0;
+        },
         back(ctx) {
-          const a = clamp01(t / 25000) * envelope(t, DURATION, 1, 20000);
-          ctx.fillStyle = 'rgb(225, 232, 255)';
-          stars.forEach((s) => {
-            ctx.globalAlpha = a * (0.25 + 0.2 * Math.sin(t * 0.001 + s.phase));
-            ctx.fillRect(s.x, s.y, s.s, s.s);
+          const a = b ** 1.5;
+          if (a <= 0.01) return;
+          ctx.globalCompositeOperation = 'lighter';
+          ctx.globalAlpha = a * 0.85;
+          ctx.drawImage(galaxy, 0, 0, W, H * 0.72); // behind the skyline: it rises from the city
+          ctx.globalAlpha = 1;
+        },
+        front(ctx) {
+          const a = clamp01(b * 1.4 - 0.4);
+          if (a <= 0) return;
+          ctx.globalCompositeOperation = 'lighter';
+          bank.forEach((c) => {
+            if (t < c.at) return;
+            flame(ctx, c.x, c.y, scale, a * clamp01((t - c.at) / 600) * 0.85, c.phase);
+          });
+          word.forEach((c) => {
+            if (t < c.at) return;
+            const on = a * clamp01((t - c.at) / 500);
+            const bob = Math.sin(t * 0.0015 + c.phase) * 0.8 * c.s;
+            flame(ctx, c.x, c.y - 2 * c.s + bob, c.s, on, c.phase);
+            // Its warm reflection, broken by the ripples.
+            ctx.globalAlpha = on * 0.3;
+            ctx.fillStyle = 'rgb(255, 170, 100)';
+            ctx.fillRect(c.x - 0.8 * c.s + Math.sin(t * 0.004 + c.phase) * c.s, c.y, 1.6 * c.s, 6 * c.s);
           });
           ctx.globalAlpha = 1;
         },
@@ -538,7 +698,11 @@
     occasion: 'programmersday',
     spectacle: true,
     when: (look) => look.dark > 0.55,
-    create: (stage) => fx.landmarkShow(stage, ['code', 'scan', 'code'], { segment: 12000 }),
+    create: (stage) =>
+      fx.combine(
+        fx.landmarkShow(stage, ['code', 'scan', 'code'], { segment: 12000 }),
+        fx.bitexcoShow(stage, ['code', 'equalizer', 'code'], { segment: 12000 }),
+      ),
   });
 
   fx.register({
